@@ -1,0 +1,477 @@
+<?php  ?>
+<?php $picDirectoryExists = false; ?>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="color-scheme" content="dark light">
+    <link rel="stylesheet" href="<?= BASE_URL ?>vtlgen_module/css/vtl.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>vtlgen_module/css/tabulator.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>vtlgen_module/css/tabulator_midnight.css">
+    <script type="text/javascript" src="<?= BASE_URL ?>vtlgen_module/js/tabulator.js"></script>
+    <title>Vtl_Data_Generator</title>
+</head>
+<body>
+<h2 class="text-center"><?= $headline ?></h2>
+<section>
+    <div class="container">
+        <div class="flex">
+            <?php echo anchor('vtlgen', 'Back', array("class" => "button")); ?>
+        </div>
+        <p>Select the table in the database from the drop down below for which you wish to create some fake data.</p>
+        <p>Select those columns into which you want to add data, or just check the checkbox in the header if you want to select all the rows.</p>
+        <?php
+        $tableChoiceAttr['id'] = 'tableChoiceDropdown';
+        $tableChoiceAttr['onchange'] = 'selectedTable()';
+        echo form_dropdown('tableChoice', $tables, '', $tableChoiceAttr);
+        ?>
+        <div class="container" id="datatable"></div>
+        <div id="columnInfoTableContainer">
+            <div class="flex-container">
+                <div id="numRowsContainer" style="display: none;">
+                    <label for="numRows">Enter the number of rows of data you wish to generate:</label>
+                    <input type="number" id="numRows" name="numRows" min="1" value="1">
+                </div>
+                <button id="submitBtn" onclick='generateData()' style="display: none; margin-bottom: 15px;">Generate Fake Data</button>
+                <button id="movePicsBtn" onclick="movePictures()" style="display: none; margin-bottom: 15px;">Transfer Images</button>
+                <div class="progress-bar" id="progress-bar" style="display: none;">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section>
+    <div class="container">
+        <div class="modal" id="responseModal" style="display: none">
+             <div class="modal-heading">Generated Rows</div>
+                <div class="modal-body">
+                    <p id="the-response"></p>
+                    <p class="text-center">
+                    <button onclick="closeModal()" class="alt">Close</button>
+                    </p>
+                </div>
+        </div>
+    </div>
+    <div>
+        <input type="hidden" id="picDirectoryExists" value="<?php echo $picDirectoryExists ? 'true' : 'false'; ?>">
+    </div>
+</section>
+<script src="<?= BASE_URL ?>js/app.js"></script>
+</body>
+</html>
+
+<script>
+
+    async function setPictureDirectoryExistsForSelectedTableModule(selectedTable) {
+        <?php $picDirectoryExists = false;?>
+        var postData = {
+            selectedTable: selectedTable
+        };
+
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/createdataGetPictureFolderExists';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // Handle the response here
+                    var response = xhr.responseText;
+                    // Parse the response as needed
+                    var responseObject = JSON.parse(response);
+                    var picDirectoryExists = responseObject.picDirectoryExists;
+                    // Now you can use the picDirectoryExists variable
+
+
+                    // Update the content of the hidden input field
+                    var picDirectoryExistsInput = document.getElementById('picDirectoryExists');
+                    picDirectoryExistsInput.value = picDirectoryExists ? 'true' : 'false';
+
+
+                } else {
+                    // Handle error responses here
+                    console.error('Error:', xhr.status);
+                }
+            };
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function selectedTable() {
+        var dropdown = document.getElementById('tableChoiceDropdown');
+        var selectedTable = dropdown.options[dropdown.selectedIndex].text;
+        var columnInfo = <?php echo json_encode($columnInfo); ?>;
+        var selectedTableColumns = columnInfo.find(table => table.table === selectedTable).columns;
+        var tableData = [];
+
+        selectedTableColumns.forEach(column => {
+            if (!(column.Key === 'PRI' && column.Extra.includes('auto_increment'))) {
+                tableData.push({
+                    title: column.Field, // Assuming `Field` contains the column name
+                    field: column.Field,
+                    type: column.Type,
+                    null: column.Null,
+                    key: column.Key,
+                    default: column.Default,
+                    extra: column.Extra,
+                });
+            }
+        });
+
+        var table =new Tabulator("#datatable", {
+            layout: "fitColumns", // fit columns to width of table
+            selectableRows: true, // enable row selection
+            columns: [
+                {title: "Select", formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", vertAlign: "middle",headerHozAlign: "center", headerSort: false,width:60, cellClick: function (e, cell) {
+                        cell.getRow().toggleSelect();
+                    }
+                },
+                {title: "Field", field: "field", width: 200, hozAlign: "left", vertAlign: "middle", headerHozAlign: "left" },
+                {title: "Type", field: "type", width: 100, hozAlign: "left", vertAlign: "middle", headerHozAlign: "left"},
+                {title: "Null", field: "null", width: 100, hozAlign: "left", vertAlign: "middle", headerHozAlign: "left"},
+                {title: "Key", field: "key", width: 80, hozAlign: "leftr", vertAlign: "middle", headerHozAlign: "left"},
+                {title: "Default", field: "default", hozAlign: "left", vertAlign: "middle", headerHozAlign: "left"},
+                {title: "Extra", field: "extra", hozAlign: "left", vertAlign: "middle", headerHozAlign: "left"}
+            ],
+
+            data: tableData,
+
+
+        });
+        table.on("rowSelected", function(row){
+            //row - row component for the selected row
+            row.getElement().style.backgroundColor = "var(--primary)";
+            row.getElement().style.color = "white";
+        });
+        table.on("rowDeselected", function(row){
+            //row - row component for the deselected row
+            row.getElement().style.backgroundColor = '';
+            row.getElement().style.color = '';
+        });
+        table.on("rowSelectionChanged", function(data, rows, selected, deselected){
+            var numRowsContainer = document.getElementById('numRowsContainer');
+            var submitBtn = document.getElementById('submitBtn');
+            // var movePicsBtn = document.getElementById('movePicsBtn');
+            // var progressBar = document.getElementById('progress-bar');
+
+            if(table.getSelectedRows().length > 0) {
+                numRowsContainer.style.display = 'block';
+                submitBtn.style.display = 'block';
+                // movePicsBtn.style.display = 'block';
+                // progressBar.style.display = 'block';
+            } else {
+                numRowsContainer.style.display = 'none';
+                submitBtn.style.display = 'none';
+                // movePicsBtn.style.display = 'none';
+                // progressBar.style.display = 'none';
+            }
+        });
+         await setPictureDirectoryExistsForSelectedTableModule(selectedTable);
+    }
+
+    async function generateData() {
+        // Get the selected table name from the dropdown
+        var dropdown = document.getElementById('tableChoiceDropdown');
+        var selectedTable = dropdown.options[dropdown.selectedIndex].text;
+
+        // Get the selected rows from the Tabulator datatable
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+
+        // Filter the selected rows to include only the field name and data type
+        var filteredRows = selectedRows.map(row => {
+            return {
+                field: row.field,
+                type: row.type
+            };
+        });
+
+        // Get the value from the numRows input field
+        var numRows = document.getElementById('numRows').value;
+
+        // Prepare the data to send
+        var postData = {
+            selectedTable: selectedTable,
+            selectedRows: filteredRows,
+            numRows: numRows
+        };
+
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/createdataCreateFakeData';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        console.log('Response:', xhr.responseText);
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+
+                        // Handle the response
+                        openModal('responseModal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = response.message;
+
+                        // Additional logic based on response
+                        var picDirectoryExists = document.getElementById('picDirectoryExists').value === 'true';
+
+                        if (picDirectoryExists && numRows <= 100) {
+                            document.getElementById('submitBtn').style.display = 'none';
+                            document.getElementById('movePicsBtn').style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openModal('responseModal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = 'An error occurred while processing the response.';
+                    }
+                } else {
+                    var errorResponse = xhr.responseText;
+                    openModal('responseModal');
+                    const targetEl = document.getElementById('the-response');
+                    targetEl.innerHTML = errorResponse.message;
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+
+
+    function movePictures() {
+        // Get the selected table name from the dropdown
+        var dropdown = document.getElementById('tableChoiceDropdown');
+        var selectedTable = dropdown.options[dropdown.selectedIndex].text;
+
+        document.getElementById('progress-bar').style.display = 'block';
+
+        // Prepare the data to send
+        var postData = {
+            selectedTable: selectedTable
+        };
+
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/createdataSetImageFoldersAndTransferImages';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // Handle the response here
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.error) {
+                        // Handle error responses here
+                        openModal('response-modal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = response.error;
+                    } else {
+                        // Start processing records
+                        processRecords(response.totalRows);
+                    }
+                } else {
+                    // Handle error responses here
+                    openModal('response-modal');
+                    const targetEl = document.getElementById('the-response');
+                    targetEl.innerHTML = 'Request failed with status ' + xhr.status;
+                }
+            };
+        } catch (error) {
+            openModal('response-modal');
+            const targetEl = document.getElementById('the-response');
+            targetEl.innerHTML = error;
+        }
+    }
+
+    async function processRecords(totalRows) {
+        // Get the selected table name from the dropdown
+        var dropdown = document.getElementById('tableChoiceDropdown');
+        var selectedTable = dropdown.options[dropdown.selectedIndex].text;
+
+        var progressBar = document.getElementById('progress');
+        var progress = 0;
+
+        // Define a function to handle each record asynchronously
+        async function processRecord(recordId) {
+            return new Promise((resolve, reject) => {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '<?= BASE_URL ?>vtlgen/createDataCopyImageForRecord', true);
+                xhr.setRequestHeader('Content-type', 'application/json');
+
+                // Prepare the data to send
+                var data = {
+                    recordId: recordId,
+                    selectedTable: selectedTable
+                };
+
+                // Convert the data object to a JSON string
+                var jsonData = JSON.stringify(data);
+
+                // Define a callback function to handle the response
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        // Update progress bar
+                        progress++;
+                        var percent = Math.round((progress / totalRows) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = percent + '%';
+
+                        // Resolve the Promise
+                        resolve();
+                    } else {
+                        // Reject the Promise on error
+                        reject('Request from process images failed with status ' + xhr.responseText);
+                    }
+                };
+
+                xhr.onerror = function () {
+                    // Reject the Promise on connection error
+                    reject('Request failed');
+                };
+
+                // Send the request with the JSON data
+                xhr.send(jsonData);
+            });
+        }
+
+        // Loop through records and process them asynchronously
+        for (var i = 1; i <= totalRows; i++) {
+            try {
+                await processRecord(i);
+            } catch (error) {
+                // Handle errors here if needed
+                console.error(error);
+                openModal('image-transfer-response-modal');
+                const targetEl = document.getElementById('the-response');
+                targetEl.innerHTML = error;
+                return; // Stop processing further records on error
+            }
+        }
+
+        // If all records processed, display success message
+        openModal('image-transfer-response-modal');
+        const targetEl = document.getElementById('the-response');
+        targetEl.innerHTML = 'Images copied successfully.';
+    }
+</script>
+<style>
+    :root {
+        --max-progress-width: 500px;
+        --progress-height: 30px;
+        --border-radius: 50px;
+    }
+    @media (prefers-color-scheme: light) {
+        div.tabulator-cell{
+            color: white;
+
+        }
+        div.tabulator-col-title{
+            color: white;
+
+        }
+        div.tabulator-col.tabulator-sortable.tabulator-col-sorter-element{
+            color: white;
+        }
+
+    }
+
+    @media(hover: hover) and (pointer: fine) {
+        .tabulator .tabulator-header .tabulator-col.tabulator-sortable.tabulator-col-sorter-element:hover {
+            background-color: var(--primary-dark);
+
+        }
+    }
+    div.tabulator-col.tabulator-sortable.tabulator-col-sorter-element{
+        background-color: var(--primary-dark);
+    }
+
+    #datatable{
+        margin-top: 20px;
+    }
+
+    #datatable input[type="checkbox"] {
+        margin: 5px;
+        top: 0;
+        position: static;
+        width: auto;
+        height: auto;
+    }
+    .flex-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+    .progress-bar {
+        max-width: var(--max-progress-width);
+        height: var(--progress-height);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        position: relative;
+        display: block;
+    }
+    .progress {
+        background-color: var(--primary);
+        /*transition: width 0.1s ease-in-out;*/
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 16px;
+        position: absolute;
+        width: 0;
+
+    }
+</style>

@@ -1,0 +1,7 @@
+{
+    "require": {
+        "fakerphp/faker": "^1.23",
+        "ifsnop/mysqldump-php": "^2.12",
+        "erusev/parsedown": "^1.7"
+    }
+}
