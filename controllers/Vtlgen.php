@@ -323,7 +323,7 @@ class Vtlgen extends Trongate
         $data['tables'] = $this -> setupTablesForDatabaseAdmin();
         $data['headline'] = 'Vtl Data Generator: Delete Data';
         $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'deletedata';
+        $data['view_file'] = 'deleteordrop';
         $this->template('admin', $data);
     }
 
