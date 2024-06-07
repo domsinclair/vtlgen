@@ -25,9 +25,45 @@
 <section>
     <div class="container" id="datatable"></div>
 </section>
+<section>
+<div id="task" style="display: none"><?= $task ?></div>
+<div class="container" id="deleteCheckbox" style="display: none">
+    <label><input type="checkbox" id="resetAutoIncrementCheckbox" name="reset-auto-increment" > Reset Primary Auto
+        Increment</label>
+    <div>
+        <button id="submitBtn" onclick='deleteData()' style=" margin-bottom: 15px;">Delete Data</button>
+    </div>
+</div>
+</section>
+<section>
+<div class="container" id="dropTableDiv" style="display: none" >
+    <button  onclick='dropTables()' style="margin-bottom: 15px;">Drop Tables</button>
+</div>
+</section>
+<section>
+    <div class="container">
+        <div class="modal" id="responseModal" style="display: none">
+            <div class="modal-heading">Generated Rows</div>
+            <div class="modal-body">
+                <p id="the-response"></p>
+                <p class="text-center">
+                    <button onclick="closeModal()" class="alt">Close</button>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="<?= BASE_URL ?>js/app.js"></script>
 </body>
 </html>
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('modalClosed', function (event) {
+            // Place your additional logic here
+            location.reload();
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         // Sample data from PHP
         let tableData = <?php echo json_encode($data['tables']); ?>;
@@ -57,37 +93,194 @@
             row.getElement().style.backgroundColor = '';
             row.getElement().style.color = '';
         });
+        table.on("rowSelectionChanged", function(data, rows, selected, deselected){
+            var task = document.getElementById('task');
+            var deleteCheckbox = document.getElementById('deleteCheckbox');
+            var dropTableDiv = document.getElementById('dropTableDiv');
 
-        // Delete Data Button
-        document.getElementById('deleteBtn').addEventListener('click', function() {
-            let selectedRows = table.getSelectedRows();
-            let tablesToDelete = selectedRows.map(row => row.getData().table);
-            if (tablesToDelete.length > 0) {
-                if (confirm(`Are you sure you want to delete data from the following tables?\n${tablesToDelete.join(", ")}`)) {
-                    // Handle deletion logic here
-                    console.log('Deleting data from tables:', tablesToDelete);
-                    // Perform AJAX request or form submission to delete data
+            if(table.getSelectedRows().length > 0) {
+                switch(task.innerText) {
+                    case 'delete':
+                        deleteCheckbox.style.display = 'block';
+                        break;
+                    case 'drop':
+                        dropTableDiv.style.display = 'block';
+                        break;
+                    default:
+                        deleteCheckbox.style.display = 'none';
+                        dropTableDiv.style.display = 'none';
                 }
+
             } else {
-                alert('Please select at least one table to delete data.');
+                switch(task.innerText) {
+                    case 'delete':
+                        deleteCheckbox.style.display = 'none';
+                        break;
+                    case 'drop':
+                        dropTableDiv.style.display = 'none';
+                        break;
+                    default:
+                        deleteCheckbox.style.display = 'none';
+                        dropTableDiv.style.display = 'none';
+                }
             }
         });
 
-        // Drop Tables Button
-        document.getElementById('dropBtn').addEventListener('click', function() {
-            let selectedRows = table.getSelectedRows();
-            let tablesToDrop = selectedRows.map(row => row.getData().table);
-            if (tablesToDrop.length > 0) {
-                if (confirm(`Are you sure you want to drop the following tables?\n${tablesToDrop.join(", ")}`)) {
-                    // Handle drop logic here
-                    console.log('Dropping tables:', tablesToDrop);
-                    // Perform AJAX request or form submission to drop tables
-                }
-            } else {
-                alert('Please select at least one table to drop.');
-            }
-        });
     });
+
+    async function deleteData() {
+        // Get the selected rows from the Tabulator datatable
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+
+        // Filter the selected rows to include only the table name
+        var filteredRows = selectedRows.map(row => {
+            return {
+                table: row.table // Ensure the correct field name is used
+            };
+        });
+
+        // Get the value of the checkbox
+        var resetAutoIncrement = document.getElementById('resetAutoIncrementCheckbox').checked;
+
+        // Prepare the data to send
+        var postData = {
+            selectedTables: filteredRows,
+            resetAutoIncrement: resetAutoIncrement
+        };
+
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/deleteordropDeleteTableData';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        console.log('Response:', xhr.responseText);
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+
+                        // Handle the response
+                        openModal('responseModal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = response.message;
+
+                        // Display deleted tables and failed tables
+                        if (response.deletedTables !== "") {
+                            targetEl.innerHTML += '<br>Deleted Data From Tables:<br>' + response.deletedTables;
+                        }
+                        if (response.failedTables !== "") {
+                            targetEl.innerHTML += '<br>Failed To Delete Data From Tables:<br>' + response.failedTables;
+                        }
+
+
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openModal('responseModal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = 'An error occurred while processing the response.';
+                    }
+                } else {
+                    var errorResponse = xhr.responseText;
+                    openModal('responseModal');
+                    const targetEl = document.getElementById('the-response');
+                    targetEl.innerHTML = errorResponse.message;
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+
+    async function dropTables() {
+        // Get the selected rows from the Tabulator datatable
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+
+        // Filter the selected rows to include only the table name
+        var filteredRows = selectedRows.map(row => {
+            return {
+                table: row.table // Ensure the correct field name is used
+            };
+        });
+        // Prepare the data to send
+        var postData = {
+            selectedTables: filteredRows
+        };
+
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/deleteordropDropTables';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        console.log('Response:', xhr.responseText);
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+
+                        // Handle the response
+                        openModal('responseModal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = response.message;
+
+                        // Display deleted tables and failed tables
+                        if (response.deletedTables !== "") {
+                            targetEl.innerHTML += '<br>Dropped Tables:<br>' + response.deletedTables;
+                        }
+                        if (response.failedTables !== "") {
+                            targetEl.innerHTML += '<br>Failed To Drop Tables:<br>' + response.failedTables;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openModal('responseModal');
+                        const targetEl = document.getElementById('the-response');
+                        targetEl.innerHTML = 'An error occurred while processing the response.';
+                    }
+                } else {
+                    var errorResponse = xhr.responseText;
+                    openModal('responseModal');
+                    const targetEl = document.getElementById('the-response');
+                    targetEl.innerHTML = errorResponse.message;
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
 </script>
 <style>
     :root {
@@ -136,6 +329,11 @@
         flex-direction: column;
         align-items: center;
         margin-top: 20px;
+    }
+
+    input[type="checkbox"] {
+        margin: 6px;
+        align-self: inherit;
     }
 
 </style>

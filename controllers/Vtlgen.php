@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../assets/vendor/autoload.php';
-require_once __DIR__ . '/../assets/vtlFakerConfig.php';
+require_once __DIR__ . '/../assets/vtlgenConfig.php';
 class Vtlgen extends Trongate
 {
 
@@ -319,12 +319,37 @@ class Vtlgen extends Trongate
         $this->template('admin', $data);
     }
 
+    /**
+     * Opens the delete view for the VTL data generator.
+     *
+     * Does not take any parameters.
+     * Does not throw any exceptions.
+     * Does not return any value.
+     */
     public function vtlgenDeleteData(): void{
-        $data['tables'] = $this -> setupTablesForDatabaseAdmin();
-        $data['headline'] = 'Vtl Data Generator: Delete Data';
-        $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'deleteordrop';
-        $this->template('admin', $data);
+        $this->openDeleteOrDropView('delete');
+    }
+
+    /**
+     * Shows the foreign keys in the database for the Vtl Data Generator.
+     * Very specifically it will show those created by the Data Generator
+     */
+    public function vtlgenShowForeignKeys(): void{
+        $rows = $this->getForeignKeysFromDatabase();
+        $headline = 'Vtl Data Generator: Foreign Keys in Database';
+        $noDataMessage = 'There are currently no foreign keys in the database: ' . DATABASE;
+        $this->showRowData($rows, $headline, $noDataMessage);
+    }
+
+    /**
+     * Opens the delete or drop view for the VTL data generator.
+     *
+     * This function opens the delete or drop view for the VTL data generator. It takes no parameters and does not throw any exceptions.
+     *
+     * @return void
+     */
+    public function vtlgenDropTables(): void{
+        $this->openDeleteOrDropView('drop');
     }
 
     public function vtlgenCreateDataTable(): void{
@@ -367,6 +392,32 @@ class Vtlgen extends Trongate
         $this->openHelpView($filepath, $headline);
     }
 
+    /**
+     * Fetches and displays the latest primary key values for tables.
+     *
+     * @return void
+     */
+
+    public function vtlgenFetchLatestPkValues(): void{
+        $rows = $this->showLatestPkValues();
+        $headline = 'Vtl Data Generator: Latest Primary Key Values for Tables';
+        $noDataMessage = 'There are currently no tables in the database: ' . DATABASE . ' with any rows of data';
+        $this->showRowData($rows, $headline, $noDataMessage);
+    }
+
+    /**
+     * Displays data from the selected table.
+     *
+     * This function checks if the 'selectedTable' parameter is set in the GET request.
+     * If it is, it sets the selected data table in the session and retrieves data from the database
+     * using the 'pdoGet' method. It then displays the data using the 'showRowData' method.
+     *
+     * If the 'selectedTable' parameter is not set, it retrieves the selected data table from the session.
+     * It then calls the 'trongate_security' module's '_make_sure_allowed' method to ensure the user is allowed.
+     * Finally, it retrieves data from the database using the 'pdoGet' method and displays the data using the 'showRowData' method.
+     *
+     * @return void
+     */
     public function vtlgenShowData(): void{
         if (isset($_GET['selectedTable'])) {
             $selectedDataTable = $_GET['selectedTable'];
@@ -379,13 +430,159 @@ class Vtlgen extends Trongate
         $this->trongate_security->_make_sure_allowed();
 
         $rows = $this->pdoGet(target_tbl: $selectedDataTable);
-        $headline = 'Vtl Data Generator: Show Data';
+        $headline = 'Vtl Data Generator: Show Data<br>From '.$selectedDataTable;
         $noDataMessage = 'There is no data to display from the table ' . $selectedDataTable;
         $this->showRowData($rows, $headline, $noDataMessage);
     }
     //endregion
 
     //region private functions
+
+    public function getForeignKeysFromDatabase(): mixed
+    {
+        // Run the query to collect the information
+        $sql = 'SELECT 
+            CONCAT(table_name, \'.\', column_name) AS "foreign key", 
+            CONCAT(referenced_table_name, \'.\', referenced_column_name) AS "references", 
+            constraint_name AS "constraint name" 
+        FROM 
+            information_schema.key_column_usage 
+        WHERE 
+            referenced_table_name IS NOT NULL 
+        AND 
+            table_schema = :database';
+
+
+
+        // Ensure the user is allowed to perform the action
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        try {
+            // Prepare and execute the query
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute([':database' => DATABASE]);
+
+            // Fetch the results
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return $rows;
+        } catch (PDOException $e) {
+            // Handle any errors
+            error_log('Database Error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+
+
+    /**
+     * Get the latest primary key values for all tables that have data.
+     *
+     * @return array An array containing information about tables with data, including table name, primary key field, and latest primary key value.
+     */
+    private function showLatestPkValues(): array
+    {
+        // Get all tables
+        $allTables = $this->setupTablesForDatabaseAdmin();
+        $tablesWithData = [];
+
+        foreach ($allTables as $table) {
+            $primaryKeyField = $this->getPrimaryKeyField($table);
+            if ($primaryKeyField && $this->tableHasRows($table)) {
+                $latestPkValue = $this->getLatestPkValue($table, $primaryKeyField);
+                $tablesWithData[] = [
+                    'tableName' => $table,
+                    'primaryKeyField' => $primaryKeyField,
+                    'latestPkValue' => $latestPkValue
+                ];
+            }
+        }
+
+        return $tablesWithData;
+
+    }
+
+    /**
+     * Retrieves the primary key field for the specified table.
+     *
+     * @param string $tableName The name of the table to retrieve the primary key field for.
+     * @throws Exception Error message if there is an issue preparing or executing the query.
+     * @return mixed The primary key field of the specified table, or null if not found.
+     */
+    private function getPrimaryKeyField($tableName)
+    {
+        $query = "SHOW KEYS FROM `$tableName` WHERE Key_name = 'PRIMARY'";
+
+        $stmt = $this->dbh->prepare($query);
+        if (!$stmt) {
+            $errorInfo = $this->dbh->errorInfo();
+            throw new Exception("Error preparing query '$query': " . $errorInfo[2]);
+        }
+
+        $success = $stmt->execute();
+        if (!$success) {
+            $errorInfo = $stmt->errorInfo();
+            throw new Exception("Error executing query '$query': " . $errorInfo[2]);
+        }
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return null;
+        }
+
+        return $row['Column_name'];
+    }
+
+    /**
+     * Retrieves whether a table has rows or not.
+     *
+     * @param string $tableName The name of the table to check for rows.
+     * @throws Exception Error message if there is an issue with the query execution.
+     * @return bool Whether the table has rows (true) or not (false).
+     */
+    private function tableHasRows($tableName)
+    {
+        $query = "SELECT COUNT(*) as count FROM `$tableName`";
+
+        try {
+            $stmt = $this->dbh->query($query);
+            if (!$stmt) {
+                $errorInfo = $this->dbh->errorInfo();
+                throw new Exception("Error executing query '$query': " . $errorInfo[2]);
+            }
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row['count'] > 0;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Retrieves the latest primary key value from the specified table.
+     *
+     * @param string $tableName The name of the table to retrieve the primary key value from.
+     * @param string $primaryKeyField The field representing the primary key.
+     * @throws Exception Error message if there is an issue with the query execution.
+     * @return mixed The latest primary key value, or null if no value is found.
+     */
+    private function getLatestPkValue($tableName, $primaryKeyField)
+    {
+        $query = "SELECT `$primaryKeyField` FROM `$tableName` ORDER BY `$primaryKeyField` DESC LIMIT 1";
+
+        try {
+            $stmt = $this->dbh->query($query);
+            if (!$stmt) {
+                $errorInfo = $this->dbh->errorInfo();
+                throw new Exception("Error executing query '$query': " . $errorInfo[2]);
+            }
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? $row[$primaryKeyField] : null;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
 
     /**
      * Sets up the tables for the database admin.
@@ -519,6 +716,21 @@ class Vtlgen extends Trongate
     }
 
     /**
+     * Opens the delete or drop view for the Vtl Data Generator.
+     *
+     * @param string $task The task to perform ('delete' or 'drop').
+     * @return void
+     */
+    private function openDeleteOrDropView(string $task): void {
+        $data['tables'] = $this->setupTablesForDatabaseAdmin();
+        $data['task'] = $task;
+        $data['headline'] = 'Vtl Data Generator: ' . ($task === 'delete' ? 'Delete Data' : 'Drop Tables');
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'deleteordrop';
+        $this->template('admin', $data);
+    }
+
+    /**
      * Retrieves data from the database using PDO.
      *
      * @param string|null $order_by The column to order the results by. Defaults to null.
@@ -594,6 +806,35 @@ class Vtlgen extends Trongate
         return null;
     }
 
+    /**
+     * Deletes all subdirectories and their contents recursively.
+     *
+     * @param string $dir The directory to delete subdirectories from.
+     * @return void
+     */
+    private function deleteSubDirectories($dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $subDirectories = array_diff(scandir($dir), array('.', '..'));
+
+        foreach ($subDirectories as $subDir) {
+            $path = $dir . '/' . $subDir;
+            if (is_dir($path)) {
+                // Recursively delete subdirectories and their contents
+                $this->deleteSubDirectories($path);
+                // Remove the empty subdirectory
+                rmdir($path);
+            } else {
+                // Delete files directly within the directory
+                unlink($path);
+            }
+        }
+
+    }
+
 
     //endregion
 
@@ -618,7 +859,7 @@ class Vtlgen extends Trongate
         // which can be useful for testing purposes.
         // Comment out the line below if you don't want to use a seeded faker.
 
-        $faker->seed(FAKER_SEED);
+        //$faker->seed(FAKER_SEED);
 
         $rawPostData = file_get_contents('php://input');
         // Decode the JSON data into an associative array
@@ -716,6 +957,7 @@ class Vtlgen extends Trongate
             }
 
             $selectedTable = $postData['selectedTable'];
+
             //TODO: Check that the query below will work with primary keys that are not named id
 
             // Construct SQL query to select id and picture from the selected table
@@ -728,7 +970,6 @@ class Vtlgen extends Trongate
             // Execute the SQL query using PDO
             $stmt = $this->dbh->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
-
             // Check if any records were retrieved
             if (empty($rows)) {
                 throw new Exception("No records found for the selected table.");
@@ -758,7 +999,7 @@ class Vtlgen extends Trongate
      * @throws Exception if there is an error in the process.
      * @return void
      */
-    public function createDataCopyImageForRecords(): void{
+    public function createdataCopyImageForRecords(): void{
         try {
             // Get the raw POST data
             $rawPostData = file_get_contents('php://input');
@@ -775,6 +1016,9 @@ class Vtlgen extends Trongate
             // Extract the record ID and selected table from the POST data
             $id = $postData['recordId'];
             $selectedTable = $postData['selectedTable'];
+
+            // Output the data as JSON
+
 
             // Retrieve the column info for the table and find the primary key field
             $sql = 'SHOW COLUMNS IN ' . $selectedTable;
@@ -820,6 +1064,7 @@ class Vtlgen extends Trongate
 
             // Define base directories
             $basedir = APPPATH . 'modules/vtlgen/assets/images/';
+            //$basedir = __DIR__ . '/../assets/images';
             $picDirectoryPath = $this->getPicDirectory($selectedTable);
 
             // Copy image files
@@ -865,7 +1110,8 @@ class Vtlgen extends Trongate
         // Initialize response array
         $response = ['status' => '', 'message' => ''];
         try {
-            $folderPath = __DIR__ . '/../assets/sqltablescripts';
+            $folderPath = SQL_SCRIPTS_LOCATION;
+            //$folderPath = __DIR__ . '/../assets/sqltablescripts';
             if (is_dir($folderPath)) {
                 // we have a folder
             } else {
@@ -929,6 +1175,209 @@ class Vtlgen extends Trongate
         header('Content-Type: application/json');
         echo json_encode($response);
     }
+    //endregion
+
+    //region DeleteOrDrop view functions
+
+    /**
+     * Deletes table data based on the selected tables and resetAutoIncrement flag.
+     *
+     * @throws PDOException when a database operation fails
+     * @throws Exception when the operation fails
+     * @return void
+     */
+    public function deleteordropDeleteTableData() {
+        // At the top of your PHP script
+        ini_set('display_errors', 0);
+        ini_set('log_errors', 1);
+        error_reporting(E_ALL);
+
+        // Start the output buffering to prevent any accidental output
+        ob_start();
+
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        $selectedTables = $postData['selectedTables'];
+        $resetAutoIncrement = $postData['resetAutoIncrement'];
+
+        if ($selectedTables != null && $selectedTables != "") {
+            $responseText = '';
+            $deletedTables = [];
+            $failedTables = [];
+
+            try {
+                if ($resetAutoIncrement) {
+                    foreach ($selectedTables as $selectedTable) {
+                        $sql = 'nothing';
+                        $table = $selectedTable['table'];
+                        switch ($table) {
+
+                            case 'trongate_users':
+                            case 'trongate_user_levels':
+                            case 'trongate_administrators':
+                                break;
+                            default:
+                                $sql = 'TRUNCATE TABLE ' . $table;
+                                break;
+                        }
+
+                        if ($sql != 'nothing') {
+                            try {
+                                $stmt = $this->dbh->prepare($sql);
+                                $stmt->execute();
+                                $deletedTables[] = $table;
+
+                                if ($this->findPicDirectoryExists($table)) {
+                                    $picDirectory = $this->getPicDirectory($table);
+                                    $this->deleteSubDirectories($picDirectory);
+                                    $thumbsDir = $picDirectory . '_thumbnails';
+                                    $this->deleteSubDirectories($thumbsDir);
+                                }
+
+                                if ($table === 'trongate_pages') {
+                                    $sourcedir = APPPATH . 'modules/trongate_pages/assets/images/uploads';
+                                    for ($i = 1; $i <= 11; $i++) {
+                                        $filename = 'img' . $i . '.jpg';
+                                        $filepath = $sourcedir . '/' . $filename;
+                                        if (file_exists($filepath)) {
+                                            unlink($filepath);
+                                        }
+                                    }
+                                }
+                            } catch (PDOException $e) {
+                                $failedTables[] = $table;
+                            }
+                        }
+                    }
+                } else {
+                    foreach ($selectedTables as $selectedTable) {
+                        $table = $selectedTable['table'];
+                        $sql = 'DELETE FROM ' . $table;
+
+                        switch ($table) {
+                            case 'trongate_users':
+                            case 'trongate_user_levels':
+                            case 'trongate_administrators':
+                                $sql .= ' WHERE id > 1';
+                                break;
+                            default:
+                                break;
+                        }
+
+                        try {
+                            $stmt = $this->dbh->prepare($sql);
+                            $stmt->execute();
+                            $deletedTables[] = $table;
+
+                            if ($this->findPicDirectoryExists($table)) {
+                                $picDirectory = $this->getPicDirectory($table);
+                                $this->deleteSubDirectories($picDirectory);
+                                $thumbsDir = $picDirectory . '_thumbnails';
+                                $this->deleteSubDirectories($thumbsDir);
+                            }
+
+                            if ($table === 'trongate_pages') {
+                                $sourcedir = APPPATH . 'modules/trongate_pages/assets/images/uploads';
+                                for ($i = 1; $i <= 11; $i++) {
+                                    $filename = 'img' . $i . '.jpg';
+                                    $filepath = $sourcedir . '/' . $filename;
+                                    if (file_exists($filepath)) {
+                                        unlink($filepath);
+                                    }
+                                }
+                            }
+                        } catch (PDOException $e) {
+                            $failedTables[] = $table;
+                        }
+                    }
+                }
+
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Operation completed successfully.',
+                    'deletedTables' => implode("\n", $deletedTables),
+                    'failedTables' => implode("\n", $failedTables)
+                ]);
+            } catch (Exception $e) {
+                ob_end_clean();
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Operation failed: ' . $e->getMessage(),
+                    'deletedTables' => implode("\n", $deletedTables),
+                    'failedTables' => implode("\n", $failedTables)
+                ]);
+            }
+        } else {
+            ob_end_clean();
+            echo json_encode([
+                'success' => false,
+                'message' => 'No Tables were selected'
+            ]);
+        }
+    }
+
+    /**
+     * Drops table data based on the selected tables.
+     *
+     * @return void
+     */
+    public function deleteordropDropTables() {
+        // Initialize response data
+        $response = [
+            'success' => true,
+            'message' => '',
+            'deletedTables' => [],
+            'failedTables' => []
+        ];
+
+        // Get JSON data from request
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        // Extract relevant data from the decoded JSON
+        $selectedTables = $postData['selectedTables'];
+
+        // Check if tables were selected
+        if (!empty($selectedTables)) {
+            try {
+                // Loop through selected tables
+                foreach ($selectedTables as $selectedTable) {
+                    // Prepare SQL query to drop table
+                    $table = $selectedTable['table'];
+                    $sql = 'DROP TABLE IF EXISTS ' . $table;
+
+                    // Execute SQL query
+                    try {
+                        $stmt = $this->dbh->prepare($sql);
+                        $stmt->execute();
+
+                        // Add table to list of deleted tables
+                        $response['deletedTables'][] = $table;
+                    } catch (PDOException $ex) {
+                        // Add table to list of failed tables
+                        $response['failedTables'][] = $table;
+                    }
+                }
+
+                // Set success message
+                $response['message'] = 'Operation completed successfully.';
+            } catch (Exception $e) {
+                // Set error message
+                $response['success'] = false;
+                $response['message'] = 'Operation failed: ' . $e->getMessage();
+            }
+        } else {
+            // Set error message for no tables selected
+            $response['success'] = false;
+            $response['message'] = 'No tables were selected';
+        }
+
+        // Output response as JSON
+        echo json_encode($response);
+    }
+
     //endregion
 
     //region Faker functions
@@ -1729,6 +2178,7 @@ class Vtlgen extends Trongate
     private function copyImageFile(string $sourceDir, string $targetDir, int $id, string $fileName, bool $isThumbnail = false): void
     {
         $sourceFile = $sourceDir . ($isThumbnail ? 'thumbnails/' : '') . $fileName;
+
         $targetSubDir = rtrim($targetDir, '/') . ($isThumbnail ? '_thumbnails/' : '/') . ($isThumbnail ? '' : $id . '/');
         $targetFile = $targetSubDir . $fileName;
 
@@ -1852,7 +2302,7 @@ class Vtlgen extends Trongate
                             for ($k = 0; $k < $numSentences; $k++) {
                                 $text .= $faker->sentence() . ' ';
                             }
-                            $text = '<div class=""text-div"">' . $text . '</div>';
+                            $text = '<div class=""text-div""><p>' . $text . '</p></div>';
                             $img = $faker->randomElement(['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img7.jpg', 'img8.jpg', 'img9.jpg', 'img10.jpg', 'img11.jpg']);
                             $imgText = '<img src="' . BASE_URL . 'trongate_pages_module/images/uploads/' . $img . '" />';
                             $pagebody .= $text . $imgText;
@@ -1883,10 +2333,19 @@ class Vtlgen extends Trongate
         try {
             $stmt = $this->dbh->prepare($sql);
             $stmt->execute();
-            echo('The following number rows were inserted into trongate_pages: ' . $numRows);
-        } catch (Exception $e) {
-            echo($e->getMessage());
+            echo json_encode([
+                'success' => true,
+                'message' => 'The following number of rows were inserted into trongate_pages: ' . $numRows . '.'
+            ]);
+        } catch (PDOException $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
+
+
+
     }
 
     //endregion

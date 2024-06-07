@@ -141,7 +141,7 @@
                 </button>
             </div>
             <div class="grid-item">
-                <button class="svg-button" aria-label="Drop Table" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDropDataTable'">
+                <button class="svg-button" aria-label="Drop Table" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDropTables'">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlTableRemoveDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlTableRemove.svg" alt="Create Data Icon">

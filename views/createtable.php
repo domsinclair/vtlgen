@@ -203,65 +203,66 @@
         }
 
         function generateSQLCreateStatement(tableName, columns) {
-            var sql = '';
             if (!tableName) {
                 alert('Please enter a table name.');
                 return '';
             }
 
-            sql = `CREATE TABLE IF NOT EXISTS ${tableName} (\n`;
-            var primaryKeys = [];
-            columns.forEach((column, index) => {
-                sql += `  ${column.colname} `;
+            let sql = `CREATE TABLE IF NOT EXISTS ${tableName} (\n`;
+            let primaryKeys = [];
+            let columnDefinitions = [];
+
+            columns.forEach((column) => {
+                let columnDef = `  ${column.colname} `; // Add leading spaces for indentation
                 if (column.type === 'autoincrement') {
-                    sql += 'int(11)';
+                    columnDef += 'int(11)';
                 } else {
-                    sql += column.type;
+                    columnDef += column.type;
                 }
-                if (column.primary) primaryKeys.push(column.colname);
-                if (column.nullable === false) sql += ' NOT NULL';
+                if (column.nullable === false) columnDef += ' NOT NULL';
                 if (column.default) {
                     switch (column.default) {
                         case 'CURRENT_TIMESTAMP':
-                            sql += ' DEFAULT CURRENT_TIMESTAMP';
+                            columnDef += ' DEFAULT CURRENT_TIMESTAMP';
                             break;
                         case 'CURRENT_DATE':
-                            sql += ' DEFAULT CURRENT_DATE';
+                            columnDef += ' DEFAULT CURRENT_DATE';
                             break;
                         case 'CURRENT_TIME':
-                            sql += ' DEFAULT CURRENT_TIME';
+                            columnDef += ' DEFAULT CURRENT_TIME';
                             break;
                         case 'UTC_TIMESTAMP':
-                            sql += ' DEFAULT UTC_TIMESTAMP';
+                            columnDef += ' DEFAULT UTC_TIMESTAMP';
                             break;
                         case 'UNIX_TIMESTAMP':
-                            sql += ' DEFAULT UNIX_TIMESTAMP';
+                            columnDef += ' DEFAULT UNIX_TIMESTAMP';
                             break;
                         case 'UUID()':
-                            sql += ' DEFAULT UUID()';
+                            columnDef += ' DEFAULT UUID()';
                             break;
-                        // Add cases for other default values as needed
                         default:
-                            sql += ` DEFAULT '${column.default}'`;
+                            columnDef += ` DEFAULT '${column.default}'`;
                     }
                 }
                 if (column.type === 'autoincrement') {
-                    sql += ' AUTO_INCREMENT';
+                    columnDef += ' AUTO_INCREMENT';
                 }
                 if (column.unique) {
-                    sql += ' UNIQUE';
+                    columnDef += ' UNIQUE';
                 }
-                sql += ',\n';
+                columnDefinitions.push(columnDef);
+                if (column.primary) primaryKeys.push(column.colname);
             });
 
+            sql += columnDefinitions.join(',\n'); // Join column definitions with newline and comma
             if (primaryKeys.length > 0) {
-                sql += `  PRIMARY KEY (${primaryKeys.join(', ')})\n`;
+                sql += `,\n  PRIMARY KEY (${primaryKeys.join(', ')})`; // Add primary key definition
             }
-
-            sql = sql.replace(/,\n$/, ''); // Remove the last comma and newline
             sql += '\n);';
+
             return sql;
         }
+
 
         // Generate Table button functionality
         document.getElementById('generate-table').addEventListener('click', function () {
@@ -345,7 +346,7 @@
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     document.getElementById('sqlCode').innerText = e.target.result;
-                    // Prismjs.highlightAll(); // Re-highlight the code block
+                    Prism.highlightElement(document.getElementById('sqlCode')); // Re-highlight the code block
                     isSqlLoaded = true;
                 };
                 reader.readAsText(file);
@@ -357,7 +358,6 @@
 
 </script>
 <script src="<?= BASE_URL ?>vtlgen_module/js/prism.js"></script>
-<script src="<?= BASE_URL ?>js/app.js"></script>
 </body>
 </html>
 

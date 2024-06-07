@@ -37,10 +37,11 @@
                 </div>
                 <button id="submitBtn" onclick='generateData()' style="display: none; margin-bottom: 15px;">Generate Fake Data</button>
                 <button id="movePicsBtn" onclick="movePictures()" style="display: none; margin-bottom: 15px;">Transfer Images</button>
-                <div class="progress-bar" id="progress-bar" style="display: none;">
-                    <div class="progress" id="progress"></div>
-                </div>
+
             </div>
+        </div>
+        <div class="progress-bar" id="progress-bar" style="display: none" >
+            <div class="progress" id="progress" ></div>
         </div>
     </div>
 </section>
@@ -55,17 +56,29 @@
                     </p>
                 </div>
         </div>
+        <div class="modal" id="imageTransferResponseModal" style="display: none">
+            <div class="modal-heading">Transferred Images</div>
+            <div class="modal-body">
+                <p id="the-response"></p>
+                <p class="text-center">
+                    <button onclick="closeModal()" class="alt">Close</button>
+                </p>
+            </div>
+        </div>
     </div>
     <div>
         <input type="hidden" id="picDirectoryExists" value="<?php echo $picDirectoryExists ? 'true' : 'false'; ?>">
     </div>
 </section>
-<script src="<?= BASE_URL ?>js/app.js"></script>
 </body>
 </html>
 
 <script>
-
+    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('modalClosed', function (event) {
+            // Place your additional logic here
+        });
+    });
     async function setPictureDirectoryExistsForSelectedTableModule(selectedTable) {
         <?php $picDirectoryExists = false;?>
         var postData = {
@@ -177,8 +190,6 @@
             if(table.getSelectedRows().length > 0) {
                 numRowsContainer.style.display = 'block';
                 submitBtn.style.display = 'block';
-                // movePicsBtn.style.display = 'block';
-                // progressBar.style.display = 'block';
             } else {
                 numRowsContainer.style.display = 'none';
                 submitBtn.style.display = 'none';
@@ -279,8 +290,8 @@
         // Get the selected table name from the dropdown
         var dropdown = document.getElementById('tableChoiceDropdown');
         var selectedTable = dropdown.options[dropdown.selectedIndex].text;
-
-        document.getElementById('progress-bar').style.display = 'block';
+        var progressBar = document.getElementById('progress-bar');
+        progressBar.style.display = 'block';
 
         // Prepare the data to send
         var postData = {
@@ -339,14 +350,14 @@
         var dropdown = document.getElementById('tableChoiceDropdown');
         var selectedTable = dropdown.options[dropdown.selectedIndex].text;
 
-        var progressBar = document.getElementById('progress');
+        var progressElement = document.getElementById('progress');
         var progress = 0;
 
         // Define a function to handle each record asynchronously
         async function processRecord(recordId) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
-                xhr.open('POST', '<?= BASE_URL ?>vtlgen/createDataCopyImageForRecord', true);
+                xhr.open('POST', '<?= BASE_URL ?>vtlgen/createdataCopyImageForRecords', true);
                 xhr.setRequestHeader('Content-type', 'application/json');
 
                 // Prepare the data to send
@@ -357,15 +368,14 @@
 
                 // Convert the data object to a JSON string
                 var jsonData = JSON.stringify(data);
-
                 // Define a callback function to handle the response
                 xhr.onload = function () {
                     if (xhr.status === 200) {
                         // Update progress bar
                         progress++;
                         var percent = Math.round((progress / totalRows) * 100);
-                        progressBar.style.width = percent + '%';
-                        progressBar.textContent = percent + '%';
+                        progressElement.style.width = percent + '%';
+                        progressElement.textContent = percent + '%';
 
                         // Resolve the Promise
                         resolve();
@@ -392,7 +402,7 @@
             } catch (error) {
                 // Handle errors here if needed
                 console.error(error);
-                openModal('image-transfer-response-modal');
+                openModal('imageTransferResponseModal');
                 const targetEl = document.getElementById('the-response');
                 targetEl.innerHTML = error;
                 return; // Stop processing further records on error
@@ -400,7 +410,7 @@
         }
 
         // If all records processed, display success message
-        openModal('image-transfer-response-modal');
+        openModal('imageTransferResponseModal');
         const targetEl = document.getElementById('the-response');
         targetEl.innerHTML = 'Images copied successfully.';
     }
