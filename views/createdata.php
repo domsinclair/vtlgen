@@ -21,14 +21,15 @@
         <div class="flex">
             <?php echo anchor('vtlgen', 'Back', array("class" => "button")); ?>
         </div>
-        <p>Select the table in the database from the drop down below for which you wish to create some fake data.</p>
-        <p>Select those columns into which you want to add data, or just check the checkbox in the header if you want to select all the rows.</p>
+        <p><?= $instruction1 ?> </p>
+        <p><?= $instruction2 ?> </p>
         <?php
         $tableChoiceAttr['id'] = 'tableChoiceDropdown';
         $tableChoiceAttr['onchange'] = 'selectedTable()';
         echo form_dropdown('tableChoice', $tables, '', $tableChoiceAttr);
         ?>
         <div class="container" id="datatable"></div>
+        <div id="task" style="display: none"><?= $task ?></div>
         <div id="columnInfoTableContainer">
             <div class="flex-container">
                 <div id="numRowsContainer" style="display: none;">

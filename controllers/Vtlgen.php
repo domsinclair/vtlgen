@@ -309,11 +309,32 @@ class Vtlgen extends Trongate
 
     //region vtlgen page redirect functions
 
+    /**
+     * Generates the data needed for the Vtl Data Generator: Create Data page.
+     *
+     * Does not take any parameters.
+     * Does not throw any exceptions.
+     */
     public function vtlgenCreateData(): void
     {
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
         $data['headline'] = 'Vtl Data Generator: Create Data';
+        $data['instruction1'] = 'Select the table in the database from the drop down below for which you wish to create some fake data.';
+        $data['instruction2'] = 'Select those columns into which you want to add data, or just check the checkbox in the header if you want to select all the rows.';
+        $data['task'] = 'createData';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'createdata';
+        $this->template('admin', $data);
+    }
+
+    public function vtlgenCreateIndex(): void{
+        $data['tables'] = $this->setupTablesForDropdown();
+        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
+        $data['headline'] = 'Vtl Data Generator: Create Index';
+        $data['instruction1'] = 'Select the table in the database from the drop down below for which you wish to create an index.';
+        $data['instruction2'] = 'Select the column on which you wish to create the index, and when asked select the index type';
+        $data['task'] = 'createIndex';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'createdata';
         $this->template('admin', $data);
