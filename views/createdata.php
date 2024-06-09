@@ -47,30 +47,24 @@
     </div>
 </section>
 <section>
-    <div class="container">
-        <div class="modal" id="responseModal" style="display: none">
-             <div class="modal-heading">Generated Rows</div>
-                <div class="modal-body">
-                    <p id="the-response"></p>
-                    <p class="text-center">
-                    <button onclick="closeModal()" class="alt">Close</button>
-                    </p>
-                </div>
-        </div>
-        <div class="modal" id="imageTransferResponseModal" style="display: none">
-            <div class="modal-heading">Transferred Images</div>
-            <div class="modal-body">
-                <p id="the-response"></p>
-                <p class="text-center">
-                    <button onclick="closeModal()" class="alt">Close</button>
-                </p>
-            </div>
-        </div>
-    </div>
     <div>
         <input type="hidden" id="picDirectoryExists" value="<?php echo $picDirectoryExists ? 'true' : 'false'; ?>">
     </div>
 </section>
+<!-- vtl modal, overlay and script ref. Place just above lower body tag-->
+<div id="vtlOverlay" class="vtlOverlay"></div>
+<dialog id="vtlModal" class="vtlModal">
+    <div id="vtlModalHeader" class="vtlModalHeader">
+        <h2 class="vtlModalTitle" id="vtlModalTitle">Default Title</h2>
+    </div>
+    <div class="vtlModalContentWrapper">
+        <p id="vtlResponse">Default content</p>
+    </div>
+    <div class="vtlModalFooter">
+        <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
+    </div>
+</dialog>
+<script src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
 </body>
 </html>
 
@@ -246,14 +240,11 @@
             xhr.onload = function () {
                 if (xhr.status === 200) {
                     try {
-                        console.log('Response:', xhr.responseText);
                         // Parse the JSON response
                         var response = JSON.parse(xhr.responseText);
 
                         // Handle the response
-                        openModal('responseModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
+                        openVtlModal('Fake Data Generated',true,response.message);
 
                         // Additional logic based on response
                         var picDirectoryExists = document.getElementById('picDirectoryExists').value === 'true';
@@ -264,15 +255,11 @@
                         }
                     } catch (e) {
                         console.error('Error parsing JSON response:', e);
-                        openModal('responseModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = 'An error occurred while processing the response.';
+                        openVtlModal('Error Parsing Json',false,response.message);
                     }
                 } else {
                     var errorResponse = xhr.responseText;
-                    openModal('responseModal');
-                    const targetEl = document.getElementById('the-response');
-                    targetEl.innerHTML = errorResponse.message;
+                    openVtlModal('Error Generating Fake Data',false,errorResponse.message);
                 }
             };
 
@@ -325,24 +312,19 @@
                     var response = JSON.parse(xhr.responseText);
                     if (response.error) {
                         // Handle error responses here
-                        openModal('response-modal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.error;
+                        openVtlModal('Error Moving Images',false,response.message);
                     } else {
                         // Start processing records
                         processRecords(response.totalRows);
                     }
                 } else {
                     // Handle error responses here
-                    openModal('response-modal');
-                    const targetEl = document.getElementById('the-response');
-                    targetEl.innerHTML = 'Request failed with status ' + xhr.status;
+                    openVtlModal('Error Moving Images',false,response.message);
+
                 }
             };
         } catch (error) {
-            openModal('response-modal');
-            const targetEl = document.getElementById('the-response');
-            targetEl.innerHTML = error;
+           openVtlModal('Error Moving Images',false,error);
         }
     }
 
@@ -403,17 +385,13 @@
             } catch (error) {
                 // Handle errors here if needed
                 console.error(error);
-                openModal('imageTransferResponseModal');
-                const targetEl = document.getElementById('the-response');
-                targetEl.innerHTML = error;
+               openVtlModal('Error Moving Images',false,error);
                 return; // Stop processing further records on error
             }
         }
 
         // If all records processed, display success message
-        openModal('imageTransferResponseModal');
-        const targetEl = document.getElementById('the-response');
-        targetEl.innerHTML = 'Images copied successfully.';
+       openVtlModal('Success Moving Images',true,'Images copied successfully.');
     }
 </script>
 <style>

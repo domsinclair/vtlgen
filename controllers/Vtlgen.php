@@ -365,7 +365,8 @@ class Vtlgen extends Trongate
     /**
      * Opens the delete or drop view for the VTL data generator.
      *
-     * This function opens the delete or drop view for the VTL data generator. It takes no parameters and does not throw any exceptions.
+     * This function opens the delete or drop view for the VTL data generator. It takes no parameters and does not
+     * throw any exceptions.
      *
      * @return void
      */
@@ -435,7 +436,8 @@ class Vtlgen extends Trongate
      *
      * If the 'selectedTable' parameter is not set, it retrieves the selected data table from the session.
      * It then calls the 'trongate_security' module's '_make_sure_allowed' method to ensure the user is allowed.
-     * Finally, it retrieves data from the database using the 'pdoGet' method and displays the data using the 'showRowData' method.
+     * Finally, it retrieves data from the database using the 'pdoGet' method and displays the data using the
+     * 'showRowData' method.
      *
      * @return void
      */
@@ -500,7 +502,8 @@ class Vtlgen extends Trongate
     /**
      * Get the latest primary key values for all tables that have data.
      *
-     * @return array An array containing information about tables with data, including table name, primary key field, and latest primary key value.
+     * @return array An array containing information about tables with data, including table name, primary key field,
+     *               and latest primary key value.
      */
     private function showLatestPkValues(): array
     {
@@ -2101,7 +2104,8 @@ class Vtlgen extends Trongate
      * Finds if the picture directory exists for the specified table.
      *
      * @param string $selectedTable The name of the table to search for.
-     * @return bool Returns true if the picture directory exists for the specified module, false if it is an orphaned table, and false if the module name is not found or no API JSON exists for the table.
+     * @return bool Returns true if the picture directory exists for the specified module, false if it is an orphaned
+     *              table, and false if the module name is not found or no API JSON exists for the table.
      */
     public function findPicDirectoryExists($selectedTable): bool
     {
@@ -2147,7 +2151,8 @@ class Vtlgen extends Trongate
      * If it does, creates directories for pictures and thumbnails.
      *
      * @param string $selectedTable The name of the table to check.
-     * @return bool Returns true if the 'picture' field exists and directories were created successfully, false otherwise.
+     * @return bool Returns true if the 'picture' field exists and directories were created successfully, false
+     *              otherwise.
      */
     private function checkForExistenceOfPictureFieldAndCreatePicsDirectories($selectedTable): bool{
         $result = 0;
@@ -2370,6 +2375,14 @@ class Vtlgen extends Trongate
     }
 
     //endregion
+
+    public function modaltest(): void{
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'modaltest';
+        $this->template('admin', $data);
+    }
+
+
 
 
 }

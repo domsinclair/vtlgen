@@ -55,15 +55,23 @@
         </div>
     </div>
 </section>
-<div class="modal" id="tableCreationModal" style="display: none">
-    <div id="modal_header" class="modal-heading">Table Creation</div>
-    <div class="modal-body">
-        <p id="the-response"></p>
-        <p class="text-center">
-            <button onclick="closeModal()" class="alt">Close</button>
-        </p>
+<!-- vtl modal, overlay and script ref. Place just above lower body tag-->
+<div id="vtlOverlay" class="vtlOverlay"></div>
+<dialog id="vtlModal" class="vtlModal">
+    <div id="vtlModalHeader" class="vtlModalHeader">
+        <h2 class="vtlModalTitle" id="vtlModalTitle">Default Title</h2>
     </div>
-</div>
+    <div class="vtlModalContentWrapper">
+        <p id="vtlResponse">Default content</p>
+    </div>
+    <div class="vtlModalFooter">
+        <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
+    </div>
+</dialog>
+<script src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
+<script src="<?= BASE_URL ?>vtlgen_module/js/prism.js"></script>
+</body>
+</html>
 <script>
     var isSqlLoaded = false;
     document.addEventListener('DOMContentLoaded', function () {
@@ -286,18 +294,12 @@
                     // Parse the JSON response
                     var response = JSON.parse(xhr.responseText);
                     if (response.status === 'success') {
-                        openModal('tableCreationModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
+                        openVtlModal('Table Created',true,response.message);
                     } else {
-                        openModal('tableCreationModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
+                        openVtlModal('Error Creating Table',false,response.message);
                     }
                 } else {
-                    openModal('tableCreationModal');
-                    const targetEl = document.getElementById('the-response');
-                    targetEl.innerHTML = response.message;
+                    openVtlModal('Error Creating Table',false,response.message);
                 }
             };
         });
@@ -319,18 +321,12 @@
                 if (xhr.status === 200 && xhr.responseText) {
                     var response = JSON.parse(xhr.responseText);
                     if (response.status === 'success') {
-                        openModal('tableCreationModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
+                        openVtlModal('Sql Script Saved',true,response.message);
                     } else {
-                        openModal('tableCreationModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
+                        openVtlModal('Error Saving Sql',false,response.message);
                     }
                 } else {
-                    openModal('tableCreationModal');
-                    const targetEl = document.getElementById('the-response');
-                    targetEl.innerHTML = response.message;
+                    openVtlModal('Error Saving Sql',false,response.message);
                 }
             };
         });
@@ -357,10 +353,6 @@
     });
 
 </script>
-<script src="<?= BASE_URL ?>vtlgen_module/js/prism.js"></script>
-</body>
-</html>
-
 <style>
     @media (prefers-color-scheme: light) {
         div.tabulator-cell{
