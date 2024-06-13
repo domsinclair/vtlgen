@@ -1,4 +1,4 @@
-<?php  ?>
+<?php // echo json($data);?>
 <?php $picDirectoryExists = false; ?>
 <!doctype html>
 <html lang="en">

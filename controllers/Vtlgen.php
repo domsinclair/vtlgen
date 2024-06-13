@@ -413,10 +413,33 @@ class Vtlgen extends Trongate
         $this->openDeleteOrDropView('drop');
     }
 
+    /**
+     * Displays the view for creating a new data table in the VTL data generator.
+     *
+     * @throws No exceptions are thrown by this function.
+     * @return void
+     */
     public function vtlgenCreateDataTable(): void{
         $data['headline'] = 'Vtl Data Generator: Create Table';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'createtable';
+        $this->template('admin', $data);
+    }
+
+    /**
+     * Displays the view for editing a data table in the VTL data generator.
+     *
+     * @throws No exceptions are thrown by this function.
+     * @return void
+     */
+    public function vtlgenEditDataTable(): void{
+        $data['tables'] = $this->setupTablesForDropdown();
+        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
+        $data['headline'] = 'Vtl Data Generator: Edit Table';
+        $data['instruction1'] = 'Select tables from the dropdown below to Edit.';
+        $data['instruction2'] = '';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'edittable';
         $this->template('admin', $data);
     }
 
@@ -480,7 +503,7 @@ class Vtlgen extends Trongate
 
     public function vtlgenShowIndexes(): void{
         $rows = $this->getAllTableIndexes();
-        $headline = 'Vtl Data Generator: Delete Index';
+        $headline = 'Vtl Data Generator: Browse Indexes in Database';
         $noDataMessage = 'There are currently no indexes in the database: ' . DATABASE;
         $this->showRowData($rows, $headline, $noDataMessage);
     }

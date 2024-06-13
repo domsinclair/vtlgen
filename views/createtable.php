@@ -89,6 +89,7 @@
                             "varchar(10)": "Varchar(10)",
                             "varchar(15)": "Varchar(15)",
                             "varchar(25)": "Varchar(25)",
+                            "varchar(32)": "Varchar(32)",
                             "varchar(50)": "Varchar(50)",
                             "varchar(75)": "Varchar(75)",
                             "varchar(100)": "Varchar(100)",
