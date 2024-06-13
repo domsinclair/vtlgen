@@ -74,6 +74,7 @@
 </html>
 <script>
     var isSqlLoaded = false;
+    var initialSetupComplete = false; // Add a flag for initial setup
     document.addEventListener('DOMContentLoaded', function () {
         var table = new Tabulator("#datatable", {
             layout: "fitColumns",
@@ -94,6 +95,7 @@
                             "varchar(255)": "Varchar(255)",
                             "text": "Text",
                             "int": "Int",
+                            "int(11)": "Int(11)",
                             "tinyint": "Tinyint",
                             "bigint": "Bigint",
                             "decimal": "Decimal",
@@ -182,6 +184,7 @@
 
         setTimeout(function () {
             table.addRow({nullable: true, unique: false});
+            initialSetupComplete = true; // Set the flag to true after the initial row is added
         }, 0);
 
         document.getElementById('add-row').addEventListener('click', function () {
@@ -190,6 +193,10 @@
 
         document.getElementById('save-table').addEventListener('click', function () {
             var tableName = document.getElementById('table-name-input').value;
+            if (!tableName && initialSetupComplete) { // Check the flag before showing the alert
+                alert('Please enter a table name.');
+                return;
+            }
             var tableData = table.getData();
             var sql = generateSQLCreateStatement(tableName, tableData);
             document.getElementById('sqlCode').innerText = sql;
@@ -205,6 +212,15 @@
         table.on("tableBuilt", function () {
             table.navigateNext();
         });
+        table.on("rowAdded", function () {
+            if (initialSetupComplete) {
+                var tableName = document.getElementById('table-name-input').value;
+                var tableData = table.getData();
+                var sql = generateSQLCreateStatement(tableName, tableData);
+                document.getElementById('sqlCode').innerText = sql;
+                Prism.highlightAll(); // Re-highlight the code block
+            }
+        })
 
         function deleteIcon(cell, formatterParams, onRendered) {
             return "<span class='delete-button'>&times;</span>";
@@ -221,7 +237,12 @@
             let columnDefinitions = [];
 
             columns.forEach((column) => {
-                let columnDef = `  ${column.colname} `; // Add leading spaces for indentation
+                if (!column.colname || !column.type) {
+                    // Skip this row if the column name or type is empty/undefined
+                    return;
+                }
+
+                let columnDef = `  ${column.colname} `;
                 if (column.type === 'autoincrement') {
                     columnDef += 'int(11)';
                 } else {

@@ -6,9 +6,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const vtlResponse = document.getElementById('vtlResponse');
     const vtlCloseModal = document.getElementById('vtlCloseModal');
 
+
+
     function showModal(title, content, isSuccess) {
         vtlModalTitle.textContent = title;
-        vtlResponse.textContent = content;
+        vtlResponse.innerHTML = content;
 
         // Remove previous success/error classes
         vtlModalHeader.classList.remove('modalTitleSuccess', 'modalTitleError');

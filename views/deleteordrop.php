@@ -41,26 +41,33 @@
 </div>
 </section>
 <section>
-    <div class="container">
-        <div class="modal" id="responseModal" style="display: none">
-            <div class="modal-heading">Generated Rows</div>
-            <div class="modal-body">
-                <p id="the-response"></p>
-                <p class="text-center">
-                    <button onclick="closeModal()" class="alt">Close</button>
-                </p>
-            </div>
-        </div>
+    <div class="container" id="exportTableDiv" style="display: none" >
+        <button  onclick='exportTables()' style="margin-bottom: 15px;">Export Tables</button>
     </div>
 </section>
+<!-- vtl modal, overlay and script ref. Place just above lower body tag-->
+<div id="vtlOverlay" class="vtlOverlay"></div>
+<dialog id="vtlModal" class="vtlModal">
+    <div id="vtlModalHeader" class="vtlModalHeader">
+        <h2 class="vtlModalTitle" id="vtlModalTitle">Default Title</h2>
+    </div>
+    <div class="vtlModalContentWrapper">
+        <p id="vtlResponse">Default content</p>
+    </div>
+    <div class="vtlModalFooter">
+        <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
+    </div>
+</dialog>
+<script src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
 </body>
 </html>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.addEventListener('modalClosed', function (event) {
-            // Place your additional logic here
+
+    vtlModal.addEventListener('vtlModalClosed', () => {
+        var task = document.getElementById('task');
+        if (task.innerText === 'drop') {
             location.reload();
-        });
+        }
     });
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -105,6 +112,9 @@
                     case 'drop':
                         dropTableDiv.style.display = 'block';
                         break;
+                    case 'export':
+                        exportTableDiv.style.display = 'block';
+                        break;
                     default:
                         deleteCheckbox.style.display = 'none';
                         dropTableDiv.style.display = 'none';
@@ -118,9 +128,14 @@
                     case 'drop':
                         dropTableDiv.style.display = 'none';
                         break;
+                    case 'export':
+                        exportTableDiv.style.display = 'none';
+                        break;
                     default:
                         deleteCheckbox.style.display = 'none';
                         dropTableDiv.style.display = 'none';
+                        exportTableDiv.style.display = 'none';
+
                 }
             }
         });
@@ -166,35 +181,27 @@
             xhr.onload = function () {
                 if (xhr.status === 200) {
                     try {
-                        console.log('Response:', xhr.responseText);
                         // Parse the JSON response
                         var response = JSON.parse(xhr.responseText);
-
-                        // Handle the response
-                        openModal('responseModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
-
-                        // Display deleted tables and failed tables
+                        let message = response.message;
                         if (response.deletedTables !== "") {
-                            targetEl.innerHTML += '<br>Deleted Data From Tables:<br>' + response.deletedTables;
+                            message += '<br>Dropped Tables:<br>' + response.deletedTables;
                         }
                         if (response.failedTables !== "") {
-                            targetEl.innerHTML += '<br>Failed To Delete Data From Tables:<br>' + response.failedTables;
+                            message += '<br>Failed To Drop Tables:<br>' + response.failedTables;
                         }
+
+                        // Handle the response with the custom modal
+                        openVtlModal('Data Deleted Successfully', true, message);
 
 
                     } catch (e) {
                         console.error('Error parsing JSON response:', e);
-                        openModal('responseModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = 'An error occurred while processing the response.';
+                        openVtlModal('Error Parsing Json', false, 'An error occurred while processing the response.');
                     }
                 } else {
                     var errorResponse = xhr.responseText;
-                    openModal('responseModal');
-                    const targetEl = document.getElementById('the-response');
-                    targetEl.innerHTML = errorResponse.message;
+                   openVtlModal('Error', false, errorResponse.message);
                 }
             };
 
@@ -242,33 +249,26 @@
             xhr.onload = function () {
                 if (xhr.status === 200) {
                     try {
-                        console.log('Response:', xhr.responseText);
                         // Parse the JSON response
                         var response = JSON.parse(xhr.responseText);
 
-                        // Handle the response
-                        openModal('responseModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = response.message;
-
-                        // Display deleted tables and failed tables
+                        let message = response.message;
                         if (response.deletedTables !== "") {
-                            targetEl.innerHTML += '<br>Dropped Tables:<br>' + response.deletedTables;
+                            message += '<br>Dropped Tables:<br>' + response.deletedTables;
                         }
                         if (response.failedTables !== "") {
-                            targetEl.innerHTML += '<br>Failed To Drop Tables:<br>' + response.failedTables;
+                            message += '<br>Failed To Drop Tables:<br>' + response.failedTables;
                         }
+
+                        // Handle the response with the custom modal
+                        openVtlModal('Tables Dropped Successfully', true, message);
                     } catch (e) {
                         console.error('Error parsing JSON response:', e);
-                        openModal('responseModal');
-                        const targetEl = document.getElementById('the-response');
-                        targetEl.innerHTML = 'An error occurred while processing the response.';
+                        openVtlModal('Error Parsing Json', false, 'An error occurred while processing the response.');
                     }
                 } else {
                     var errorResponse = xhr.responseText;
-                    openModal('responseModal');
-                    const targetEl = document.getElementById('the-response');
-                    targetEl.innerHTML = errorResponse.message;
+                   openVtlModal('Error', false, errorResponse.message);
                 }
             };
 
@@ -280,6 +280,63 @@
             console.error('Error:', error);
         }
     }
+
+    async function exportTables() {
+        // Get the selected rows from the Tabulator datatable
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+        var tablesToExport = selectedRows.map(row => row.table);
+
+        // Prepare the data to send
+        var postData = {
+            tablesToExport: tablesToExport
+        };
+
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/deleteordropExportTables';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+
+                        let message = response.message;
+
+                        // Handle the response with the custom modal
+                        openVtlModal('Export Successful', true, message);
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openVtlModal('Error Parsing Json', false, 'An error occurred while processing the response.');
+                    }
+                } else {
+                    var errorResponse = xhr.responseText;
+                    openVtlModal('Error', false, errorResponse);
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+            openVtlModal('Error', false, 'An error occurred: ' + error);
+        }
+    }
+
 </script>
 <style>
     :root {

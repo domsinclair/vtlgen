@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../assets/vendor/autoload.php';
 require_once __DIR__ . '/../assets/vtlgenConfig.php';
+include_once(__DIR__ . '/../assets/vendor/ifsnop/mysqldump-php/src/Ifsnop/Mysqldump/Mysqldump.php');
+use Ifsnop\Mysqldump as IMysqldump;
 class Vtlgen extends Trongate
 {
 
@@ -310,34 +312,39 @@ class Vtlgen extends Trongate
     //region vtlgen page redirect functions
 
     /**
-     * Generates the data needed for the Vtl Data Generator: Create Data page.
+     * Displays the Vtl Data Generator: Create Data page.
      *
-     * Does not take any parameters.
-     * Does not throw any exceptions.
+     * This method sets up the data required to render the 'Create Data' view.
+     *
+     * @return void
      */
     public function vtlgenCreateData(): void
     {
-        $data['tables'] = $this->setupTablesForDropdown();
-        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
-        $data['headline'] = 'Vtl Data Generator: Create Data';
-        $data['instruction1'] = 'Select the table in the database from the drop down below for which you wish to create some fake data.';
-        $data['instruction2'] = 'Select those columns into which you want to add data, or just check the checkbox in the header if you want to select all the rows.';
-        $data['task'] = 'createData';
-        $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'createdata';
-        $this->template('admin', $data);
+        $this->generateVtlViewData(
+            'Vtl Data Generator: Create Data',
+            'Select the table in the database from the drop down below for which you wish to create some fake data.',
+            'Select those columns into which you want to add data, or just check the checkbox in the header if you want to select all the rows.',
+            'data',
+            'createdata'
+        );
     }
 
-    public function vtlgenCreateIndex(): void{
-        $data['tables'] = $this->setupTablesForDropdown();
-        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
-        $data['headline'] = 'Vtl Data Generator: Create Index';
-        $data['instruction1'] = 'Select the table in the database from the drop down below for which you wish to create an index.';
-        $data['instruction2'] = 'Select the column on which you wish to create the index, and when asked select the index type';
-        $data['task'] = 'createIndex';
-        $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'createdata';
-        $this->template('admin', $data);
+    /**
+     * Displays the Vtl Data Generator: Create Index page.
+     *
+     * This method sets up the data required to render the 'Create Index' view.
+     *
+     * @return void
+     */
+    public function vtlgenCreateIndex(): void
+    {
+        $this->generateVtlViewData(
+            'Vtl Data Generator: Create Index',
+            'Select the table in the database from the drop down below for which you wish to create an index.',
+            'Select the column on which you wish to create the index, and when asked select the index type',
+            'index',
+            'createdata'
+        );
     }
 
     /**
@@ -351,6 +358,26 @@ class Vtlgen extends Trongate
         $this->openDeleteOrDropView('delete');
     }
 
+    public function vtlgenExportDatabase(): void{
+        $this->openDeleteOrDropView('export');
+    }
+
+    /**
+     * Generates the view for creating foreign keys in the Vtl Data Generator.
+     *
+     * @return void
+     */
+    public function vtlgenCreateForeignKey(): void{
+        $data['tables'] = $this->setupTablesForDropdown();
+        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
+        $data['headline'] = 'Vtl Data Generator: Create Foreign Keys';
+        $data['instruction1'] = 'Select tables from the dropdowns below to view their columns.';
+        $data['instruction2'] = 'Then select the columns on which you wish to create foreign keys.';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'createforeignkey';
+        $this->template('admin', $data);
+    }
+
     /**
      * Shows the foreign keys in the database for the Vtl Data Generator.
      * Very specifically it will show those created by the Data Generator
@@ -360,6 +387,18 @@ class Vtlgen extends Trongate
         $headline = 'Vtl Data Generator: Foreign Keys in Database';
         $noDataMessage = 'There are currently no foreign keys in the database: ' . DATABASE;
         $this->showRowData($rows, $headline, $noDataMessage);
+    }
+
+    public function vtlgenDeleteForeignKeys(): void{
+        $data['rows'] = $this->getForeignKeysFromDatabase();
+        $data['headline'] = 'Vtl Data Generator: Drop Foreign Key';
+        $data['instruction1'] = 'Select those foreign keys you wish to drop';
+        $data['instruction2'] = '';
+        $data['noDataMessage'] = 'There are currently no foreign keys in the database: ' . DATABASE;
+        $data['task'] = 'key';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'deleteindexorforeignkey';
+        $this->template('admin', $data);
     }
 
     /**
@@ -427,6 +466,25 @@ class Vtlgen extends Trongate
         $this->showRowData($rows, $headline, $noDataMessage);
     }
 
+    public function vtlgenDeleteIndex(): void{
+        $data['rows'] = $this->getAllTableIndexes();
+        $data['headline'] = 'Vtl Data Generator: Drop Index';
+        $data['instruction1'] = 'Select those indexes you wish to drop';
+        $data['instruction2'] = '';
+        $data['noDataMessage'] = 'There are currently no indexes in the database: ' . DATABASE;
+        $data['task'] = 'index';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'deleteindexorforeignkey';
+        $this->template('admin', $data);
+    }
+
+    public function vtlgenShowIndexes(): void{
+        $rows = $this->getAllTableIndexes();
+        $headline = 'Vtl Data Generator: Delete Index';
+        $noDataMessage = 'There are currently no indexes in the database: ' . DATABASE;
+        $this->showRowData($rows, $headline, $noDataMessage);
+    }
+
     /**
      * Displays data from the selected table.
      *
@@ -461,7 +519,40 @@ class Vtlgen extends Trongate
 
     //region private functions
 
-    public function getForeignKeysFromDatabase(): mixed
+
+
+    /**
+     * Generates the data required to render the VTL view.
+     *
+     * This method sets up the common data used by both the 'Create Data' and 'Create Index' views.
+     *
+     * @param string $headline     The headline for the view.
+     * @param string $instruction1 The first instruction to be displayed.
+     * @param string $instruction2 The second instruction to be displayed.
+     * @param string $task         The task identifier.
+     * @param string $viewFile     The name of the view file to be used.
+     *
+     * @return void
+     */
+    private function generateVtlViewData(
+        string $headline,
+        string $instruction1,
+        string $instruction2,
+        string $task,
+        string $viewFile
+    ): void {
+        $data['tables'] = $this->setupTablesForDropdown();
+        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
+        $data['headline'] = $headline;
+        $data['instruction1'] = $instruction1;
+        $data['instruction2'] = $instruction2;
+        $data['task'] = $task;
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = $viewFile;
+        $this->template('admin', $data);
+    }
+
+    private function getForeignKeysFromDatabase(): mixed
     {
         // Run the query to collect the information
         $sql = 'SELECT 
@@ -607,6 +698,65 @@ class Vtlgen extends Trongate
         }
     }
 
+    /**
+     * Retrieves all table indexes from the database.
+     *
+     * @return array An array of associative arrays representing the table indexes,
+     *               with the following keys:
+     *               - index_schema: The schema of the index.
+     *               - index_name: The name of the index.
+     *               - index_columns: The columns of the index, concatenated.
+     *               - index_type: The type of the index.
+     *               - is_unique: Whether the index is unique or not.
+     *               - table_name: The name of the table.
+     *               The array is sorted by table name and index name.
+     *               Returns an empty array if there is an error executing the query.
+     */
+    private function getAllTableIndexes(): array {
+        $database = DATABASE;
+        // Define the SQL query
+        $sql = "SELECT 
+            index_schema, 
+            index_name, 
+            GROUP_CONCAT(column_name ORDER BY seq_in_index) AS index_columns, 
+            index_type, 
+            CASE non_unique 
+                WHEN 1 THEN 'Not Unique' 
+                ELSE 'Unique' 
+            END AS is_unique, 
+            table_name 
+        FROM 
+            information_schema.statistics 
+        WHERE 
+            table_schema = :database
+        GROUP BY 
+            index_schema, 
+            index_name, 
+            index_type, 
+            non_unique, 
+            table_name 
+        ORDER BY 
+            table_name ASC, 
+            index_name";
+
+        try {
+            // Prepare the query and bind parameters
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->bindParam(':database', $database, PDO::PARAM_STR);
+            $stmt->execute();
+
+            // Fetch the results
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            // Log the error message if logging is set up
+            error_log("Error executing query '$sql': " . $e->getMessage());
+
+            // Return an empty array in case of an error
+            return [];
+        }
+    }
+
+
 
     /**
      * Sets up the tables for the database admin.
@@ -748,11 +898,55 @@ class Vtlgen extends Trongate
     private function openDeleteOrDropView(string $task): void {
         $data['tables'] = $this->setupTablesForDatabaseAdmin();
         $data['task'] = $task;
-        $data['headline'] = 'Vtl Data Generator: ' . ($task === 'delete' ? 'Delete Data' : 'Drop Tables');
+
+        switch ($task) {
+            case 'delete':
+                $this->handleDeleteTask($data);
+                break;
+            case 'drop':
+                $this->handleDropTask($data);
+                break;
+            case 'export':
+                $this->handleExportTask($data);
+                break;
+            default:
+                throw new InvalidArgumentException('Invalid task provided');
+        }
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'deleteordrop';
         $this->template('admin', $data);
     }
+
+    /**
+     * Handles the delete task for the Vtl Data Generator by setting the headline in the provided data array.
+     *
+     * @param array &$data The data array to update with the headline.
+     * @return void
+     */
+    private function handleDeleteTask(array &$data): void {
+        $data['headline'] = 'Vtl Data Generator: Delete Data';
+    }
+
+    /**
+     * Handles the delete task for the Vtl Data Generator by setting the headline in the provided data array.
+     *
+     * @param array &$data The data array to update with the headline.
+     * @return void
+     */
+    private function handleDropTask(array &$data): void {
+        $data['headline'] = 'Vtl Data Generator: Drop Tables';
+    }
+
+    /**
+     * Handles the delete task for the Vtl Data Generator by setting the headline in the provided data array.
+     *
+     * @param array &$data The data array to update with the headline.
+     * @return void
+     */
+    private function handleExportTask(array &$data): void {
+        $data['headline'] = 'Vtl Data Generator: Export Table Scripts';
+    }
+
 
     /**
      * Retrieves data from the database using PDO.
@@ -1105,6 +1299,81 @@ class Vtlgen extends Trongate
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Creates indexes for selected rows in a specified table based on the provided index type.
+     *
+     * @throws Exception If an error occurs during index creation.
+     */
+    public function createdataCreateIndex() : void {
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        if ($postData === null || !isset($postData['selectedTable'])) {
+            // Invalid POST data, send an error response
+            http_response_code(400); // Bad request
+            echo json_encode(['message' => 'Invalid request data']);
+            return;
+        }
+
+        // Extract relevant data from the decoded JSON
+        $selectedTable = $postData['selectedTable'];
+        $selectedRows = $postData['selectedRows'];
+        $indexType = $postData['indexType'];
+
+        $response = [
+            'createdIndexes' => [],
+            'failedIndexes' => [],
+            'message' => ''
+        ];
+
+        if ($selectedRows != null) {
+            try {
+                foreach ($selectedRows as $selectedRow) {
+                    $indexName = 'idx_' . $selectedTable . '_' . $selectedRow['field'];
+                    try {
+                        // Check if index already exists
+                        $existingIndexQuery = "SHOW INDEX FROM $selectedTable WHERE Key_name = '$indexName';";
+                        $existingIndexResult = $this->model->query($existingIndexQuery);
+                        if ($existingIndexResult && $existingIndexResult->num_rows > 0) {
+                            $response['message'] .= "Index $indexName already exists.\n";
+                            continue; // Skip creating index if it already exists
+                        }
+
+                        $sql = '';
+                        switch ($indexType) {
+                            case 'Standard':
+                                $sql = 'CREATE INDEX ' . $indexName . ' ON ' . $selectedTable . ' (' . $selectedRow['field'] . ');';
+                                break;
+                            case 'Unique':
+                                $sql = 'CREATE UNIQUE INDEX ' . $indexName . ' ON ' . $selectedTable . ' (' . $selectedRow['field'] . ');';
+                                break;
+                            default:
+                                break;
+                        }
+
+                        $this->dbh->query($sql);
+                        $response['createdIndexes'][] = $indexName;
+                    } catch (Exception $ex) {
+                        $response['failedIndexes'][] = $indexName;
+                        $response['message'] .= 'Error: ' . $ex->getMessage() . "\n";
+                    }
+                }
+            } catch (Exception $e) {
+                $response['message'] .= 'Operation failed: ' . $e->getMessage() . "\n";
+            }
+
+            // Now response contains the report for the whole operation
+            $response['message'] .= "Created Indexes:\n" . implode("\n", $response['createdIndexes']);
+            $response['message'] .= "\nFailed Indexes:\n" . implode("\n", $response['failedIndexes']);
+        } else {
+            $response['message'] = 'No Rows were selected';
+        }
+
+        echo json_encode($response);
+    }
+
+
     //endregion
 
     //region createtable view functions
@@ -1402,7 +1671,164 @@ class Vtlgen extends Trongate
         echo json_encode($response);
     }
 
+    public function deleteordropExportTables(): void {
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        // Extract relevant data from the decoded JSON
+        $tablesToExport = $postData['tablesToExport'];
+        $dumpSettings = array(
+            'include-tables' => $tablesToExport,
+            'no-data' => true,
+            'add-drop-database' => true,
+            'no-create-db' => false,
+            'add-drop-table' => true,
+            'single-transaction' => true,
+            'reset-auto-increment' => true
+        );
+        $pdoSettings = array(
+            PDO::ATTR_PERSISTENT => true,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        );
+
+        $response = array();
+        try {
+            //run a check to see if there is a backups directory in the assets folder
+            $folderPath = BACKUP_SCRIPTS_LOCATION;
+            if (!is_dir($folderPath)) {
+                if (!mkdir($folderPath, 0777, true)) {
+                    $response['status'] = 'error';
+                    $response['message'] = 'Failed to create folder!';
+                    echo json_encode($response);
+                    return;
+                }
+            }
+            $dump = new IMysqldump\Mysqldump('mysql:host=' . $this->host . ';dbname=' . $this->dbname, $this->user, $this->pass, $dumpSettings, $pdoSettings);
+            $dateSuffix = date('Ymd_His'); // Current date and time format: YYYYMMDD_HHmmss
+            $backupFilename = $folderPath . '/backup_' . $dateSuffix . '.sql';
+            $dump->start($backupFilename);
+            $response['status'] = 'success';
+            $response['message'] = 'Success, your database script ( backup' . $dateSuffix . '.sql )is in the folder modules/vtl_gen/vtl_faker/assets/backups';
+        } catch (\Exception $e) {
+            $response['status'] = 'error';
+            $response['message'] = 'mysqldump-php error: ' . $e->getMessage();
+        }
+        echo json_encode($response);
+    }
+
+
+
+
     //endregion
+
+
+    //region Drop Index orForeign Key View Functions
+
+    /**
+     * A function to delete indexes or foreign keys from the database.
+     *
+     * @throws PDOException When there is an issue with the database operation.
+     */
+    public function deleteindexorforeignkeyDeleteIndex(): void {
+        $rawPostData = file_get_contents('php://input');
+        $selectedRows = json_decode($rawPostData, true);
+
+        $responseText = '';
+        $indexesDeleted = [];
+        $failedDeletions = [];
+
+        try {
+            foreach ($selectedRows as $selectedRow) {
+                $table = $selectedRow['table_name'];
+                $index = $selectedRow['index_name'];
+                try {
+                    $sql = 'ALTER TABLE ' . $table . ' DROP INDEX ' . $index;
+                    $stmt = $this->dbh->prepare($sql);
+                    $stmt->execute();
+                    $indexesDeleted[] = $index;
+                } catch (PDOException $ex) {
+                    $failedDeletions[] = $index;
+                }
+            }
+        } catch (Exception $e) {
+            $responseText = $e->getMessage();
+        }
+
+        // Constructing the response text with proper HTML formatting
+        if (!empty($indexesDeleted)) {
+            $responseText .= "Deleted Indexes:<br>";
+            foreach ($indexesDeleted as $index) {
+                $responseText .= "- $index<br>";
+            }
+        }
+
+        if (!empty($failedDeletions)) {
+            $responseText .= "Failed To Drop Indexes:<br>";
+            foreach ($failedDeletions as $index) {
+                $responseText .= "- $index<br>";
+            }
+        }
+
+        ob_end_clean();
+        echo json_encode([
+            'success' => true,
+            'message' => $responseText
+        ]);
+    }
+
+
+    public function deleteindexorforeignkeyDeleteKey(): void{
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        if (isset($postData['selectedRows']) && is_array($postData['selectedRows'])) {
+            $responseText = '';
+            $deletedKeys = [];
+            $failedKeys = [];
+
+
+
+            foreach ($postData['selectedRows'] as $row) {
+                if (isset($row['foreign key'], $row['constraint name'])) {
+                    $foreignKey = $row['foreign key'];
+                    $constraintName = $row['constraint name'];
+
+                    // Extract the table name from the foreign key
+                    list($tableName, $columnName) = explode('.', $foreignKey);
+
+                    // SQL to drop the foreign key constraint
+                    $sql = "ALTER TABLE $tableName DROP FOREIGN KEY $constraintName;";
+
+                    try {
+                        $stmt = $this->dbh->prepare($sql);
+                        $stmt->execute();
+                        $deletedKeys[] = $constraintName;
+                    } catch (PDOException $ex) {
+                        echo 'Error: ' . $ex->getMessage();
+                        // Add the foreign key to the list of failed keys
+                        $failedKeys[] = $constraintName;
+                    }
+                } else {
+                    $failedKeys[] = json_encode($row); // Include row data for debugging
+                }
+            }
+
+            // Prepare response text
+            if (!empty($deletedKeys)) {
+                $responseText .= 'Deleted foreign keys: ' . implode(', ', $deletedKeys) . '. ';
+            }
+            if (!empty($failedKeys)) {
+                $responseText .= 'Failed to delete foreign keys: ' . implode(', ', $failedKeys) . '.';
+            }
+
+            // Return the response as JSON
+            echo json_encode(['status' => 'success', 'message' => $responseText]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No rows selected']);
+        }
+    }
+    //endregion
+
 
     //region Faker functions
 
@@ -2376,11 +2802,39 @@ class Vtlgen extends Trongate
 
     //endregion
 
-    public function modaltest(): void{
-        $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'modaltest';
-        $this->template('admin', $data);
+    //region Create Foreign Key View Functions
+
+    /**
+     * Set a foreign key relationship between two tables based on the provided fields.
+     *
+     */
+    public function createforeignkeySetForeignKey(): void{
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+        $table1 = $postData['table1'];
+        $table2 = $postData['table2'];
+        $selectedField1 = $postData['selectedField1'];
+        $selectedField2 = $postData['selectedField2'];
+        // Define the query
+        $query = "ALTER TABLE `$table1` ADD CONSTRAINT `FK_{$table1}_{$table2}` FOREIGN KEY (`$selectedField1`) REFERENCES `$table2` (`$selectedField2`)";
+        try {
+            $stmt = $this->dbh->prepare($query);
+            $stmt->execute();
+            echo json_encode([
+                'success' => true,
+                'message' => 'Foreign key created successfully'
+            ]);
+        } catch (PDOException $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+
     }
+    //endregion
+
+
 
 
 

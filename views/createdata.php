@@ -44,6 +44,20 @@
         <div class="progress-bar" id="progress-bar" style="display: none" >
             <div class="progress" id="progress" ></div>
         </div>
+<!--        index related stuff-->
+        <div class="flex-container">
+            <div id="indexTypeDropdown" style="display: none;">
+                <label for="indexType">Select Index Type:</label>
+                <select id="indexType" name="indexType">
+                    <option value="Standard" selected>Standard</option>
+                    <option value="Unique">Unique</option>
+                </select>
+            </div>
+            <button id="generateIndexButton" onclick="generateIndex()" style="display: none;">Create Index</button>
+        </div>
+
+
+
     </div>
 </section>
 <section>
@@ -69,10 +83,8 @@
 </html>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.addEventListener('modalClosed', function (event) {
-            // Place your additional logic here
-        });
+    vtlModal.addEventListener('vtlModalClosed', () => {
+            location.reload();
     });
     async function setPictureDirectoryExistsForSelectedTableModule(selectedTable) {
         <?php $picDirectoryExists = false;?>
@@ -179,20 +191,42 @@
         table.on("rowSelectionChanged", function(data, rows, selected, deselected){
             var numRowsContainer = document.getElementById('numRowsContainer');
             var submitBtn = document.getElementById('submitBtn');
-            // var movePicsBtn = document.getElementById('movePicsBtn');
-            // var progressBar = document.getElementById('progress-bar');
+            var indexTypeDropdown = document.getElementById('indexTypeDropdown');
+            var generateIndexButton = document.getElementById('generateIndexButton');
+
 
             if(table.getSelectedRows().length > 0) {
-                numRowsContainer.style.display = 'block';
-                submitBtn.style.display = 'block';
+                switch(task.innerText) {
+                    case 'data':
+                        numRowsContainer.style.display = 'block';
+                        submitBtn.style.display = 'block';
+                        indexTypeDropdown.style.display = 'none';
+                        generateIndexButton.style.display = 'none';
+                        break;
+                    case 'index':
+                        numRowsContainer.style.display = 'none';
+                        submitBtn.style.display = 'none';
+                        indexTypeDropdown.style.display = 'block';
+                        generateIndexButton.style.display = 'block';
+                        break;
+                    default:
+                        numRowsContainer.style.display = 'none';
+                        submitBtn.style.display = 'none';
+                        indexTypeDropdown.style.display = 'none';
+                        generateIndexButton.style.display = 'none';
+                }
+
             } else {
                 numRowsContainer.style.display = 'none';
                 submitBtn.style.display = 'none';
-                // movePicsBtn.style.display = 'none';
-                // progressBar.style.display = 'none';
+                indexTypeDropdown.style.display = 'none';
+                generateIndexButton.style.display = 'none';
             }
         });
-         await setPictureDirectoryExistsForSelectedTableModule(selectedTable);
+        if (task.innerText === 'data') {
+            await setPictureDirectoryExistsForSelectedTableModule(selectedTable);
+        }
+
     }
 
     async function generateData() {
@@ -272,6 +306,88 @@
         }
     }
 
+    async function generateIndex() {
+        // Get the selected table name from the dropdown
+        var dropdown = document.getElementById('tableChoiceDropdown');
+        var selectedTable = dropdown.options[dropdown.selectedIndex].text;
+
+        // Get the selected rows from the Tabulator datatable
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+
+        // Filter the selected rows to include only the field name
+        var filteredRows = selectedRows.map(row => {
+            return {
+                field: row.field
+            };
+        });
+
+        // Get the value from the index type dropdown
+        var indexDropdown = document.getElementById('indexType');
+        var indexType = indexDropdown.options[indexDropdown.selectedIndex].value;
+
+        // Prepare the data to send
+        var postData = {
+            selectedTable: selectedTable,
+            selectedRows: filteredRows,
+            indexType: indexType
+        };
+
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/createdataCreateIndex';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+                        let message = response.message;
+
+                        // Format the response message
+                        if (response.createdIndexes.length > 0) {
+                            message += '<br><br>Created Indexes:<br>' + response.createdIndexes.join('<br>');
+                        }
+                        if (response.failedIndexes.length > 0) {
+                            message += '<br><br>Failed Indexes:<br>' + response.failedIndexes.join('<br>');
+                        }
+
+                        // Handle the response with the custom modal
+                        openVtlModal('Index Generated', true, message);
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openVtlModal('Error Parsing JSON', false, 'An error occurred while processing the response.');
+                    }
+                } else {
+                    try {
+                        var errorResponse = JSON.parse(xhr.responseText);
+                        openVtlModal('Error Generating Index', false, errorResponse.message);
+                    } catch (e) {
+                        console.error('Error parsing error response JSON:', e);
+                        openVtlModal('Error Generating Index', false, xhr.responseText);
+                    }
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
 
 
     function movePictures() {

@@ -2,11 +2,10 @@
     color-scheme: light dark;
     --color-bg: #313131;
     --color-fg: #eeeeee;
-    --primary: #237323; /*#9647d5;*/
-    --primary-dark: #155015; /* #8820d8;*/
-    --primary-darker: #0f390f; /*#7d07d8;*/
+    --primary: #237323;
+    --primary-dark: #155015;
+    --primary-darker: #0f390f;
     --primary-color: #eeeeee;
-
 }
 
 html {
@@ -15,8 +14,6 @@ html {
 }
 
 @media (prefers-color-scheme: dark) {
-
-
     button:hover,
     .button:hover {
         background-color: var(--primary-dark);
@@ -33,7 +30,7 @@ html {
     .alt:hover {
         background-color: transparent;
         border: 1px solid var(--primary-darker);
-        color: #131313;;
+        color: #131313;
     }
 
     .pagination {
@@ -57,7 +54,7 @@ html {
 
     .pagination a:hover:not(.active) {
         background-color: #ddd;
-        color: var(--color-bg)
+        color: var(--color-bg);
     }
 
     .pagination a:first-child {
@@ -71,7 +68,6 @@ html {
     }
 
     table {
-        /*border-collapse: collapse;*/
         width: 100%;
         border: var(--primary-color);
     }
@@ -79,27 +75,12 @@ html {
     th {
         background-color: var(--primary-dark);
         color: var(--primary-color);
-        font-style: normal;
-
-
-    }
-
-    th {
-        .label {
-            margin: 0;
-        }
-
-
     }
 
     th,
     td {
         border: 1px var(--primary-darker) solid;
         padding: 0.7em;
-    }
-
-    td:hover {
-        cursor: auto;
     }
 
     tr:hover,
@@ -114,72 +95,71 @@ html {
     }
 
     /* Modal styles */
-    dialog {
+    .vtlModal,
+    .vtlQuestionModal {
         border: none;
         border-radius: 8px;
-        padding: 0; /* Remove padding to allow custom sections to handle it */
+        padding: 0;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        max-width: 90%; /* Responsive width */
-        max-height: 90%; /* Responsive height */
+        max-width: 90%;
+        max-height: 90%;
         display: flex;
         flex-direction: column;
         position: fixed;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%); /* Center the modal */
+        transform: translate(-50%, -50%);
     }
 
     dialog::backdrop {
         background: rgba(0, 0, 0, 0.4);
     }
 
-    .vtlModalHeader {
+    .vtlModalHeader,
+    .vtlQuestionModalHeader {
         padding: 1em;
         color: white;
-        text-align: center; /* Center align the text */
+        text-align: center;
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
-
     }
 
-    .vtlModalContentWrapper {
+    .vtlModalContentWrapper,
+    .vtlQuestionModalContentWrapper {
         padding: 1em;
-        overflow-y: auto; /* Add vertical scroll bar if content overflows */
-        max-height: 50vh; /* Set a maximum height for the content */
+        overflow-y: auto;
+        max-height: 50vh;
         box-sizing: border-box;
     }
 
-    .vtlCloseButton {
+    .vtlCloseButton,
+    .vtlQuestionAcceptButton,
+    .vtlQuestionCancelButton {
         border-radius: 10px;
         border: 2px solid var(--primary-dark);
         background-color: transparent;
-        /*border: none;*/
-        /*background-color: #4CAF50;*/
         color: white;
         padding: 10px 20px;
         text-align: center;
-        text-decoration: none;
         display: inline-block;
         font-size: 16px;
         cursor: pointer;
-        outline: none; /* Remove the default focus outline */
-        margin:0 auto;
-    }
-    .vtlModalTitle{
-        color: white;
+        outline: none;
+        margin: 0 auto;
     }
 
-    .vtlCloseButton:hover {
-        outline: none; /* Ensure no outline on focus */
+    .vtlCloseButton:hover,
+    .vtlQuestionAcceptButton:hover,
+    .vtlQuestionCancelButton:hover {
         border: 2px solid var(--primary);
         background-color: transparent;
     }
 
-    .vtlCloseButton:focus {
-        outline: none; /* Ensure no outline on focus */
+    .vtlModalTitle,
+    .vtlQuestionModalTitle {
+
     }
 
-    /* Title styles for success and error */
     .modalTitleSuccess {
         background-color: darkgreen;
     }
@@ -188,29 +168,43 @@ html {
         background-color: #ac0e0e;
     }
 
-    .vtlOverlay {
-        display: none; /* Initially hidden */
-        position: fixed; /* Cover the whole viewport */
+    .vtlOverlay,
+    .vtlQuestionOverlay {
+        display: none;
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-        z-index: 1000; /* Make sure it's on top */
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
     }
-    #vtlModal {
+
+    .vtlModal,
+    .vtlQuestionModal {
         display: none;
         min-width: 350px;
         z-index: 1001;
     }
 
-    .vtlModalFooter {
+    .vtlModalFooter,
+    .vtlQuestionModalFooter {
         padding: 1em;
-        text-align: center; /* Center the close button */
-        border-top: 1px solid #ddd; /* Optional: to visually separate the footer */
+        text-align: center;
+        border-top: 1px solid #ddd;
     }
 
+    .modalTypeInformation {
+        background-color: blue;
+    }
 
+    .modalTypeWarning {
+        background-color: darkgoldenrod;
+    }
+
+    .modalTypeRequired {
+        background-color: rebeccapurple;
+    }
 }
 
 @media (prefers-color-scheme: light) {
@@ -218,7 +212,6 @@ html {
         --color-bg: #f8f7f7;
         --color-fg: #1E1D1DFF;
     }
-
 
     button:hover,
     .button:hover {
@@ -272,7 +265,6 @@ html {
         border-bottom-right-radius: 5px;
     }
 
-
     table {
         border-collapse: collapse;
         width: 100%;
@@ -289,10 +281,6 @@ html {
         padding: 0.7em;
     }
 
-    td:hover {
-        cursor: auto;
-    }
-
     tr:hover,
     tr:nth-child(odd):hover {
         background-color: #fdfdea;
@@ -300,79 +288,81 @@ html {
 
     tr:nth-child(odd) {
         background-color: #f3f3f3;
-
     }
 
     /* Modal styles */
-    dialog {
+    .vtlModal,
+    .vtlQuestionModal {
         border: none;
         border-radius: 8px;
-        padding: 0; /* Remove padding to allow custom sections to handle it */
+        padding: 0;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        max-width: 90%; /* Responsive width */
-        max-height: 90%; /* Responsive height */
+        max-width: 90%;
+        max-height: 90%;
         display: flex;
         flex-direction: column;
         position: fixed;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%); /* Center the modal */
+        transform: translate(-50%, -50%);
     }
 
     dialog::backdrop {
         background: rgba(0, 0, 0, 0.4);
     }
 
-    .vtlModalHeader {
+    .vtlModalHeader,
+    .vtlQuestionModalHeader {
         padding: 1em;
         color: white;
-        text-align: center; /* Center align the text */
+        text-align: center;
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
-
-    }
-    .vtlModalTitle{
-        color: white;
     }
 
+    .vtlModalTitle,
+    .vtlQuestionModalTitle {
+    }
 
-    .vtlModalContentWrapper {
+    .vtlModalContentWrapper,
+    .vtlQuestionModalContentWrapper {
         padding: 1em;
-        overflow-y: auto; /* Add vertical scroll bar if content overflows */
-        max-height: 50vh; /* Set a maximum height for the content */
+        overflow-y: auto;
+        max-height: 50vh;
         box-sizing: border-box;
     }
 
-    .vtlCloseButton {
+    .vtlCloseButton,
+    .vtlQuestionAcceptButton,
+    .vtlQuestionCancelButton {
         border-radius: 10px;
         border: 2px solid var(--primary-dark);
         background-color: transparent;
-        /*border: none;*/
-        /*background-color: #4CAF50;*/
         color: rgba(1, 69, 1, 0.99);
         padding: 10px 20px;
         text-align: center;
-        text-decoration: none;
         display: inline-block;
         font-size: 16px;
         font-weight: bolder;
         cursor: pointer;
-        outline: none; /* Remove the default focus outline */
-        margin:0 auto;
+        outline: none;
+        margin: 0 auto;
     }
 
-    .vtlCloseButton:hover {
-        outline: none; /* Ensure no outline on focus */
+    .vtlCloseButton:hover,
+    .vtlQuestionAcceptButton:hover,
+    .vtlQuestionCancelButton:hover {
         border: 2px solid var(--primary);
         background-color: transparent;
         color: #050000;
     }
 
-    .vtlCloseButton:focus {
-        outline: none; /* Ensure no outline on focus */
+    .vtlCloseButton:focus,
+    .vtlQuestionAcceptButton:focus,
+    .vtlQuestionCancelButton:focus {
+        outline: none;
     }
 
-    /* Title styles for success and error */
     .modalTitleSuccess {
         background-color: var(--primary);
     }
@@ -381,30 +371,43 @@ html {
         background-color: #ac0e0e;
     }
 
-
-    .vtlOverlay {
-        display: none; /* Initially hidden */
-        position: fixed; /* Cover the whole viewport */
+    .vtlOverlay,
+    .vtlQuestionOverlay {
+        display: none;
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-        z-index: 1000; /* Make sure it's on top */
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
     }
-    #vtlModal {
+
+    .vtlModal,
+    .vtlQuestionModal {
         display: none;
         min-width: 350px;
         z-index: 1001;
     }
 
-    .vtlModalFooter {
+    .vtlModalFooter,
+    .vtlQuestionModalFooter {
         padding: 1em;
-        text-align: center; /* Center the close button */
-        border-top: 1px solid #ddd; /* Optional: to visually separate the footer */
+        text-align: center;
+        border-top: 1px solid #ddd;
     }
 
+    .modalTypeInformation {
+        background-color: blue;
+    }
 
+    .modalTypeWarning {
+        background-color: darkgoldenrod;
+    }
+
+    .modalTypeRequired {
+        background-color: rebeccapurple;
+    }
 }
 
 body {
@@ -437,40 +440,18 @@ button {
     border-radius: 10px;
 }
 
-h1 {
-    color: var(--color-fg);
-}
-
-h2 {
-    color: var(--color-fg);
-}
-
-h3 {
-    color: var(--color-fg);
-}
-
-h4 {
-    color: var(--color-fg);
-}
-
-h {
-    color: var(--color-fg);
-}
-
-h {
+h1,
+h2,
+h3,
+h4,
+h,
+p,
+div {
     color: var(--color-fg);
 }
 
 img {
     filter: brightness(.8) contrast(1.2);
-}
-
-p {
-    color: var(--color-fg);
-}
-
-div {
-    color: var(--color-fg);
 }
 
 picture {
@@ -533,6 +514,572 @@ picture {
 .back-to-top:hover span {
     transform: translateY(-4px);
 }
+
+#vtlQuestionModal .vtlModalHeader {
+    display: flex;
+    justify-content: center; /* Horizontally center items */
+    align-items: center; /* Vertically center items */
+}
+
+#vtlQuestionModal .vtlModalTitle {
+    margin: 0; /* Remove any default margin */
+    margin-left: 10px; /* Add some space between the title and the icon */
+}
+
+#vtlQuestionModal .vtlModalIcon {
+    margin: 0; /* Remove any default margin */
+    margin-right: 10px; /* Add some space between the title and the icon */
+}
+
+#vtlQuestionModal .vtlModalIcon img {
+    max-width: 50px;
+    max-height: 50px;
+}
+
+
+
+
+
+
+
+
+
+
+/*:root {*/
+/*    color-scheme: light dark;*/
+/*    --color-bg: #313131;*/
+/*    --color-fg: #eeeeee;*/
+/*    --primary: #237323; !*#9647d5;*!*/
+/*    --primary-dark: #155015; !* #8820d8;*!*/
+/*    --primary-darker: #0f390f; !*#7d07d8;*!*/
+/*    --primary-color: #eeeeee;*/
+
+/*}*/
+
+/*html {*/
+/*    color-scheme: dark light;*/
+/*    scroll-behavior: smooth;*/
+/*}*/
+
+/*@media (prefers-color-scheme: dark) {*/
+
+
+/*    button:hover,*/
+/*    .button:hover {*/
+/*        background-color: var(--primary-dark);*/
+/*        border: 1px solid var(--primary-darker);*/
+/*        color: var(--primary-color);*/
+/*    }*/
+
+/*    .alt {*/
+/*        background-color: transparent;*/
+/*        border: 1px solid var(--primary-dark);*/
+/*        color: #333;*/
+/*    }*/
+
+/*    .alt:hover {*/
+/*        background-color: transparent;*/
+/*        border: 1px solid var(--primary-darker);*/
+/*        color: #131313;;*/
+/*    }*/
+
+/*    .pagination {*/
+/*        display: inline-block;*/
+/*        margin: 1em 0;*/
+/*    }*/
+
+/*    .pagination a {*/
+/*        color: var(--color-fg);*/
+/*        float: left;*/
+/*        padding: 8px 16px;*/
+/*        text-decoration: none;*/
+/*        border: 1px solid #ddd;*/
+/*    }*/
+
+/*    .pagination a.active {*/
+/*        background-color: var(--primary);*/
+/*        color: white;*/
+/*        border: 1px solid var(--primary);*/
+/*    }*/
+
+/*    .pagination a:hover:not(.active) {*/
+/*        background-color: #ddd;*/
+/*        color: var(--color-bg)*/
+/*    }*/
+
+/*    .pagination a:first-child {*/
+/*        border-top-left-radius: 5px;*/
+/*        border-bottom-left-radius: 5px;*/
+/*    }*/
+
+/*    .pagination a:last-child {*/
+/*        border-top-right-radius: 5px;*/
+/*        border-bottom-right-radius: 5px;*/
+/*    }*/
+
+/*    table {*/
+/*        !*border-collapse: collapse;*!*/
+/*        width: 100%;*/
+/*        border: var(--primary-color);*/
+/*    }*/
+
+/*    th {*/
+/*        background-color: var(--primary-dark);*/
+/*        color: var(--primary-color);*/
+/*        font-style: normal;*/
+
+
+/*    }*/
+
+/*    th {*/
+/*        .label {*/
+/*            margin: 0;*/
+/*        }*/
+
+
+/*    }*/
+
+/*    th,*/
+/*    td {*/
+/*        border: 1px var(--primary-darker) solid;*/
+/*        padding: 0.7em;*/
+/*    }*/
+
+/*    td:hover {*/
+/*        cursor: auto;*/
+/*    }*/
+
+/*    tr:hover,*/
+/*    tr:nth-child(odd):hover {*/
+/*        background-color: #fbfbde;*/
+/*        color: #1a1a1a;*/
+/*    }*/
+
+/*    tr:nth-child(odd) {*/
+/*        background-color: #454242;*/
+/*        color: var(--color-fg);*/
+/*    }*/
+
+/*    !* Modal styles *!*/
+/*    dialog {*/
+/*        border: none;*/
+/*        border-radius: 8px;*/
+/*        padding: 0; !* Remove padding to allow custom sections to handle it *!*/
+/*        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);*/
+/*        max-width: 90%; !* Responsive width *!*/
+/*        max-height: 90%; !* Responsive height *!*/
+/*        display: flex;*/
+/*        flex-direction: column;*/
+/*        position: fixed;*/
+/*        top: 50%;*/
+/*        left: 50%;*/
+/*        transform: translate(-50%, -50%); !* Center the modal *!*/
+/*    }*/
+
+/*    dialog::backdrop {*/
+/*        background: rgba(0, 0, 0, 0.4);*/
+/*    }*/
+
+/*    .vtlModalHeader {*/
+/*        padding: 1em;*/
+/*        color: white;*/
+/*        text-align: center; !* Center align the text *!*/
+/*        border-top-left-radius: 8px;*/
+/*        border-top-right-radius: 8px;*/
+
+/*    }*/
+
+/*    .vtlModalContentWrapper {*/
+/*        padding: 1em;*/
+/*        overflow-y: auto; !* Add vertical scroll bar if content overflows *!*/
+/*        max-height: 50vh; !* Set a maximum height for the content *!*/
+/*        box-sizing: border-box;*/
+/*    }*/
+
+/*    .vtlCloseButton {*/
+/*        border-radius: 10px;*/
+/*        border: 2px solid var(--primary-dark);*/
+/*        background-color: transparent;*/
+/*        !*border: none;*!*/
+/*        !*background-color: #4CAF50;*!*/
+/*        color: white;*/
+/*        padding: 10px 20px;*/
+/*        text-align: center;*/
+/*        text-decoration: none;*/
+/*        display: inline-block;*/
+/*        font-size: 16px;*/
+/*        cursor: pointer;*/
+/*        outline: none; !* Remove the default focus outline *!*/
+/*        margin:0 auto;*/
+/*    }*/
+/*    .vtlModalTitle{*/
+/*        color: white;*/
+/*    }*/
+
+/*    .vtlCloseButton:hover {*/
+/*        outline: none; !* Ensure no outline on focus *!*/
+/*        border: 2px solid var(--primary);*/
+/*        background-color: transparent;*/
+/*    }*/
+
+/*    .vtlCloseButton:focus {*/
+/*        outline: none; !* Ensure no outline on focus *!*/
+/*    }*/
+
+/*    !* Title styles for success and error *!*/
+/*    .modalTitleSuccess {*/
+/*        background-color: darkgreen;*/
+/*    }*/
+
+/*    .modalTitleError {*/
+/*        background-color: #ac0e0e;*/
+/*    }*/
+
+/*    .vtlOverlay {*/
+/*        display: none; !* Initially hidden *!*/
+/*        position: fixed; !* Cover the whole viewport *!*/
+/*        top: 0;*/
+/*        left: 0;*/
+/*        width: 100%;*/
+/*        height: 100%;*/
+/*        background-color: rgba(0, 0, 0, 0.5); !* Semi-transparent background *!*/
+/*        z-index: 1000; !* Make sure it's on top *!*/
+/*    }*/
+/*    #vtlModal {*/
+/*        display: none;*/
+/*        min-width: 350px;*/
+/*        z-index: 1001;*/
+/*    }*/
+
+/*    .vtlModalFooter {*/
+/*        padding: 1em;*/
+/*        text-align: center; !* Center the close button *!*/
+/*        border-top: 1px solid #ddd; !* Optional: to visually separate the footer *!*/
+/*    }*/
+
+
+/*}*/
+
+/*@media (prefers-color-scheme: light) {*/
+/*    :root {*/
+/*        --color-bg: #f8f7f7;*/
+/*        --color-fg: #1E1D1DFF;*/
+/*    }*/
+
+
+/*    button:hover,*/
+/*    .button:hover {*/
+/*        background-color: var(--primary-dark);*/
+/*        border: 1px solid var(--primary-darker);*/
+/*        color: var(--primary-color);*/
+/*    }*/
+
+/*    .alt {*/
+/*        background-color: transparent;*/
+/*        border: 1px solid var(--primary);*/
+/*        color: #333;*/
+/*    }*/
+
+/*    .alt:hover {*/
+/*        background-color: transparent;*/
+/*        border: 1px solid var(--primary);*/
+/*        color: var(--primary);*/
+/*    }*/
+
+/*    .pagination {*/
+/*        display: inline-block;*/
+/*        margin: 1em 0;*/
+/*    }*/
+
+/*    .pagination a {*/
+/*        color: black;*/
+/*        float: left;*/
+/*        padding: 8px 16px;*/
+/*        text-decoration: none;*/
+/*        border: 1px solid #ddd;*/
+/*    }*/
+
+/*    .pagination a.active {*/
+/*        background-color: var(--primary);*/
+/*        color: white;*/
+/*        border: 1px solid var(--primary);*/
+/*    }*/
+
+/*    .pagination a:hover:not(.active) {*/
+/*        background-color: #ddd;*/
+/*    }*/
+
+/*    .pagination a:first-child {*/
+/*        border-top-left-radius: 5px;*/
+/*        border-bottom-left-radius: 5px;*/
+/*    }*/
+
+/*    .pagination a:last-child {*/
+/*        border-top-right-radius: 5px;*/
+/*        border-bottom-right-radius: 5px;*/
+/*    }*/
+
+
+/*    table {*/
+/*        border-collapse: collapse;*/
+/*        width: 100%;*/
+/*    }*/
+
+/*    th {*/
+/*        background-color: var(--primary);*/
+/*        color: var(--primary-color);*/
+/*    }*/
+
+/*    th,*/
+/*    td {*/
+/*        border: 1px var(--primary-darker) solid;*/
+/*        padding: 0.7em;*/
+/*    }*/
+
+/*    td:hover {*/
+/*        cursor: auto;*/
+/*    }*/
+
+/*    tr:hover,*/
+/*    tr:nth-child(odd):hover {*/
+/*        background-color: #fdfdea;*/
+/*    }*/
+
+/*    tr:nth-child(odd) {*/
+/*        background-color: #f3f3f3;*/
+
+/*    }*/
+
+/*    !* Modal styles *!*/
+/*    dialog {*/
+/*        border: none;*/
+/*        border-radius: 8px;*/
+/*        padding: 0; !* Remove padding to allow custom sections to handle it *!*/
+/*        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);*/
+/*        max-width: 90%; !* Responsive width *!*/
+/*        max-height: 90%; !* Responsive height *!*/
+/*        display: flex;*/
+/*        flex-direction: column;*/
+/*        position: fixed;*/
+/*        top: 50%;*/
+/*        left: 50%;*/
+/*        transform: translate(-50%, -50%); !* Center the modal *!*/
+/*    }*/
+
+/*    dialog::backdrop {*/
+/*        background: rgba(0, 0, 0, 0.4);*/
+/*    }*/
+
+/*    .vtlModalHeader {*/
+/*        padding: 1em;*/
+/*        color: white;*/
+/*        text-align: center; !* Center align the text *!*/
+/*        border-top-left-radius: 8px;*/
+/*        border-top-right-radius: 8px;*/
+
+/*    }*/
+/*    .vtlModalTitle{*/
+/*        color: white;*/
+/*    }*/
+
+
+/*    .vtlModalContentWrapper {*/
+/*        padding: 1em;*/
+/*        overflow-y: auto; !* Add vertical scroll bar if content overflows *!*/
+/*        max-height: 50vh; !* Set a maximum height for the content *!*/
+/*        box-sizing: border-box;*/
+/*    }*/
+
+/*    .vtlCloseButton {*/
+/*        border-radius: 10px;*/
+/*        border: 2px solid var(--primary-dark);*/
+/*        background-color: transparent;*/
+/*        !*border: none;*!*/
+/*        !*background-color: #4CAF50;*!*/
+/*        color: rgba(1, 69, 1, 0.99);*/
+/*        padding: 10px 20px;*/
+/*        text-align: center;*/
+/*        text-decoration: none;*/
+/*        display: inline-block;*/
+/*        font-size: 16px;*/
+/*        font-weight: bolder;*/
+/*        cursor: pointer;*/
+/*        outline: none; !* Remove the default focus outline *!*/
+/*        margin:0 auto;*/
+/*    }*/
+
+/*    .vtlCloseButton:hover {*/
+/*        outline: none; !* Ensure no outline on focus *!*/
+/*        border: 2px solid var(--primary);*/
+/*        background-color: transparent;*/
+/*        color: #050000;*/
+/*    }*/
+
+/*    .vtlCloseButton:focus {*/
+/*        outline: none; !* Ensure no outline on focus *!*/
+/*    }*/
+
+/*    !* Title styles for success and error *!*/
+/*    .modalTitleSuccess {*/
+/*        background-color: var(--primary);*/
+/*    }*/
+
+/*    .modalTitleError {*/
+/*        background-color: #ac0e0e;*/
+/*    }*/
+
+
+/*    .vtlOverlay {*/
+/*        display: none; !* Initially hidden *!*/
+/*        position: fixed; !* Cover the whole viewport *!*/
+/*        top: 0;*/
+/*        left: 0;*/
+/*        width: 100%;*/
+/*        height: 100%;*/
+/*        background-color: rgba(0, 0, 0, 0.5); !* Semi-transparent background *!*/
+/*        z-index: 1000; !* Make sure it's on top *!*/
+/*    }*/
+/*    #vtlModal {*/
+/*        display: none;*/
+/*        min-width: 350px;*/
+/*        z-index: 1001;*/
+/*    }*/
+
+/*    .vtlModalFooter {*/
+/*        padding: 1em;*/
+/*        text-align: center; !* Center the close button *!*/
+/*        border-top: 1px solid #ddd; !* Optional: to visually separate the footer *!*/
+/*    }*/
+
+
+/*}*/
+
+/*body {*/
+/*    background-color: var(--color-bg);*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*div {*/
+/*    .code-toolbar {*/
+/*        margin-top: 45px;*/
+/*        margin-bottom: 45px;*/
+/*    }*/
+/*}*/
+
+/*figure {*/
+/*    margin-top: 45px;*/
+/*    margin-bottom: 45px;*/
+/*}*/
+
+/*figcaption {*/
+/*    margin-top: 20px;*/
+/*    text-align: center !important;*/
+/*}*/
+
+/*.button {*/
+/*    border-radius: 10px;*/
+/*}*/
+
+/*button {*/
+/*    border-radius: 10px;*/
+/*}*/
+
+/*h1 {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*h2 {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*h3 {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*h4 {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*h {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*h {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*img {*/
+/*    filter: brightness(.8) contrast(1.2);*/
+/*}*/
+
+/*p {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*div {*/
+/*    color: var(--color-fg);*/
+/*}*/
+
+/*picture {*/
+/*    margin-top: 50px;*/
+/*    align-content: center;*/
+/*}*/
+
+/*.back-to-top {*/
+/*    position: fixed;*/
+/*    bottom: 2rem;*/
+/*    right: 2rem;*/
+/*    display: inline-flex;*/
+/*    align-items: center;*/
+/*    justify-content: center;*/
+/*    background-color: #f4eeee;*/
+/*    border-radius: 10em;*/
+/*    padding: 0.5rem;*/
+/*    text-decoration: none;*/
+/*    transition: 0.2s ease-out;*/
+/*}*/
+
+/*.back-to-top span {*/
+/*    color: #fff;*/
+/*    font-size: 1em;*/
+/*    transition: 0.2s ease-out;*/
+/*}*/
+
+/*.back-to-top:hover {*/
+/*    background-color: #dadada;*/
+/*}*/
+
+/*.back-to-top:hover span {*/
+/*    transform: translateY(-4px);*/
+/*}*/
+
+/*.back-to-top {*/
+/*    position: fixed;*/
+/*    bottom: 2rem;*/
+/*    right: 2rem;*/
+/*    display: inline-flex;*/
+/*    align-items: center;*/
+/*    justify-content: center;*/
+/*    background-color: lightgreen;*/
+/*    border-radius: 10em;*/
+/*    padding: 0.5rem;*/
+/*    text-decoration: none;*/
+/*    transition: 0.2s ease-out;*/
+/*}*/
+
+/*.back-to-top span {*/
+/*    color: #fff;*/
+/*    font-size: 1em;*/
+/*    transition: 0.2s ease-out;*/
+/*}*/
+
+/*.back-to-top:hover {*/
+/*    background-color: limegreen;*/
+/*}*/
+
+/*.back-to-top:hover span {*/
+/*    transform: translateY(-4px);*/
+/*}*/
 
 
 

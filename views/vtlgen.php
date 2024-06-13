@@ -39,22 +39,14 @@
                     <div class="popup popupLeft">Delete Data</div>
                 </button>
             </div>
-            <div class="grid-item">
-                <button class="svg-button" aria-label="Last Primary" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenFetchLatestPkValues'">
-                    <picture>
-                        <source srcset="vtlgen_module/help/images/vtlPrimaryKeysDark.svg" media="(prefers-color-scheme: dark)">
-                        <img class="svg-icon" src="vtlgen_module/help/images/vtlPrimaryKeys.svg" alt="Create Data Icon">
-                    </picture>
-                    <div class="popup popupRight">Last Primary</div>
-                </button>
-            </div>
+
             <div class="grid-item" id="showButton">
                 <button class="svg-button" aria-label="Browse Data" onclick="toggleDropdown()">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlBrowseDataDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlBrowseData.svg" alt="Create Data Icon">
                     </picture>
-                    <div class="popup popupLeft">Browse Data</div>
+                    <div class="popup popupRight">Browse Data</div>
                 </button>
             </div>
 
@@ -73,7 +65,7 @@
             </div>
 
             <!-- Group Title for Indexes -->
-            <div class="grid-item index-heading" colspan="4">Index and Foreign Key Operations</div>
+            <div class="grid-item index-heading" colspan="4">Index Operations</div>
 
             <!-- Index Operation Buttons -->
             <div class="grid-item">
@@ -94,6 +86,45 @@
                     <div class="popup popupLeft">Delete Index</div>
                 </button>
             </div>
+
+            <div class="grid-item">
+                <div class="grid-item">
+                    <button class="svg-button" aria-label="Browse Indexes" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenShowIndexes'">
+                        <picture>
+                            <source srcset="vtlgen_module/help/images/vtlIndexBrowseDark.svg" media="(prefers-color-scheme: dark)">
+                            <img class="svg-icon" src="vtlgen_module/help/images/vtlIndexBrowse.svg" alt="Create Data Icon">
+                        </picture>
+                        <div class="popup popupRight">Indexes</div>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Group Title for Foreign Key Operations -->
+            <div class="grid-item fk-heading" colspan="4">Foreign and PrimaryKey Operations</div>
+
+
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Create FK" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenCreateForeignKey'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlForeignKeysAddDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlForeignKeysAdd.svg" alt="Create Data Icon">
+                    </picture>
+                    <div class="popup popupRight">Create FK</div>
+                </button>
+            </div>
+            <div class="grid-item">
+                <div class="grid-item">
+                    <button class="svg-button" aria-label="Delete FK's" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDeleteForeignKeys'">
+                        <picture>
+                            <source srcset="vtlgen_module/help/images/vtlForeignKeysRemoveDark.svg" media="(prefers-color-scheme: dark)">
+                            <img class="svg-icon" src="vtlgen_module/help/images/vtlForeignKeysRemove.svg" alt="Create Data Icon">
+                        </picture>
+                        <div class="popup popupLeft">Delete FK's</div>
+                    </button>
+                </div>
+            </div>
+
             <div class="grid-item">
                 <div class="grid-item">
                     <button class="svg-button" aria-label="Browse FK's" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenShowForeignKeys'">
@@ -106,26 +137,14 @@
                 </div>
             </div>
             <div class="grid-item">
-                <button class="svg-button" aria-label="Create FK" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenCreateForeignKey'">
+                <button class="svg-button" aria-label="Browse Primary" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenFetchLatestPkValues'">
                     <picture>
-                        <source srcset="vtlgen_module/help/images/vtlForeignKeysAddDark.svg" media="(prefers-color-scheme: dark)">
-                        <img class="svg-icon" src="vtlgen_module/help/images/vtlForeignKeysAdd.svg" alt="Create Data Icon">
+                        <source srcset="vtlgen_module/help/images/vtlPrimaryBrowseDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlPrimaryBrowse.svg" alt="Create Data Icon">
                     </picture>
-                    <div class="popup popupLeft">Create FK</div>
+                    <div class="popup popupLeft">Browse PK's</div>
                 </button>
             </div>
-            <div class="grid-item">
-                <div class="grid-item">
-                    <button class="svg-button" aria-label="Delete FK's" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDeleteForeignKeys'">
-                        <picture>
-                            <source srcset="vtlgen_module/help/images/vtlForeignKeysRemoveDark.svg" media="(prefers-color-scheme: dark)">
-                            <img class="svg-icon" src="vtlgen_module/help/images/vtlForeignKeysRemove.svg" alt="Create Data Icon">
-                        </picture>
-                        <div class="popup popupRight">Delete FK's</div>
-                    </button>
-                </div>
-            </div>
-
             <!-- Group Title for Database Operations -->
 
             <div class="grid-item dbase-heading" colspan="4">Database Operations</div>
@@ -150,12 +169,22 @@
                 </button>
             </div>
             <div class="grid-item">
+                <button class="svg-button" aria-label="Edit Table" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenEditDataTable'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlTableEditDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlTableEdit.svg" alt="Create Data Icon">
+                    </picture>
+                    <div class="popup popupRight">Edit Table</div>
+                </button>
+            </div>
+
+            <div class="grid-item">
                 <button class="svg-button" aria-label="Export Script" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenExportDatabase'">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlDatabaseExportDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlDatabaseExport.svg" alt="Create Data Icon">
                     </picture>
-                    <div class="popup popupRight">Export Script</div>
+                    <div class="popup popupLeft">Export </div>
                 </button>
             </div>
 
@@ -182,7 +211,7 @@
                         <source srcset="vtlgen_module/help/images/vtlHelpDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlHelp.svg" alt="Create Data Icon">
                     </picture>
-                    <div class="popup popupLeft">Customisation</div>
+                    <div class="popup popupLeft">Customise</div>
                 </button>
             </div>
             <div class="grid-item">
@@ -194,7 +223,15 @@
                     <div class="popup popupRight">POI</div>
                 </button>
             </div>
-
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Tabulator" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenShowPointsOfInterestHelp'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlHelpDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlHelp.svg" alt="Create Data Icon">
+                    </picture>
+                    <div class="popup popupLeft">Tabulator</div>
+                </button>
+            </div>
         </div>
 
     </div>
@@ -221,7 +258,7 @@
 <style>
 
     @media (prefers-color-scheme: light) {
-        .data-heading, .index-heading, .dbase-heading, .help-heading {
+        .data-heading, .index-heading,.fk-heading, .dbase-heading, .help-heading {
             grid-column: span 4; /* Span all 4 columns */
             color: #000000; /* Optional: Add a background color for the headings */
             text-align: center; /* Center the text in headings */
@@ -260,7 +297,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-        .data-heading, .index-heading, .dbase-heading, .help-heading {
+        .data-heading, .index-heading,.fk-heading, .dbase-heading, .help-heading {
             grid-column: span 4; /* Span all 4 columns */
             color: #f0f0f0; /* Optional: Add a background color for the headings */
             text-align: center; /* Center the text in headings */
