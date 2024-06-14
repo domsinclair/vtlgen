@@ -40,7 +40,7 @@
 </section>
 <section>
     <div class="container">
-        <pre>
+        <pre id="codeBlock" class="language-sql">
             <code id="sqlCode" class="language-sql">
 
              </code>
@@ -289,7 +289,7 @@
                 sql += `,\n  PRIMARY KEY (${primaryKeys.join(', ')})`; // Add primary key definition
             }
             sql += '\n);';
-
+            console.log('sql:', sql);
             return sql;
         }
 
@@ -373,7 +373,13 @@
         });
 
     });
-
+    // Prism.plugins.NormalizeWhitespace.setDefaults({
+    //     // 'remove-trailing': true,
+    //     // 'remove-indent': true,
+    //     // 'left-trim': true,
+    //     // 'right-trim': true,
+    //     'break-lines': 80, //max number of characters in each line before break
+    // });
 </script>
 <style>
     @media (prefers-color-scheme: light) {
@@ -451,6 +457,7 @@
         color: #37035c;
     }
 
-
+    #sqlCode {
+    white-space: pre-wrap;
 </style>
 
