@@ -40,7 +40,7 @@
 </section>
 <section>
     <div class="container">
-        <pre id="codeBlock" class="language-sql">
+        <pre >
             <code id="sqlCode" class="language-sql">
 
              </code>
@@ -373,13 +373,7 @@
         });
 
     });
-    // Prism.plugins.NormalizeWhitespace.setDefaults({
-    //     // 'remove-trailing': true,
-    //     // 'remove-indent': true,
-    //     // 'left-trim': true,
-    //     // 'right-trim': true,
-    //     'break-lines': 80, //max number of characters in each line before break
-    // });
+
 </script>
 <style>
     @media (prefers-color-scheme: light) {

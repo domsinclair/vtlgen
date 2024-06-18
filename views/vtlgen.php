@@ -12,6 +12,7 @@
 </head>
 <body>
 <h2 class="container, text-center"><?= $headline ?></h2>
+
 <section>
     <div class="container">
 
@@ -235,7 +236,11 @@
         </div>
 
     </div>
+
 </section>
+<div class="container">
+    <p class="text-center" id="version">Version: 3.0</p>
+</div>
 </body>
 </html>
 <script>
@@ -392,6 +397,9 @@
     }
     .container{
         padding:0;
+    }
+    #version{
+        font-size: 12px;
     }
 
 </style>

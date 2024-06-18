@@ -38,36 +38,23 @@
             <source srcset="vtlgen_module/help/images/vtlExportHtmlDark.svg" media="(prefers-color-scheme: dark)">
             <img class="svg-icon" src="vtlgen_module/help/images/vtlExportHtml.svg" alt="Customisation Icon">
         </picture>
-<!--        <div class="popup popupLeft">Customise</div>-->
+        <div class="popup popupRight">Download HTML</div>
     </button>
     <button class="svg-button" aria-label="Download CSV" onclick="downloadCSV()">
         <picture>
             <source srcset="vtlgen_module/help/images/vtlExportCsvDark.svg" media="(prefers-color-scheme: dark)">
             <img class="svg-icon" src="vtlgen_module/help/images/vtlExportCsv.svg" alt="Download CSV Icon">
         </picture>
-<!--        <div class="popup popupLeft">Download CSV</div>-->
+        <div class="popup popupLeft">Download CSV</div>
     </button>
     <button class="svg-button" aria-label="Download JSON" onclick="downloadJSON()">
         <picture>
             <source srcset="vtlgen_module/help/images/vtlExportJsonDark.svg" media="(prefers-color-scheme: dark)">
             <img class="svg-icon" src="vtlgen_module/help/images/vtlExportJson.svg" alt="Download JSON Icon">
         </picture>
-<!--        <div class="popup popupLeft">Download JSON</div>-->
+        <div class="popup popupLeft">Download JSON</div>
     </button>
-    <button class="svg-button" aria-label="Download XLSX" onclick="downloadXLSX()">
-        <picture>
-            <source srcset="vtlgen_module/help/images/vtlExportToExcelDark.svg" media="(prefers-color-scheme: dark)">
-            <img class="svg-icon" src="vtlgen_module/help/images/vtlExportToExcel.svg" alt="Download XLSX Icon">
-        </picture>
-<!--        <div class="popup popupLeft">Download XLSX</div>-->
-    </button>
-    <button class="svg-button" aria-label="Download PDF" onclick="downloadPDF()">
-        <picture>
-            <source srcset="vtlgen_module/help/images/vtlExportPdfDark.svg" media="(prefers-color-scheme: dark)">
-            <img class="svg-icon" src="vtlgen_module/help/images/vtlExportPdf.svg" alt="Download PDF Icon">
-        </picture>
-<!--        <div class="popup popupLeft">Download PDF</div>-->
-    </button>
+
 </div>
 </section>
 <script src="<?= BASE_URL ?>vtlgen_module/js/jspdf.plugin.autotable.min.js"></script>
@@ -135,17 +122,7 @@
         var table = Tabulator.findTable("#datatable")[0];
         table.download("json", "data.json");
     }
-    async function downloadXLSX(){
-        var table = Tabulator.findTable("#datatable")[0];
-        table.download("xlsx", "data.xlsx", {sheetName:"My Data"});
-    }
-    async function downloadPDF(){
-        var table = Tabulator.findTable("#datatable")[0];
-        table.download("pdf", "data.pdf", {
-            orientation:"portrait", //set page orientation to portrait
-            title:"Data Report", //add title to report
-        });
-    }
+
 </script>
 <style>
     @media (prefers-color-scheme: light) {
@@ -172,6 +149,19 @@
             position: relative;
         }
 
+        .popup {
+            display: none;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 10px;
+            position: absolute;
+            z-index: 2;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+
     }
 
     @media (prefers-color-scheme: dark) {
@@ -186,6 +176,19 @@
             cursor: pointer;
             padding: 0;
             position: relative;
+        }
+        .popup {
+            display: none;
+            color: white;
+            background-color: white;
+            border: 1px solid #dadada;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            position: absolute;
+            z-index: 2;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
         }
     }
 
@@ -226,7 +229,25 @@
         padding: 0;
     }
 
+    .svg-button:focus .popup,
+    .svg-button:hover .popup {
+        display: block;
+        background-color: transparent; /*rgba(255, 255, 255, 0.8); /* Transparent background on hover */
+    }
 
+    .popupLeft {
+        top: 50%; /* Vertically centers the popup relative to the button */
+        right: 100%; /* Positions the popup to the left of the button */
+        transform: translateY(-50%); /* Centers the popup vertically */
+        margin-right: 5px;
+    }
+
+    .popupRight {
+        top: 50%; /* Vertically centers the popup relative to the button */
+        left: 100%; /* Positions the popup to the right of the button */
+        transform: translateY(-50%); /* Centers the popup vertically */
+        margin-left: 5px;
+    }
 
 
 </style>
