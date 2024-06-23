@@ -20,6 +20,8 @@
         <div class="flex">
             <?php echo anchor('vtlgen', 'Back', array("class" => "button")); ?>
         </div>
+        <p><?= $instruction1 ?> </p>
+        <p><?= $instruction2 ?> </p>
     </div>
 </section>
 <section>

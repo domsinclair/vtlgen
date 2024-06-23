@@ -114,42 +114,7 @@ class Vtlgen extends Trongate
                 file_put_contents($filePath, $newContent);
             }
         }
-        $this->module('trongate_administrators');
-        $token = $this->trongate_administrators->_make_sure_allowed();
 
-
-        if (ENV != 'dev') {
-            redirect(BASE_URL);
-            die();
-        } else {
-            if ($token == '') {
-                redirect(BASE_URL);
-                die();
-            }
-        }
-        unset($_SESSION['selectedDataTable']);
-
-        // Define the list item HTML
-        $listItemHTML = '<li>' . anchor('vtlgen', '<img src="vtlgen_module/help/images/vtlgen.svg"> Vtl Data Generator') . '</li>';
-
-        // Path to the dynamic_nav.php file
-        $filePath = APPPATH . 'templates/views/partials/admin/dynamic_nav.php';
-
-        // Read the content of dynamic_nav.php
-        $fileContent = file_get_contents($filePath);
-
-        // Check if the list item already exists in the file
-        if (strpos($fileContent, $listItemHTML) === false) {
-            // If not, find the position to insert the new list item
-            $pos = strpos($fileContent, '</ul>');
-            if ($pos !== false) {
-                // Insert the list item before the closing </ul> tag
-                $newContent = substr_replace($fileContent, $listItemHTML, $pos, 0);
-
-                // Write the modified content back to the file
-                file_put_contents($filePath, $newContent);
-            }
-        }
 
         $data['tables'] = $this->setupTablesForDropdown();
         $data['headline'] = 'Vtl Data Generator: Home Page';
@@ -948,6 +913,8 @@ class Vtlgen extends Trongate
      */
     private function handleDeleteTask(array &$data): void {
         $data['headline'] = 'Vtl Data Generator: Delete Data';
+        $data['instruction1'] = 'Select table(s) for which you want to delete data .';
+        $data['instruction2'] = '';
     }
 
     /**
@@ -958,6 +925,8 @@ class Vtlgen extends Trongate
      */
     private function handleDropTask(array &$data): void {
         $data['headline'] = 'Vtl Data Generator: Drop Tables';
+        $data['instruction1'] = 'Select table(s) that you want to drop.';
+        $data['instruction2'] = '';
     }
 
     /**
@@ -968,6 +937,8 @@ class Vtlgen extends Trongate
      */
     private function handleExportTask(array &$data): void {
         $data['headline'] = 'Vtl Data Generator: Export Table Scripts';
+        $data['instruction1'] = 'Select table(s) that you wish to export .';
+        $data['instruction2'] = '';
     }
 
 

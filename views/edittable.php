@@ -70,6 +70,13 @@
     var updatedData =[];
     var rowStates = [];
     var sql = '';
+    var successfulOperation = false;
+
+    vtlModal.addEventListener('vtlModalClosed', () => {
+        if (successfulOperation) {
+            location.reload();
+        }
+    });
 
     document.addEventListener("DOMContentLoaded", function () {
         const dropdown = document.getElementById('tableChoiceDropdown');
@@ -235,7 +242,6 @@
         // Add logic to handle table built
         tabulator.setData(tableData);
         initialTableData = tabulator.getData(); // Store the initial table data
-        console.log("Initial table data stored:", initialTableData);
     }
 
     function handleRowAdded(row) {
@@ -265,12 +271,13 @@
                 // Parse the JSON response
                 var response = JSON.parse(xhr.responseText);
                 if (response.status === 'success') {
-                    openVtlModal('Table Created',true,response.message);
+                    successfulOperation = true;
+                    openVtlModal('Table Altered',true,response.message);
                 } else {
-                    openVtlModal('Error Creating Table',false,response.message);
+                    openVtlModal('Error Altering Table',false,response.message);
                 }
             } else {
-                openVtlModal('Error Creating Table',false,response.message);
+                openVtlModal('Error Altering Table',false,response.message);
             }
         };
     }
