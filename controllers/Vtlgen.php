@@ -436,8 +436,8 @@ class Vtlgen extends Trongate
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
         $data['headline'] = 'Vtl Data Generator: Edit Table';
-        $data['instruction1'] = 'Select tables from the dropdown below to Edit.';
-        $data['instruction2'] = '';
+        $data['instruction1'] = 'Select table to edit from the dropdown below.';
+        $data['instruction2'] = 'Once the edit is complete, generate the Sql and then save it.';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'edittable';
         $this->template('admin', $data);
@@ -2858,6 +2858,54 @@ class Vtlgen extends Trongate
     //endregion
 
 
+
+    //region edittable view functions
+
+    /**
+     * Execute an SQL statement received in the request body and handle transactional operations.
+     *
+     * @throws Exception Rollbacks the transaction if an error occurs during SQL execution.
+     */
+    public function edittableAlterDataTable(): void {
+        // Retrieve raw POST data from the request body
+        $rawPostData = file_get_contents('php://input');
+
+        // Decode the JSON data into an associative array
+        $postData = json_decode($rawPostData, true);
+
+        // Extract relevant data from the decoded JSON
+        $sql = $postData['sql'];
+
+        // Initialize response array
+        $response = ['status' => '', 'message' => ''];
+
+        try {
+            // Check if dbh is properly initialized
+            if (!$this->dbh) {
+                throw new Exception('Database connection not established.');
+            }
+
+            // Execute the SQL statement (no transaction needed)
+            $this->dbh->exec($sql);
+
+            // Update response on success
+            $response['status'] = 'success';
+            $response['message'] = 'Operation completed successfully.';
+        } catch (Exception $e) {
+            // Log the error message for debugging purposes
+            error_log('SQL Error: ' . $e->getMessage());
+
+            // Update response on error
+            $response['status'] = 'error';
+            $response['message'] = 'Operation failed: ' . $e->getMessage();
+        }
+
+        // Return the response as JSON
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    }
+
+    //endregion
 
 
 
