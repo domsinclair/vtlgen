@@ -441,6 +441,12 @@ class Vtlgen extends Trongate
         $this->openHelpView($filepath, $headline);
     }
 
+    public function vtlgenShowPointsOfInterestHelp(): void{
+        $filepath = __DIR__ . '/../assets/help/general.md';
+        $headline = 'Vtl Data Generator: Customise Faker';
+        $this->openHelpView($filepath, $headline);
+    }
+
     /**
      * Fetches and displays the latest primary key values for tables.
      *
@@ -813,6 +819,34 @@ class Vtlgen extends Trongate
     }
 
     /**
+     * Retrieves all tables with rows from the database.
+     *
+     * @return array List of tables with rows
+     */
+    private function getAllTablesWithRows(): array {
+        $database = DATABASE;
+        $tables = [];
+        $sql = "SELECT table_name AS 'table'
+            FROM information_schema.tables
+            WHERE table_schema = :database
+              AND table_type = 'BASE TABLE'
+              AND table_rows > 0
+            ORDER BY table_name ASC;";
+
+        try {
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->bindParam(':database', $database, PDO::PARAM_STR);
+            $stmt->execute();
+            $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            // Handle the exception (optional)
+            // echo "Error: " . $e->getMessage();
+        }
+
+        return $tables;
+    }
+
+    /**
      * Get All Tables in the Database
      *
      * This function retrieves the names of all tables in the database using standard PDO.
@@ -884,17 +918,20 @@ class Vtlgen extends Trongate
      * @return void
      */
     private function openDeleteOrDropView(string $task): void {
-        $data['tables'] = $this->setupTablesForDatabaseAdmin();
+
         $data['task'] = $task;
 
         switch ($task) {
             case 'delete':
+                $data['tables'] = $this->getAllTablesWithRows();
                 $this->handleDeleteTask($data);
                 break;
             case 'drop':
+                $data['tables'] = $this->setupTablesForDatabaseAdmin();
                 $this->handleDropTask($data);
                 break;
             case 'export':
+                $data['tables'] = $this->setupTablesForDatabaseAdmin();
                 $this->handleExportTask($data);
                 break;
             default:

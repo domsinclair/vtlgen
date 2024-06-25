@@ -194,7 +194,7 @@
                         }
 
                         // Handle the response with the custom modal
-                        openVtlModal('Data Deleted Successfully', true, message);
+                        openVtlModal('Data Deleted', true, message);
 
 
                     } catch (e) {
@@ -263,7 +263,7 @@
                         }
 
                         // Handle the response with the custom modal
-                        openVtlModal('Tables Dropped Successfully', true, message);
+                        openVtlModal('Tables Dropped', true, message);
                     } catch (e) {
                         console.error('Error parsing JSON response:', e);
                         openVtlModal('Error Parsing Json', false, 'An error occurred while processing the response.');
