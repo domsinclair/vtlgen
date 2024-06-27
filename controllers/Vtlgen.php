@@ -412,15 +412,15 @@ class Vtlgen extends Trongate
     /**
      * Displays the general help documentation.
      *
-     * This function reads the markdown file located at '../assets/help/help.md',
+     * This function reads the markdown file located at '../assets/help/general.md',
      * parses its content to HTML using Parsedown, and then sets the parsed content
-     * along with other necessary data to be used in the 'generalHelp' view.
+     * along with other necessary data to be used in the 'help' view.
      *
      * @return void
      */
     public function vtlgenShowGeneralHelp(): void
     {
-        $filepath = __DIR__ . '/../assets/help/help.md';
+        $filepath = __DIR__ . '/../assets/help/general.md';
         $headline = 'Vtl Data Generator: General Help';
         $this->openHelpView($filepath, $headline);
     }
@@ -430,7 +430,7 @@ class Vtlgen extends Trongate
      *
      * This function reads the markdown file located at '../assets/help/customise.md',
      * parses its content to HTML using Parsedown, and then sets the parsed content
-     * along with other necessary data to be used in the 'customisefaker' view.
+     * along with other necessary data to be used in the 'help' view.
      *
      * @return void
      */
@@ -441,9 +441,34 @@ class Vtlgen extends Trongate
         $this->openHelpView($filepath, $headline);
     }
 
+    /**
+     * Displays the points of interest help documentation.
+     *
+     * This function reads the markdown file located at '../assets/help/pointsofinterest.md',
+     * parses its content to HTML using Parsedown, and then sets the parsed content
+     * along with other necessary data to be used in the 'help' view.
+     *
+     * @return void
+     */
     public function vtlgenShowPointsOfInterestHelp(): void{
-        $filepath = __DIR__ . '/../assets/help/general.md';
-        $headline = 'Vtl Data Generator: Customise Faker';
+        $filepath = __DIR__ . '/../assets/help/pointsofinterest.md';
+        $headline = 'Vtl Data Generator: Points of Interest';
+        $this->openHelpView($filepath, $headline);
+    }
+
+
+    /**
+     * Displays the tabulator help documentation.
+     *
+     * This function reads the markdown file located at '../assets/help/tabulator.md',
+     * parses its content to HTML using Parsedown, and then sets the parsed content
+     * along with other necessary data to be used in the 'help' view.
+     *
+     * @return void
+     */
+    public function vtlgenShowTabulatorHelp(): void{
+        $filepath = __DIR__ . '/../assets/help/tabulator.md';
+        $headline = 'Vtl Data Generator: Tabulator';
         $this->openHelpView($filepath, $headline);
     }
 

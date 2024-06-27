@@ -183,7 +183,7 @@ Underneath the table displaying the data are three buttons that allow you to dow
 <br>
 <div id="browseindex"></div>
 
-You can opt to see all of the indexes that are present in the database by choosing this option.  They will be displayed in a table 9which itself will be paginated if necessary).  The option to download the information to HTML, CSV or Json is present if required.
+You can opt to see all of the indexes that are present in the database by choosing this option.  They will be displayed in a table (which itself will be paginated if necessary).  The option to download the information to HTML, CSV or Json is present if required.
 
 <br>
 <div id="keyops"></div>
@@ -384,3 +384,45 @@ There are two other buttons that provide you with some additional functionality.
 <div id="droptable"></div>
 
 - Select the table, or tables that you want to drop from the database and then click the 'Drop Table' button.  Tables that form part of existing table relationships will not be dropped.
+
+<div class = "text-center">
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlTableEditDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlTableEdit.svg">
+</picture>
+<figcaption>Edit Table</figcaption> 
+</figure>
+</div>
+
+<br>
+<div id="edittable"></div>
+
+- Select the table that you wish to edit from the dropdown.
+- Upon selection an editable datatable will be populated with all of that table's columns.
+- You can edit individual aspects of columns, drop columns completely or add new columns.
+- As soo as you have completed your edits click the 'Generate Sql' button to view the sql statement that will be used to effect your proposed changes.
+- If you are happy with your changes then click the 'Save Changes' button.
+
+> <b>You are responsible for ensuring the integrity of any data that exists in the table before you effect any changes to the table structure itself.</b>
+ 
+If you are familiar with the process for creating new database tables then the operation of this view should be easy and it has been deliberately designed to replicate the procedure for creating tables.
+
+
+<div class = "text-center">
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlDatabaseExportDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlDatabaseExport.svg">
+</picture>
+<figcaption>Database Export</figcaption> 
+</figure>
+</div>
+
+<br>
+<div id="export"></div>
+
+- Select those tables for which you wish to create an export script.
+- Click the 'Export Tables' button.
+
+A backup script will then be generated and saved to a special backups folder in the module's assets directory.  The location of this folder can be customised, more details of which can be found in the customisation help file.

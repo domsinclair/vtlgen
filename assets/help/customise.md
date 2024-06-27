@@ -21,30 +21,42 @@ define('FAKER_LOCALE', 'en_GB');
 define('FAKER_SEED', '13579');
 define('FAKER_DATE_FORMAT', 'Y-m-d');
 define('FAKER_DATETIME_FORMAT', 'Y-m-d H:i:s');
+define('FAKER_TIME_FORMAT', 'H:i:s');
+define('FAKER_TIMESTAMP_FORMAT', 'Y-m-d H:i:s');
+define ('SQL_SCRIPTS_LOCATION', __DIR__ . '/../assets/sqltablescripts');
+define ('BACKUP_SCRIPTS_LOCATION', __DIR__ . '/../assets/backups');
 ```
 
 Setting your locale will immediately improve the quality of data generated to make it more appropriate to your region.
 
-The Date and DateTime formats can also be set and these will affect the way that the data is stored in the database. By
+The Date, DateTime, Time and Timestamp formats can also be set and these will affect the way that the data is stored in the database. By
 default a generally accepted norm for these values has been applied.
 
-Lastly you can alter the seed value if you wish. The purpose behind seeding the Faker Generator is to ensure that
+You can alter the seed value if you wish. The purpose behind seeding the Faker Generator is to ensure that
 similar records are created on each run. Being able to predict that a record with a primary key of 'x' will contain
 columns with specific values can be extremely beneficial when it comes to testing.
 
-The VTL Data Generator has implemented seeding by default but it can be very easily disabled by commenting out the
-relevant line in the createFakes method in the vtl_faker.php controller.
+You can also set the default locations for where the Generator should save generated sql scripts for table creation and backup export scripts.  This could be particularly useful if you decide to extensively customise the generator to suit your own particular needs.
 
+
+The VTL Data Generator has implemented seeding by default but it can be very easily disabled by commenting out the
+relevant line in the createdataCreateFakeData() method in the Vtlgen.php controller.
+00
 ```php
- public function createFakes(): void
-    {
+  public function createdataCreateFakeData(): void{
         // Initialize Faker instance
         $faker = null;
         $faker = $this->$faker;
+
+        // register any custom provider(s) with the faker
+        $faker->addProvider(new Faker\Provider\Commerce($faker));
+        $faker->addProvider(new Faker\Provider\Blog($faker));
+
         // Seed the faker.  This will ensure that the same data gets recreated
-        // which can be useful for testing purposes. 
+        // which can be useful for testing purposes.
         // Comment out the line below if you don't want to use a seeded faker.
-        $faker->seed(FAKER_SEED);
+
+        //$faker->seed(FAKER_SEED);
 ```
 
 #### The basic data Creation process
@@ -233,16 +245,17 @@ to create several thousand unique product names.
 
 The last task that needs to be done is to actively register the provider with any new faker instance that we create.
 
-In the Data Generator this is done just after we setupup the faker for use.
+In the Data Generator this is done just after we setup the faker for use.
 
 ```php
-public function createFakes(): void
-    {
+   public function createdataCreateFakeData(): void{
         // Initialize Faker instance
         $faker = null;
         $faker = $this->$faker;
+
         // register any custom provider(s) with the faker
         $faker->addProvider(new Faker\Provider\Commerce($faker));
+        $faker->addProvider(new Faker\Provider\Blog($faker));
 ```
 
 ### Tweaking and using the custom provider
@@ -308,11 +321,10 @@ Trongate Pages table was a good case in point as the page body is actually an ht
 This required a rethink about how the Vtl Data Generator does things but in the process has led to a far more robust
 solution.
 
-When you initially select a table for data generation your choice is handled by the createFakes() method.
+When you initially select a table for data generation your choice is handled by the createdataCreateFakeData() method.
 
 ```php
- public function createFakes(): void
-    {
+   public function createdataCreateFakeData(): void{
         // Initialize Faker instance
         $faker = null;
         $faker = $this->$faker;
@@ -324,25 +336,20 @@ When you initially select a table for data generation your choice is handled by 
         // Seed the faker.  This will ensure that the same data gets recreated
         // which can be useful for testing purposes.
         // Comment out the line below if you don't want to use a seeded faker.
-        $faker->seed(FAKER_SEED);
 
+        //$faker->seed(FAKER_SEED);
 
-        // Retrieve raw POST data from the request body
         $rawPostData = file_get_contents('php://input');
-
         // Decode the JSON data into an associative array
         $postData = json_decode($rawPostData, true);
-
         // Ensure JSON decoding was successful
         if ($postData === null) {
             throw new Exception("Invalid JSON data");
         }
-
         // Extract relevant data from the decoded JSON
         $selectedTable = $postData['selectedTable'];
         $selectedRows = $postData['selectedRows'];
         $numRows = $postData['numRows'];
-
 
         // Now is the time to hive off highly customised data creation for particular tables
         // like Trongate pages
@@ -350,14 +357,11 @@ When you initially select a table for data generation your choice is handled by 
         switch ($selectedTable) {
             case 'trongate_pages':
                 $this->transferImagesToTrongatePages();
-                $this->generateDataForTrongatePages($faker, $selectedRows, $numRows);
+                $this->generateDataForTrongatePages($faker, $selectedTable, $selectedRows, $numRows);
                 break;
             default :
                 $this->processGeneralTablesThatAreNotSpecialCases($faker, $selectedTable, $selectedRows, $numRows);
-                break;
         }
-
-
     }
 ```
 
@@ -368,10 +372,10 @@ to the Trongate pages images folder is being called first.)
 You can then handle your custom generation any way you want. The method for Trongate Pages is shown below.
 
 ```php
-  private function transferImagesToTrongatePages()
+  private function transferImagesToTrongatePages(): void
     {
         //check if img1.png resides in the images/uploades directory
-        $basedir = APPPATH . 'modules/vtlgen/vtl_faker/assets/images/';
+        $basedir = APPPATH . 'modules/vtlgen/assets/images/';
         $sourcedir = APPPATH . 'modules/trongate_pages/assets/images/uploads';
         if (!file_exists($sourcedir . '/img1.jpg')) {
             // Copy files from $basedir to $sourcedir
@@ -392,142 +396,105 @@ You can then handle your custom generation any way you want. The method for Tron
         }
     }
 
-    private function generateDataForTrongatePages($faker, $selectedTable, $selectedRows, $numRows)
+     private function generateDataForTrongatePages($faker, $selectedTable, $selectedRows, $numRows)
     {
-
-        // we ought to count the current tally of trongate pages as we'll use that to help
-        // generate short unique uri strings
-
-        $countSql = 'Select count(*) from ' . $selectedTable;
-        $result = $this->model->query($countSql, 'array');
+        // Count the current tally of trongate pages
+        $countSql = 'SELECT count(*) as count FROM ' . $selectedTable;
+        $stmt = $this->dbh->query($countSql);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Check if the result is not empty and has the 'count' key
-        if (!empty($result) && isset($result[0]['count(*)'])) {
-            $pagesCount = (int)$result[0]['count(*)'];
-        } else {
-            // Handle the case when no count is returned or there's an error
-            $pagesCount = 0; // or any default value you want
-        }
+        $pagesCount = !empty($result) && isset($result['count']) ? (int)$result['count'] : 0;
 
+        // Set number of rows to generate
+        $numRows = is_int($numRows) ? $numRows : intval($numRows);
 
-        // now we can set to work
-        if (!is_int($numRows)) {
-            $numRows = intval($numRows);
-        }
-
-        $columns = '(';
+        $columns = '(' . implode(',', array_column($selectedRows, 'field')) . ')';
         $values = '';
 
-        foreach ($selectedRows as $key => $selectedRow) {
-            $originalFieldName = $selectedRow['field'];
-            $columns .= $originalFieldName;
-            if ($key < count($selectedRows) - 1) {
-                $columns .= ',';
-            } else {
-                $columns .= ')';
-            }
-        }
-
-        // That's the columns part of the eventual sql statement taken care of
-        // now to generate the values needed.
+        // Generate the values needed
         $pageTitle = '';
         for ($i = 0; $i < $numRows; $i++) {
             $rowValues = '';
 
             foreach ($selectedRows as $selectedRow) {
-                if ($rowValues !== '') {
-                    $rowValues .= ',';
-                }
-                $value = null;
                 $field = $this->processFieldName($selectedRow['field']);
+                $value = null;
 
                 switch ($field) {
                     case 'urlstring':
-                        if ($pagesCount > 0) {
-                            // Fetch existing URLs from the database
-                            $existingUrls = $this->model->query('SELECT url_string FROM ' . $selectedTable, 'array');
-
-                            do {
-                                $proposedUrl = 'article' . ($pagesCount + $i + 1);
-                                $unique = true;
-                                foreach ($existingUrls as $row) {
-                                    if ($row['url_string'] === $proposedUrl) {
-                                        $unique = false;
-                                        break;
-                                    }
-                                }
-                                $i++;
-                            } while (!$unique);
-
-                            $value = '"' . $proposedUrl . '"';
-                        } else {
-                            $value = '"article' . $i . '"';
-                        }
+                        $existingUrlsStmt = $this->dbh->query('SELECT url_string FROM ' . $selectedTable);
+                        $existingUrls = $existingUrlsStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+                        do {
+                            $proposedUrl = 'article' . ($pagesCount + $i + 1);
+                            $unique = !in_array($proposedUrl, $existingUrls);
+                            if (!$unique) $i++;
+                        } while (!$unique);
+                        $value = '"' . $proposedUrl . '"';
                         break;
                     case 'pagetitle':
-                        $pageTitle = $faker->articleTitle(); // Assign to $pageTitle instead of $value
+                        $pageTitle = $faker->articleTitle();
                         $value = '"' . $pageTitle . '"';
                         break;
                     case 'metakeywords':
-                        $value = $faker->metaKeywords(rand(1, 6));
-                        $value = implode(', ', $value);
-                        $value = '"' . $value . '"';
+                        $metaKeywords = $faker->metaKeywords(rand(1, 6));
+                        $value = '"' . implode(', ', $metaKeywords) . '"';
                         break;
                     case 'metadescription':
-                        $value = $faker->metaDescription();
-                        $value = '"' . $value . '"';
+                        $value = '"' . $faker->metaDescription() . '"';
                         break;
                     case 'pagebody':
                         $numParas = rand(1, 4);
                         $numSentences = rand(1, 3);
                         $pagebody = '<h1>' . $pageTitle . '</h1>';
                         for ($j = 0; $j < $numParas; $j++) {
-                            $text = ''; // Reset $text for each paragraph
+                            $text = '';
                             for ($k = 0; $k < $numSentences; $k++) {
-                                $text .= $faker->sentence() . ' '; // Append sentences to $text
+                                $text .= $faker->sentence() . ' ';
                             }
-                            // Escape double quotes within HTML attributes by doubling them
-                            $text = '<div class=""text-div"">' . $text . '</div>'; // Wrap text in a div
+                            $text = '<div class=""text-div""><p>' . $text . '</p></div>';
                             $img = $faker->randomElement(['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img7.jpg', 'img8.jpg', 'img9.jpg', 'img10.jpg', 'img11.jpg']);
                             $imgText = '<img src="' . BASE_URL . 'trongate_pages_module/images/uploads/' . $img . '" />';
-                            $pagebody .= $text . $imgText; // Append $text and $imgText to $pagebody
+                            $pagebody .= $text . $imgText;
                         }
-                        // Escape double quotes within SQL string by doubling them
                         $pagebody = '"' . str_replace('"', '""', $pagebody) . '"';
                         $value = $pagebody;
                         break;
-                    case 'datecreated' :
-                        $value = $faker->unixTime(new dateTime('-3 days'));
+                    case 'datecreated':
+                        $value = $faker->unixTime(new DateTime('-3 days'));
                         break;
-                    case 'lastupdated' :
-                        $value = $faker->unixTime(new dateTime('-1 days'));
+                    case 'lastupdated':
+                        $value = $faker->unixTime(new DateTime('-1 days'));
                         break;
                     case 'published':
                         $value = $faker->numberBetween(0, 1);
                         break;
-                    case 'createdby' :
+                    case 'createdby':
                         $value = 1;
                         break;
                 }
-                $rowValues .= $value;
+                $rowValues .= ($rowValues !== '' ? ',' : '') . $value;
             }
-            $values .= '(' . $rowValues . ')';
-
-            if ($i < $numRows - 1) {
-                $values .= ', ';
-            }
+            $values .= '(' . $rowValues . ')' . ($i < $numRows - 1 ? ', ' : '');
         }
 
-        $sql = 'INSERT INTO ' . $selectedTable . ' ' . $columns . ' VALUES ' . $values . ';';
-
+        $sql = 'INSERT INTO ' . $selectedTable . ' ' . $columns . ' VALUES ' . $values;
 
         try {
-            $data = [];
-            $this->model->prepare_and_execute($sql, $data);
-            echo('The following number rows were inserted into trongate_pages: ' . $numRows);
-        } catch (Exception $e) {
-            echo($e->getMessage());
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute();
+            echo json_encode([
+                'success' => true,
+                'message' => 'The following number of rows were inserted into trongate_pages: ' . $numRows . '.'
+            ]);
+        } catch (PDOException $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
+
+
 
     }
 ```
