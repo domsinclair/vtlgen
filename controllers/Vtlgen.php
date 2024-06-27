@@ -485,6 +485,11 @@ class Vtlgen extends Trongate
         $this->showRowData($rows, $headline, $noDataMessage);
     }
 
+    /**
+     * Displays the Vtl Data Generator: Drop Index view.
+     *
+     * @return void
+     */
     public function vtlgenDeleteIndex(): void{
         $data['rows'] = $this->getAllTableIndexes();
         $data['headline'] = 'Vtl Data Generator: Drop Index';
@@ -497,6 +502,11 @@ class Vtlgen extends Trongate
         $this->template('admin', $data);
     }
 
+    /**
+     * Displays the indexes from the database.
+     *
+     * @return void
+     */
     public function vtlgenShowIndexes(): void{
         $rows = $this->getAllTableIndexes();
         $headline = 'Vtl Data Generator: Browse Indexes in Database';
