@@ -703,10 +703,9 @@ $faker->optional()->passthrough(mt_rand(5, 15));
 <br/>
 
 
-<div id="barcode">
-<hr/>
-<hr/>
-</div>
+<div id="barcode" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Barcode
 
@@ -754,9 +753,9 @@ echo $faker->isbn13();
 // '9786881116078', '9785625528412'
 ```
 
-<div id="biased">
-<hr/>
-</div>
+<div id="biased" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Biased
 
@@ -784,9 +783,9 @@ echo $faker->biasedNumberBetween(0, 20, 'log');
 // 9, 4, 12
 ```
 
-<div id="colour">
-<hr/>
-</div>
+<div id="colour" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Colour
 
@@ -890,9 +889,9 @@ $faker->hslColorAsArray();
 // [0 => 311, 1 => 84, 2 => 31], [0 => 283, 1 => 85, 2 => 49], [0 => 57, 1 => 48, 2 => 36]
 ```
 
-<div id="dateandtime">
-<hr/>
-</div>
+<div id="dateandtime" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Date and Time
 
@@ -1195,9 +1194,9 @@ echo $faker->timezone('US');
 // 'America/New_York', 'America/Los_Angeles'
 ```
 
-<div id="file">
-<hr/>
-</div>
+<div id="file" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## File
 
@@ -1235,9 +1234,9 @@ $faker->file('docs', 'site', false);
 // 'c4cdee40-0eee-3172-9bca-bdafbb743c17.md', '88aef77e-040d-39a3-8f88-eca522f759ba.md', 'ecbee0e9-6fad-397b-88fb-d84704c7a71c.md'
 ```
 
-<div id="htmllorem">
-<hr/>
-</div>
+<div id="htmllorem" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## HTML Lorem
 
@@ -1259,9 +1258,9 @@ echo $faker->randomHtml(1, 1);
 // '<html><head><title>Architecto ut eius nisi molestiae atque ab.</title></head><body><form action="example.net" method="POST"><label for="username">saepe</label><input type="text" id="username"><label for="password">est</label><input type="password" id="password"></form></body></html>'
 ```
 
-<div id="image">
-<hr/>
-</div>
+<div id="image" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Image
 
@@ -1345,9 +1344,9 @@ echo $faker->image(null, 360, 360, 'animals', true, true, 'cats', true, 'jpg');
 // '/tmp/9444227f06f0b024a14688ef3b31fe7a.jpg'
 ```
 
-<div id="internet">
-<hr/>
-</div>
+<div id="internet" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Internet
 
@@ -1537,9 +1536,9 @@ echo $faker->macAddress();
 // '94:00:10:01:58:07', '0E:E1:48:29:2F:E2'
 ```
 
-<div id="miscellaneous">
-<hr/>
-</div>
+<div id="miscellaneous" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Miscellaneous
 
@@ -1649,9 +1648,9 @@ echo $faker->emoji();
 // '😦', '😎', '😢'
 ```
 
-<div id="numbersandstrings">
-<hr/>
-</div>
+<div id="numbersandstrings" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Numbers and Strings
 
@@ -1905,9 +1904,9 @@ echo $faker->regexify('[A-Z]{5}[0-4]{3}');
 // 'DRSQX201', 'FUDPA404', 'CQVIU411'
 ```
 
-<div id="payment">
-<hr/>
-</div>
+<div id="payment" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Payment
 
@@ -2028,9 +2027,9 @@ echo $faker->swiftBicNumber();
 // 'OGFCTX2GRGN', 'QFKVLJB7'
 ```
 
-<div id="textandparagraphs">
-<hr/>
-</div>
+<div id="textandparagraphs" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Text and Paragraphs
 
@@ -2162,9 +2161,9 @@ echo $faker->text(100);
 // Quaerat eveniet magni a optio. Officia facilis cupiditate fugiat earum ipsam nemo nulla.
 ```
 
-<div id="useragent">
-<hr/>
-</div>
+<div id="useragent" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## User Agent
 
@@ -2238,9 +2237,9 @@ echo $faker->msedge();
 // 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36 Edg/99.0.1150.36'
 ```
 
-<div id="uuid">
-<hr/>
-</div>
+<div id="uuid" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## UUID
 
@@ -2254,9 +2253,9 @@ echo $faker->uuid();
 // 'bf91c434-dcf3-3a4c-b49a-12e0944ef1e2', '5b2c0654-de5e-3153-ac1f-751cac718e4e'
 ```
 
-<div id="version">
-<hr/>
-</div>
+<div id="version" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Version
 
@@ -2279,10 +2278,10 @@ echo $faker->semver(true, true);
 // 0.0.1-beta, 1.0.0-rc.1, 1.5.9+276e88b, 5.6.2-alpha.2+20180419085616
 ```
 
-<div id="blog">
-<hr/>
-<hr/>
-</div>
+<div id="blog" tabindex="-1"></div>
+<div><hr/></div>
+
+
 
 ## Blog
 
@@ -2382,9 +2381,9 @@ echo $faker -> metaDescription();
 // Get access to diverse perspectives and viewpoints
 ```
 
-<div id="commerce">
-<hr/>
-</div>
+<div id="commerce" tabindex="-1"></div>
+<div><hr/></div>
+
 
 ## Commerce
 

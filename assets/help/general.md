@@ -5,7 +5,7 @@ The Vtl Data Generator is a module designed to help you with everyday database a
 > config.php file in the config folder of Trongate itself) is set to 'dev'. Any other setting OR a non administrative user
 > will result in a fallback to the main welcome page.</b>
 
-
+> There is no implied warranty with this module, you use it at your own risk. That being said it is robust and is routinely tested but it is impossible to replicate every possible Trongate implementation.  As such no responsibility for any data loss or other loss can or will be entertained.
 <br>
 
 The module has four key areas of operation and a set of comprehensive help files to assist you with understanding how it all works and can be tweaked to your own liking.
@@ -47,11 +47,12 @@ This latest iteration has involved a complete refactoring, and in some cases rew
 Every function is accessible from the home page which acts as a navigation hub. 
 
 <br>
-<div id="datageneration"></div>
+<div id="datageneration" tabindex="-1"></div>
 ### Data Generation and Visualisation
 
 
 <div class = "text-center">
+<div id="createrecords" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlRecordAddDark.svg" media="(prefers-color-scheme: dark)">
@@ -61,8 +62,8 @@ Every function is accessible from the home page which acts as a navigation hub.
 </figure>
 </div>
 
-<br>
-<div id="createrecords"></div>
+
+
 
 - Select the table for which you wish to create fake data from the dropdown.
 - From the list of fields in that table that now appears select those for which you need data.
@@ -86,6 +87,7 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 <br>
 
 <div class = "text-center">
+<div id="deleterecords" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlRecordRemoveDark.svg" media="(prefers-color-scheme: dark)">
@@ -95,8 +97,8 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 </figure>
 </div>
 
-<br>
-<div id="deleterecords"></div>
+
+
 
 - Select the table (or tables) for which you wish to delete data.
 - If you wish to reset the auto increment on the table then ensure you check the relevant box.
@@ -107,6 +109,7 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 <br>
 
 <div class = "text-center">
+<div id="browse" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlBrowseDataDark.svg" media="(prefers-color-scheme: dark)">
@@ -116,7 +119,7 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 </figure>
 </div>
 
-<br>
+
 <div id="browse"></div>
 
 - Select the table from which you wish to browse the data.
@@ -125,11 +128,12 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 Underneath the table displaying the data are three buttons that allow you to download the data contained in the table in either HTML, CSV or Json.
 
 <br>
-<div id="indexops"></div>
+<div id="indexops" tabindex="-1"></div>
 ### Index Operations
 
 
 <div class = "text-center">
+<div id="createindex" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlIndexAddDark.svg" media="(prefers-color-scheme: dark)">
@@ -139,8 +143,8 @@ Underneath the table displaying the data are three buttons that allow you to dow
 </figure>
 </div>
 
-<br>
-<div id="createindex"></div>
+
+
 
 - Select the table for which you wish to create an index from the dropdown.
 - All the table's columns (with the exception of the primary key) will then be displayed.
@@ -151,6 +155,7 @@ Underneath the table displaying the data are three buttons that allow you to dow
 > If you create a unique index you need to be aware that data you have already created for that column may not comply.  Unique indexes require a dgree of customisation in the way that fake data is created.  See the customisation help topic.
 
 <div class = "text-center">
+<div id="deleteindex" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlIndexRemoveDark.svg" media="(prefers-color-scheme: dark)">
@@ -160,8 +165,8 @@ Underneath the table displaying the data are three buttons that allow you to dow
 </figure>
 </div>
 
-<br>
-<div id="deleteindex"></div>
+
+
 
 - Select the index or indexes that you wish to drop.
 
@@ -171,6 +176,7 @@ Underneath the table displaying the data are three buttons that allow you to dow
 
 
 <div class = "text-center">
+<div id="browseindex" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlIndexBrowseDark.svg" media="(prefers-color-scheme: dark)">
@@ -180,17 +186,18 @@ Underneath the table displaying the data are three buttons that allow you to dow
 </figure>
 </div>
 
-<br>
-<div id="browseindex"></div>
+
+
 
 You can opt to see all of the indexes that are present in the database by choosing this option.  They will be displayed in a table (which itself will be paginated if necessary).  The option to download the information to HTML, CSV or Json is present if required.
 
 <br>
-<div id="keyops"></div>
+<div id="keyops" tabindex="-1"></div>
 ### Foreign and Primary Key Operations
 
 
 <div class = "text-center">
+<div id="createkey" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlForeignKeysAddDark.svg" media="(prefers-color-scheme: dark)">
@@ -200,8 +207,7 @@ You can opt to see all of the indexes that are present in the database by choosi
 </figure>
 </div>
 
-<br>
-<div id="createkey"></div>
+
 
 Creating Foreign Keys requires the linking of fields in two tables.  Imagine that there are two tables in the database, orders and orderDetails.  Each orderDetail is linked to a specific order.  This is generally described as an order => orderDetails relationship. An order has one or more related orderDetail items.  In this example orderDetails is the Foreign Key Side of the relationship and orders is the Related To side of the relationship.  Before you beging to create foreign keys you need to be sure that you know which table will be associated with which side.
 
@@ -211,6 +217,7 @@ Creating Foreign Keys requires the linking of fields in two tables.  Imagine tha
 
 
 <div class = "text-center">
+<div id="dropkey" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlForeignKeysRemoveDark.svg" media="(prefers-color-scheme: dark)">
@@ -220,13 +227,13 @@ Creating Foreign Keys requires the linking of fields in two tables.  Imagine tha
 </figure>
 </div>
 
-<br>
-<div id="dropkey"></div>
+
 
 - From the provided table listing all the foreign keys in the database select those that you wish to drop.
 - Click the 'Drop Foreign Key' button.
 
 <div class = "text-center">
+<div id="browseforeign" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlForeignKeysViewDark.svg" media="(prefers-color-scheme: dark)">
@@ -236,12 +243,12 @@ Creating Foreign Keys requires the linking of fields in two tables.  Imagine tha
 </figure>
 </div>
 
-<br>
-<div id="browseforeign"></div>
+
 
 From this table you can view all of the foreign keys that are present in the database.  There is the option to export the information to HTML, CSV or Json.
 
 <div class = "text-center">
+<div id="browseprimary" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlPrimaryKeysDark.svg" media="(prefers-color-scheme: dark)">
@@ -251,12 +258,17 @@ From this table you can view all of the foreign keys that are present in the dat
 </figure>
 </div>
 
-<br>
-<div id="browseprimary"></div>
+
 
 From this table you can see all of the database table's primary keys, and the value of the latest primary key for each table.  This information can be dowloaded to HTML, CSV or Json.
 
+<br>
+<div id="dbase" tabindex="-1"></div>
+### Database Operations
+
+
 <div class = "text-center">
+<div id="createtable" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlTableAddDark.svg" media="(prefers-color-scheme: dark)">
@@ -266,8 +278,7 @@ From this table you can see all of the database table's primary keys, and the va
 </figure>
 </div>
 
-<br>
-<div id="createtable"></div>
+
 
 At first sight the Vtl Data Generator Create Table form may seem complicated but once you become familiar with it it is pretty simple to use and provides a lot of useful functionality, especially if you are someone who decides to customise the Generator and reuse it across projects.
 
@@ -371,6 +382,7 @@ Once you are ready to actually generate the table then click the 'Generate Table
 There are two other buttons that provide you with some additional functionality.  You can opt to save the Sql statement that you have created which will easily allow you to create a library of tables, and you can opt to create a table from and existing sql query.  This effectively allows you to create a reusable library of ready made table creation statements.
 
 <div class = "text-center">
+<div id="droptable" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlTableRemoveDark.svg" media="(prefers-color-scheme: dark)">
@@ -380,12 +392,12 @@ There are two other buttons that provide you with some additional functionality.
 </figure>
 </div>
 
-<br>
-<div id="droptable"></div>
+
 
 - Select the table, or tables that you want to drop from the database and then click the 'Drop Table' button.  Tables that form part of existing table relationships will not be dropped.
 
 <div class = "text-center">
+<div id="edittable" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlTableEditDark.svg" media="(prefers-color-scheme: dark)">
@@ -395,8 +407,7 @@ There are two other buttons that provide you with some additional functionality.
 </figure>
 </div>
 
-<br>
-<div id="edittable"></div>
+
 
 - Select the table that you wish to edit from the dropdown.
 - Upon selection an editable datatable will be populated with all of that table's columns.
@@ -410,6 +421,7 @@ If you are familiar with the process for creating new database tables then the o
 
 
 <div class = "text-center">
+<div id="export" tabindex="-1"></div>
 <figure>
 <picture>
     <source srcset="vtlgen_module/help/images/vtlDatabaseExportDark.svg" media="(prefers-color-scheme: dark)">
@@ -419,8 +431,7 @@ If you are familiar with the process for creating new database tables then the o
 </figure>
 </div>
 
-<br>
-<div id="export"></div>
+
 
 - Select those tables for which you wish to create an export script.
 - Click the 'Export Tables' button.
