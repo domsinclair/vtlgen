@@ -344,6 +344,18 @@ class Vtlgen extends Trongate
     }
 
     /**
+     * Generates the SQL creation view for the Vtl Data Generator.
+     *
+     * @return void
+     */
+    public function vtlgenCreateSql(): void{
+        $data['headline'] = 'Vtl Data Generator: Create SQL';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'createsql';
+        $this->template('admin', $data);
+    }
+
+    /**
      * Shows the foreign keys in the database for the Vtl Data Generator.
      * Very specifically it will show those created by the Data Generator
      */

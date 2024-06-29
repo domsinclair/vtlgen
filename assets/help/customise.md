@@ -2,7 +2,7 @@ The Vtl Data Generator strives to automate as much of the process of creating fa
 definition it's unlikely to be perfect out of the box.
 
 The very first thing that you can do before generating any data at all is to customise the Data Generator config.php
-file which you can find in the vtl_faker assets folder.
+file which you can find in the vtlgen assets folder.
 
 <div>
 <figure>
@@ -137,7 +137,7 @@ Out of the box FakerPhp does not really have anything suitable so the goal of th
 provider was created and hopefully it should give you the confidence to try it out for yourself.
 
 Begin by creating a new file called called Commerce,php in the Provider directory that is located in the
-vtl_faker/assets/vendor/fakerphp/faker/src/Faker folder and ensure that its basic layout is as follows.
+vtlgen/assets/vendor/fakerphp/faker/src/Faker folder and ensure that its basic layout is as follows.
 
 ```php
 <?php

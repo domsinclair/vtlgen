@@ -51,6 +51,16 @@
                 </button>
             </div>
 
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Delete Data" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenCreateSql'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlCreateSqlDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlCreateSql.svg" alt="Create Data Icon">
+                    </picture>
+                    <div class="popup popupLeft">Create Sql</div>
+                </button>
+            </div>
+
             <!-- Table Dropdown Section -->
             <div class="grid-item table-dropdown">
                 <section class="tableDropdown">
@@ -64,6 +74,8 @@
                     </div>
                 </section>
             </div>
+
+
 
             <!-- Group Title for Indexes -->
             <div class="grid-item index-heading" colspan="4">Index Operations</div>
@@ -344,7 +356,9 @@
             display: block;
             background-color: transparent; /*rgba(255, 255, 255, 0.8); /* Transparent background on hover */
         }
-
+        #sidebar h3 {
+            color: #555555;
+        }
     }
     .flex {
         display: flex;
