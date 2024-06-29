@@ -7,3 +7,4 @@ define('FAKER_TIME_FORMAT', 'H:i:s');
 define('FAKER_TIMESTAMP_FORMAT', 'Y-m-d H:i:s');
 define ('SQL_SCRIPTS_LOCATION', __DIR__ . '/../assets/sqltablescripts');
 define ('BACKUP_SCRIPTS_LOCATION', __DIR__ . '/../assets/backups');
+define ('DOCUMENTATION_LOCATION', __DIR__ . '/../assets/documentation');

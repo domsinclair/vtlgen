@@ -78,7 +78,7 @@
 
 
             <!-- Group Title for Indexes -->
-            <div class="grid-item index-heading" colspan="4">Index Operations</div>
+            <div class="grid-item index-heading" colspan="4">Index and Documentation Operations</div>
 
             <!-- Index Operation Buttons -->
             <div class="grid-item">
@@ -110,6 +110,16 @@
                         <div class="popup popupRight">Indexes</div>
                     </button>
                 </div>
+            </div>
+
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Delete Index" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDocumentDatabase'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlDocumentDatabaseDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlDocumentDatabase.svg" alt="Create Data Icon">
+                    </picture>
+                    <div class="popup popupLeft">Document Db</div>
+                </button>
             </div>
 
 

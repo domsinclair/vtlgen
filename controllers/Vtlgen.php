@@ -355,6 +355,10 @@ class Vtlgen extends Trongate
         $this->template('admin', $data);
     }
 
+    public function vtlgenDocumentDatabase(): void{
+        $this-> generateDocumentation();
+    }
+
     /**
      * Shows the foreign keys in the database for the Vtl Data Generator.
      * Very specifically it will show those created by the Data Generator
@@ -1131,6 +1135,87 @@ class Vtlgen extends Trongate
 
     }
 
+    private function generateMarkdownTable($data)
+    {
+        if (empty($data)) {
+            return '';
+        }
+
+        $header = array_keys($data[0]);
+        $markdown = '|' . implode('|', $header) . '|' . PHP_EOL;
+        $markdown .= '|' . str_repeat('---|', count($header)) . PHP_EOL;
+
+        foreach ($data as $row) {
+            $markdown .= '|' . implode('|', $row) . '|' . PHP_EOL;
+        }
+
+        return $markdown . PHP_EOL;
+    }
+
+    public function generateDocumentation(): void
+    {
+        $database = DATABASE;
+        $folderPath = DOCUMENTATION_LOCATION;
+
+        // Ensure the documentation folder exists
+        if (!is_dir($folderPath)) {
+            if (!mkdir($folderPath, 0777, true)) {
+                $response['status'] = 'error';
+                $response['message'] = 'Failed to create folder!';
+                echo json_encode($response);
+                return;
+            }
+        }
+
+        // Queries
+        $queries = [
+            'Tables' => "SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_ROWS, CREATE_TIME, UPDATE_TIME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = :database;",
+            'Columns' => "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = :database ORDER BY TABLE_NAME, ORDINAL_POSITION;",
+            'Indexes' => "SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE, SEQ_IN_INDEX, COLUMN_NAME, COLLATION, CARDINALITY, SUB_PART, PACKED, NULLABLE, INDEX_TYPE, COMMENT, INDEX_COMMENT FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = :database ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX;",
+            'Constraints' => "SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = :database ORDER BY TABLE_NAME, CONSTRAINT_NAME;",
+            'Foreign Keys' => "SELECT kcu.TABLE_NAME, kcu.COLUMN_NAME, kcu.CONSTRAINT_NAME, kcu.REFERENCED_TABLE_NAME, kcu.REFERENCED_COLUMN_NAME, rc.UPDATE_RULE, rc.DELETE_RULE FROM information_schema.KEY_COLUMN_USAGE kcu JOIN information_schema.REFERENTIAL_CONSTRAINTS rc ON kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME AND kcu.TABLE_SCHEMA = rc.CONSTRAINT_SCHEMA WHERE kcu.TABLE_SCHEMA = :database AND kcu.REFERENCED_TABLE_NAME IS NOT NULL ORDER BY kcu.TABLE_NAME, kcu.CONSTRAINT_NAME;",
+            'Triggers' => "SELECT TRIGGER_NAME, EVENT_MANIPULATION, EVENT_OBJECT_TABLE, ACTION_STATEMENT, ACTION_TIMING, CREATED FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = :database;",
+            'Views' => "SELECT TABLE_NAME, VIEW_DEFINITION, CHECK_OPTION, IS_UPDATABLE FROM information_schema.VIEWS WHERE TABLE_SCHEMA = :database;",
+            'Routines' => "SELECT ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CREATED, LAST_ALTERED, DEFINER, SECURITY_TYPE, ROUTINE_DEFINITION FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = :database;"
+        ];
+
+        // Generate markdown
+        $markdown = "# Database Documentation: " . $database . PHP_EOL . PHP_EOL;
+
+        foreach ($queries as $section => $query) {
+            $result = $this->getDocumentationQueryResult($query);
+            if ($result === false) {
+                continue;
+            }
+            $markdown .= "## $section" . PHP_EOL;
+            $markdown .= $this->generateMarkdownTable($result);
+        }
+
+        // Save the markdown file
+        $filePath = $folderPath . DIRECTORY_SEPARATOR . 'database_documentation.md';
+        file_put_contents($filePath, $markdown);
+
+        echo "Markdown documentation generated successfully! File saved to: " . $filePath;
+    }
+
+
+    private function getDocumentationQueryResult($sql)
+    {
+        try {
+            // Prepare and execute the query
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute([':database' => DATABASE]);
+
+            // Fetch the results
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return $rows;
+        } catch (PDOException $e) {
+            // Handle any errors
+            error_log('Database Error: ' . $e->getMessage());
+            return false;
+        }
+    }
 
     //endregion
 

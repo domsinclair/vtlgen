@@ -1,3 +1,5 @@
+<!--This view makes use of the code-input plugin, an absolutely fabulous creation by Oliver Greer-->
+
 <!doctype html>
 <html lang="en">
 <head>
