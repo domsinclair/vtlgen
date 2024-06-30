@@ -319,11 +319,13 @@ class Vtlgen extends Trongate
      * Does not throw any exceptions.
      * Does not return any value.
      */
-    public function vtlgenDeleteData(): void{
+    public function vtlgenDeleteData(): void
+    {
         $this->openDeleteOrDropView('delete');
     }
 
-    public function vtlgenExportDatabase(): void{
+    public function vtlgenExportDatabase(): void
+    {
         $this->openDeleteOrDropView('export');
     }
 
@@ -332,7 +334,8 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenCreateForeignKey(): void{
+    public function vtlgenCreateForeignKey(): void
+    {
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
         $data['headline'] = 'Vtl Data Generator: Create Foreign Keys';
@@ -348,29 +351,33 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenCreateSql(): void{
+    public function vtlgenCreateSql(): void
+    {
         $data['headline'] = 'Vtl Data Generator: Create SQL';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'createsql';
         $this->template('admin', $data);
     }
 
-    public function vtlgenDocumentDatabase(): void{
-        $this-> generateDocumentation();
+    public function vtlgenDocumentDatabase(): void
+    {
+        $this->generateDocumentation();
     }
 
     /**
      * Shows the foreign keys in the database for the Vtl Data Generator.
      * Very specifically it will show those created by the Data Generator
      */
-    public function vtlgenShowForeignKeys(): void{
+    public function vtlgenShowForeignKeys(): void
+    {
         $rows = $this->getForeignKeysFromDatabase();
         $headline = 'Vtl Data Generator: Foreign Keys in Database';
         $noDataMessage = 'There are currently no foreign keys in the database: ' . DATABASE;
         $this->showRowData($rows, $headline, $noDataMessage);
     }
 
-    public function vtlgenDeleteForeignKeys(): void{
+    public function vtlgenDeleteForeignKeys(): void
+    {
         $data['rows'] = $this->getForeignKeysFromDatabase();
         $data['headline'] = 'Vtl Data Generator: Drop Foreign Key';
         $data['instruction1'] = 'Select those foreign keys you wish to drop';
@@ -390,17 +397,19 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenDropTables(): void{
+    public function vtlgenDropTables(): void
+    {
         $this->openDeleteOrDropView('drop');
     }
 
     /**
      * Displays the view for creating a new data table in the VTL data generator.
      *
-     * @throws No exceptions are thrown by this function.
      * @return void
+     * @throws No exceptions are thrown by this function.
      */
-    public function vtlgenCreateDataTable(): void{
+    public function vtlgenCreateDataTable(): void
+    {
         $data['headline'] = 'Vtl Data Generator: Create Table';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'createtable';
@@ -410,10 +419,11 @@ class Vtlgen extends Trongate
     /**
      * Displays the view for editing a data table in the VTL data generator.
      *
-     * @throws No exceptions are thrown by this function.
      * @return void
+     * @throws No exceptions are thrown by this function.
      */
-    public function vtlgenEditDataTable(): void{
+    public function vtlgenEditDataTable(): void
+    {
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
         $data['headline'] = 'Vtl Data Generator: Edit Table';
@@ -466,7 +476,8 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenShowPointsOfInterestHelp(): void{
+    public function vtlgenShowPointsOfInterestHelp(): void
+    {
         $filepath = __DIR__ . '/../assets/help/pointsofinterest.md';
         $headline = 'Vtl Data Generator: Points of Interest';
         $this->openHelpView($filepath, $headline);
@@ -482,7 +493,8 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenShowTabulatorHelp(): void{
+    public function vtlgenShowTabulatorHelp(): void
+    {
         $filepath = __DIR__ . '/../assets/help/tabulator.md';
         $headline = 'Vtl Data Generator: Tabulator';
         $this->openHelpView($filepath, $headline);
@@ -494,7 +506,8 @@ class Vtlgen extends Trongate
      * @return void
      */
 
-    public function vtlgenFetchLatestPkValues(): void{
+    public function vtlgenFetchLatestPkValues(): void
+    {
         $rows = $this->showLatestPkValues();
         $headline = 'Vtl Data Generator: Latest Primary Key Values for Tables';
         $noDataMessage = 'There are currently no tables in the database: ' . DATABASE . ' with any rows of data';
@@ -506,7 +519,8 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenDeleteIndex(): void{
+    public function vtlgenDeleteIndex(): void
+    {
         $data['rows'] = $this->getAllTableIndexes();
         $data['headline'] = 'Vtl Data Generator: Drop Index';
         $data['instruction1'] = 'Select those indexes you wish to drop';
@@ -523,7 +537,8 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenShowIndexes(): void{
+    public function vtlgenShowIndexes(): void
+    {
         $rows = $this->getAllTableIndexes();
         $headline = 'Vtl Data Generator: Browse Indexes in Database';
         $noDataMessage = 'There are currently no indexes in the database: ' . DATABASE;
@@ -544,7 +559,8 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenShowData(): void{
+    public function vtlgenShowData(): void
+    {
         if (isset($_GET['selectedTable'])) {
             $selectedDataTable = $_GET['selectedTable'];
             $_SESSION['selectedDataTable'] = $selectedDataTable;
@@ -556,14 +572,13 @@ class Vtlgen extends Trongate
         $this->trongate_security->_make_sure_allowed();
 
         $rows = $this->pdoGet(target_tbl: $selectedDataTable);
-        $headline = 'Vtl Data Generator: Show Data<br>From '.$selectedDataTable;
+        $headline = 'Vtl Data Generator: Show Data<br>From ' . $selectedDataTable;
         $noDataMessage = 'There is no data to display from the table ' . $selectedDataTable;
         $this->showRowData($rows, $headline, $noDataMessage);
     }
     //endregion
 
     //region private functions
-
 
 
     /**
@@ -585,7 +600,8 @@ class Vtlgen extends Trongate
         string $instruction2,
         string $task,
         string $viewFile
-    ): void {
+    ): void
+    {
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
         $data['headline'] = $headline;
@@ -612,7 +628,6 @@ class Vtlgen extends Trongate
             table_schema = :database';
 
 
-
         // Ensure the user is allowed to perform the action
         $this->module('trongate_security');
         $this->trongate_security->_make_sure_allowed();
@@ -632,7 +647,6 @@ class Vtlgen extends Trongate
             return false;
         }
     }
-
 
 
     /**
@@ -667,8 +681,8 @@ class Vtlgen extends Trongate
      * Retrieves the primary key field for the specified table.
      *
      * @param string $tableName The name of the table to retrieve the primary key field for.
-     * @throws Exception Error message if there is an issue preparing or executing the query.
      * @return mixed The primary key field of the specified table, or null if not found.
+     * @throws Exception Error message if there is an issue preparing or executing the query.
      */
     private function getPrimaryKeyField($tableName)
     {
@@ -698,8 +712,8 @@ class Vtlgen extends Trongate
      * Retrieves whether a table has rows or not.
      *
      * @param string $tableName The name of the table to check for rows.
-     * @throws Exception Error message if there is an issue with the query execution.
      * @return bool Whether the table has rows (true) or not (false).
+     * @throws Exception Error message if there is an issue with the query execution.
      */
     private function tableHasRows($tableName)
     {
@@ -721,10 +735,10 @@ class Vtlgen extends Trongate
     /**
      * Retrieves the latest primary key value from the specified table.
      *
-     * @param string $tableName The name of the table to retrieve the primary key value from.
+     * @param string $tableName       The name of the table to retrieve the primary key value from.
      * @param string $primaryKeyField The field representing the primary key.
-     * @throws Exception Error message if there is an issue with the query execution.
      * @return mixed The latest primary key value, or null if no value is found.
+     * @throws Exception Error message if there is an issue with the query execution.
      */
     private function getLatestPkValue($tableName, $primaryKeyField)
     {
@@ -757,7 +771,8 @@ class Vtlgen extends Trongate
      *               The array is sorted by table name and index name.
      *               Returns an empty array if there is an error executing the query.
      */
-    private function getAllTableIndexes(): array {
+    private function getAllTableIndexes(): array
+    {
         $database = DATABASE;
         // Define the SQL query
         $sql = "SELECT 
@@ -800,7 +815,6 @@ class Vtlgen extends Trongate
             return [];
         }
     }
-
 
 
     /**
@@ -874,7 +888,8 @@ class Vtlgen extends Trongate
      *
      * @return array List of tables with rows
      */
-    private function getAllTablesWithRows(): array {
+    private function getAllTablesWithRows(): array
+    {
         $database = DATABASE;
         $tables = [];
         $sql = "SELECT table_name AS 'table'
@@ -924,8 +939,8 @@ class Vtlgen extends Trongate
     /**
      * Displays the row data in the admin template with the given headline and no data message.
      *
-     * @param array $rows The array of rows to be displayed.
-     * @param string $headline The title for the help view.
+     * @param array  $rows          The array of rows to be displayed.
+     * @param string $headline      The title for the help view.
      * @param string $noDataMessage The message to be displayed when there is no data.
      * @return void
      */
@@ -968,7 +983,8 @@ class Vtlgen extends Trongate
      * @param string $task The task to perform ('delete' or 'drop').
      * @return void
      */
-    private function openDeleteOrDropView(string $task): void {
+    private function openDeleteOrDropView(string $task): void
+    {
 
         $data['task'] = $task;
 
@@ -999,7 +1015,8 @@ class Vtlgen extends Trongate
      * @param array &$data The data array to update with the headline.
      * @return void
      */
-    private function handleDeleteTask(array &$data): void {
+    private function handleDeleteTask(array &$data): void
+    {
         $data['headline'] = 'Vtl Data Generator: Delete Data';
         $data['instruction1'] = 'Select table(s) for which you want to delete data .';
         $data['instruction2'] = '';
@@ -1011,7 +1028,8 @@ class Vtlgen extends Trongate
      * @param array &$data The data array to update with the headline.
      * @return void
      */
-    private function handleDropTask(array &$data): void {
+    private function handleDropTask(array &$data): void
+    {
         $data['headline'] = 'Vtl Data Generator: Drop Tables';
         $data['instruction1'] = 'Select table(s) that you want to drop.';
         $data['instruction2'] = '';
@@ -1023,7 +1041,8 @@ class Vtlgen extends Trongate
      * @param array &$data The data array to update with the headline.
      * @return void
      */
-    private function handleExportTask(array &$data): void {
+    private function handleExportTask(array &$data): void
+    {
         $data['headline'] = 'Vtl Data Generator: Export Table Scripts';
         $data['instruction1'] = 'Select table(s) that you wish to export .';
         $data['instruction2'] = '';
@@ -1033,12 +1052,12 @@ class Vtlgen extends Trongate
     /**
      * Retrieves data from the database using PDO.
      *
-     * @param string|null $order_by The column to order the results by. Defaults to null.
+     * @param string|null $order_by   The column to order the results by. Defaults to null.
      * @param string|null $target_tbl The target table to query. Must not be null.
-     * @param int|null $limit The maximum number of rows to return. Defaults to null.
-     * @param int $offset The number of rows to skip before returning results. Defaults to 0.
-     * @throws InvalidArgumentException If $target_tbl is null.
+     * @param int|null    $limit      The maximum number of rows to return. Defaults to null.
+     * @param int         $offset     The number of rows to skip before returning results. Defaults to 0.
      * @return array An array of objects representing the fetched rows.
+     * @throws InvalidArgumentException If $target_tbl is null.
      */
     private function pdoGet(?string $order_by = null, ?string $target_tbl = null, ?int $limit = null, int $offset = 0): array
     {
@@ -1135,22 +1154,6 @@ class Vtlgen extends Trongate
 
     }
 
-//    private function generateMarkdownTable($data)
-//    {
-//        if (empty($data)) {
-//            return '';
-//        }
-//
-//        $header = array_keys($data[0]);
-//        $markdown = '|' . implode('|', $header) . '|' . PHP_EOL;
-//        $markdown .= '|' . str_repeat('---|', count($header)) . PHP_EOL;
-//
-//        foreach ($data as $row) {
-//            $markdown .= '|' . implode('|', $row) . '|' . PHP_EOL;
-//        }
-//
-//        return $markdown . PHP_EOL;
-//    }
 
 
     private function generateMarkdownTable($data)
@@ -1176,10 +1179,7 @@ class Vtlgen extends Trongate
         return $table . PHP_EOL;
     }
 
-
-
-    public function generateDocumentation(): void
-    {
+    private function generateDocumentation(): void{
         $database = DATABASE;
         $folderPath = DOCUMENTATION_LOCATION;
 
@@ -1237,20 +1237,13 @@ class Vtlgen extends Trongate
         $markdown = str_replace('{{database}}', $database, $markdown);
 
         // Save the markdown file
-        $filePath = $folderPath . DIRECTORY_SEPARATOR .DATABASE.'_'.FAKER_LOCALE.'_'.DOCUMENTATION_LEVEL.'_Documentation.md';
-        if (file_put_contents($filePath, $markdown)) {
-            echo json_encode(['status' => 'success', 'message' => "Markdown documentation generated successfully! File saved to: $filePath"]);
+        $docFilePath = $folderPath . DIRECTORY_SEPARATOR . DATABASE . '_' . FAKER_LOCALE . '_' . DOCUMENTATION_LEVEL . '_Documentation.md';
+        if (file_put_contents($docFilePath, $markdown)) {
+            echo json_encode(['status' => 'success', 'message' => "Markdown documentation generated successfully! File saved to: $docFilePath"]);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to save Markdown file!']);
         }
     }
-
-
-
-
-
-
-
 
 
 
