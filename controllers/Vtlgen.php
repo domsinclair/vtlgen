@@ -1135,22 +1135,48 @@ class Vtlgen extends Trongate
 
     }
 
+//    private function generateMarkdownTable($data)
+//    {
+//        if (empty($data)) {
+//            return '';
+//        }
+//
+//        $header = array_keys($data[0]);
+//        $markdown = '|' . implode('|', $header) . '|' . PHP_EOL;
+//        $markdown .= '|' . str_repeat('---|', count($header)) . PHP_EOL;
+//
+//        foreach ($data as $row) {
+//            $markdown .= '|' . implode('|', $row) . '|' . PHP_EOL;
+//        }
+//
+//        return $markdown . PHP_EOL;
+//    }
+
+
     private function generateMarkdownTable($data)
     {
         if (empty($data)) {
             return '';
         }
 
-        $header = array_keys($data[0]);
-        $markdown = '|' . implode('|', $header) . '|' . PHP_EOL;
-        $markdown .= '|' . str_repeat('---|', count($header)) . PHP_EOL;
+        $headers = array_keys($data[0]);
+        $separator = '|' . str_repeat('---|', count($headers)) . PHP_EOL;
 
+        $table = '';
+
+        // Generate headers
+        $table .= '|' . implode('|', $headers) . '|' . PHP_EOL;
+        $table .= $separator;
+
+        // Generate rows
         foreach ($data as $row) {
-            $markdown .= '|' . implode('|', $row) . '|' . PHP_EOL;
+            $table .= '|' . implode('|', $row) . '|' . PHP_EOL;
         }
 
-        return $markdown . PHP_EOL;
+        return $table . PHP_EOL;
     }
+
+
 
     public function generateDocumentation(): void
     {
@@ -1160,14 +1186,12 @@ class Vtlgen extends Trongate
         // Ensure the documentation folder exists
         if (!is_dir($folderPath)) {
             if (!mkdir($folderPath, 0777, true)) {
-                $response['status'] = 'error';
-                $response['message'] = 'Failed to create folder!';
-                echo json_encode($response);
+                echo json_encode(['status' => 'error', 'message' => 'Failed to create folder!']);
                 return;
             }
         }
 
-        // Queries
+        // Queries for each section
         $queries = [
             'Tables' => "SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_ROWS, CREATE_TIME, UPDATE_TIME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = :database;",
             'Columns' => "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = :database ORDER BY TABLE_NAME, ORDINAL_POSITION;",
@@ -1179,24 +1203,55 @@ class Vtlgen extends Trongate
             'Routines' => "SELECT ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CREATED, LAST_ALTERED, DEFINER, SECURITY_TYPE, ROUTINE_DEFINITION FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = :database;"
         ];
 
-        // Generate markdown
-        $markdown = "# Database Documentation: " . $database . PHP_EOL . PHP_EOL;
+        // Load the template
+        $templatePath = APPPATH . 'modules/vtlgen/assets/templates/' . FAKER_LOCALE . '/' . DOCUMENTATION_LEVEL . '.md';
 
-        foreach ($queries as $section => $query) {
-            $result = $this->getDocumentationQueryResult($query);
-            if ($result === false) {
-                continue;
-            }
-            $markdown .= "## $section" . PHP_EOL;
-            $markdown .= $this->generateMarkdownTable($result);
+        if (!file_exists($templatePath)) {
+            echo json_encode(['status' => 'error', 'message' => "Template not found: $templatePath"]);
+            return;
         }
 
-        // Save the markdown file
-        $filePath = $folderPath . DIRECTORY_SEPARATOR . 'database_documentation.md';
-        file_put_contents($filePath, $markdown);
+        $template = file_get_contents($templatePath);
 
-        echo "Markdown documentation generated successfully! File saved to: " . $filePath;
+        // Array to hold sections
+        $sections = '';
+
+        // Generate content for each section
+        foreach ($queries as $section => $query) {
+            $result = $this->getDocumentationQueryResult($query);
+
+            if ($result === false || empty($result)) {
+                continue;
+            }
+
+            // Generate Markdown table for current section
+            $markdownTable = $this->generateMarkdownTable($result);
+
+            // Replace section placeholder in template with generated table
+            $sections .= "## $section\n\n";
+            $sections .= $markdownTable;
+        }
+
+        // Replace placeholders in the template with generated content
+        $markdown = str_replace('{{#sections}}', $sections, $template);
+        $markdown = str_replace('{{database}}', $database, $markdown);
+
+        // Save the markdown file
+        $filePath = $folderPath . DIRECTORY_SEPARATOR .DATABASE.'_'.FAKER_LOCALE.'_'.DOCUMENTATION_LEVEL.'_Documentation.md';
+        if (file_put_contents($filePath, $markdown)) {
+            echo json_encode(['status' => 'success', 'message' => "Markdown documentation generated successfully! File saved to: $filePath"]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to save Markdown file!']);
+        }
     }
+
+
+
+
+
+
+
+
 
 
     private function getDocumentationQueryResult($sql)

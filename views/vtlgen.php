@@ -113,7 +113,7 @@
             </div>
 
             <div class="grid-item">
-                <button class="svg-button" aria-label="Delete Index" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDocumentDatabase'">
+                <button class="svg-button" aria-label="Generate Documentation" onclick="generateDocumentation()">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlDocumentDatabaseDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlDocumentDatabase.svg" alt="Create Data Icon">
@@ -263,6 +263,20 @@
 <div class="container">
     <p class="text-center" id="version">Version: 3.0</p>
 </div>
+<!-- vtl modal, overlay and script ref. Place just above lower body tag-->
+<div id="vtlOverlay" class="vtlOverlay"></div>
+<dialog id="vtlModal" class="vtlModal">
+    <div id="vtlModalHeader" class="vtlModalHeader">
+        <h2 class="vtlModalTitle" id="vtlModalTitle">Default Title</h2>
+    </div>
+    <div class="vtlModalContentWrapper">
+        <p id="vtlResponse">Default content</p>
+    </div>
+    <div class="vtlModalFooter">
+        <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
+    </div>
+</dialog>
+<script src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
 </body>
 </html>
 <script>
@@ -281,6 +295,34 @@
         // Redirect to the URL
         window.location.href = '<?= BASE_URL ?>vtlgen/vtlgenShowData?selectedTable=' + encodeURIComponent(selectedTable);
     }
+
+    function generateDocumentation() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?= BASE_URL ?>vtlgen/vtlgenDocumentDatabase', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.status === 'success') {
+                            openVtlModal('Documentation Created', true, response.message);
+                        } else {
+                            openVtlModal('Documentation Failed', false, response.message);
+                        }
+                    } catch (error) {
+                        openVtlModal('Documentation Failed', false, 'Failed to parse response as JSON.');
+                    }
+                } else {
+                    openVtlModal('Documentation Failed', false, 'Failed to generate documentation.');
+                }
+            }
+        };
+
+        xhr.send();
+    }
+
 </script>
 <style>
 
