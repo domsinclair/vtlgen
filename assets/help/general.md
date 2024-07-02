@@ -16,13 +16,16 @@ The module has four key areas of operation and a set of comprehensive help files
         <ul>
             <li><a href="#createrecords">Create Records</a></li>
             <li><a href="#deleterecords">Delete Records</a></li>
-             <li><a href="#browse">Browse Data</a></li>
+            <li><a href="#browse">Browse Data</a></li>
+            <li><a href="#createsql">Create Sql Queries</a></li>
+
         </ul>
-    <li><a href="#indexops">Index Operations</a></li>
+    <li><a href="#indexops">Index and Documentation Operations</a></li>
         <ul>
             <li><a href="#createindex">Create Index</a></li>
             <li><a href="#deleteindex">Delete Index</a></li>
              <li><a href="#browseindex">Browse Indexes</a></li>
+            <li><a href="#document">Document Database</a></li>
         </ul>
     <li><a href="#keyops">Foreign and Primary Key Operations</a></li>
         <ul>
@@ -127,9 +130,35 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 
 Underneath the table displaying the data are three buttons that allow you to download the data contained in the table in either HTML, CSV or Json.
 
+<div class = "text-center">
+<div id="createsql" tabindex="-1"></div>
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlCreateSqlDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlCreateSql.svg">
+</picture>
+<figcaption>Create Sql Queries</figcaption> 
+</figure>
+</div>
+
+This allows to create and test sql queries.  
+
+When you first open the view you'll see a table showing you all of the tables that currently contain rows of data that could be queried.
+
+- Create your sql Query in the sql editor.
+- When you're done click 'Run Sql'.
+- The sql will be evaluated and the results will appear in a data grid at the bottom of the view.
+- If the query meets your requirements and you want to save it click 'Save Sql'.
+- You'll be prompted to add a name for the query to be saved.
+- If You're not happy with the query you can click 'Clears Sql' and start again.
+
+The sql in the sql editor can be copied.
+
+The location where the queries can be saved to is customisable via the config file.
+
 <br>
 <div id="indexops" tabindex="-1"></div>
-### Index Operations
+### Index and Documentation Operations
 
 
 <div class = "text-center">
@@ -186,10 +215,23 @@ Underneath the table displaying the data are three buttons that allow you to dow
 </figure>
 </div>
 
-
-
-
 You can opt to see all of the indexes that are present in the database by choosing this option.  They will be displayed in a table (which itself will be paginated if necessary).  The option to download the information to HTML, CSV or Json is present if required.
+
+<div class = "text-center">
+<div id="document" tabindex="-1"></div>
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlDocumentDatabaseDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlDocumentDatabase.svg">
+</picture>
+<figcaption>Document Database</figcaption> 
+</figure>
+</div>
+
+Currently this will produce concise documentation for your database in English, however The basic design is now in place to produce both concise or verbose documentation which is localised.  This will be determined by two configuration settings in the vtlgenCongig.php file.
+
+Simply click the button and documentation will be created.  There is a setting in the config file that will allow you to determine where that documentation should be saved.
+
 
 <br>
 <div id="keyops" tabindex="-1"></div>

@@ -353,7 +353,10 @@ class Vtlgen extends Trongate
      */
     public function vtlgenCreateSql(): void
     {
+        $data['tables'] = $this->getAllTablesWithRows();
         $data['headline'] = 'Vtl Data Generator: Create SQL';
+        $data['instruction1'] = 'Tables shown below have data rows that can be queried.';
+        $data['instruction2'] = 'Create your query then click Run Sql to see the results.';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'createsql';
         $this->template('admin', $data);
@@ -3115,6 +3118,91 @@ class Vtlgen extends Trongate
 
     //endregion
 
+
+    public function createsqlGetDataFromSuppliedSql(): void {
+        // Set content-type header to application/json
+        header('Content-Type: application/json');
+
+        // Get the raw POST data
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        // Check if 'sql' is present in the POST data
+        if (!isset($postData['sql']) || empty($postData['sql'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'SQL query is missing or empty'
+            ]);
+            return;
+        }
+
+        $sql = $postData['sql'];
+
+        try {
+            // Prepare and execute the SQL statement
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute();
+
+            // Fetch all results as associative arrays
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Send the response with the data
+            echo json_encode([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (PDOException $e) {
+            // Send the error message in case of an exception
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function createsqlSaveEndUserCreatedQuery(): void {
+        // Retrieve raw POST data from the request body
+        $rawPostData = file_get_contents('php://input');
+
+        // Decode the JSON data into an associative array
+        $postData = json_decode($rawPostData, true);
+
+        // Extract relevant data from the decoded JSON
+        $queryName = $postData['name'];
+        $sql = $postData['sql'];
+
+        // Initialize response array
+        $response = ['status' => '', 'message' => ''];
+
+        try {
+            $folderPath = SQL_SCRIPTS_LOCATION;
+            //$folderPath = __DIR__ . '/../assets/sqltablescripts';
+            if (!is_dir($folderPath)) {
+                if (!mkdir($folderPath, 0777, true)) {
+                    throw new Exception("Failed to create folder!");
+                }
+            }
+
+            // Define the filename with the query name and .sql extension
+            $fileName = $folderPath . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $queryName) . '.sql';
+
+            // Save the SQL script to the file
+            if (file_put_contents($fileName, $sql) === false) {
+                throw new Exception("Failed to save SQL script to file!");
+            }
+
+            // Set the response status and message
+            $response['status'] = 'success';
+            $response['message'] = 'SQL script saved successfully.';
+        } catch (Exception $e) {
+            $response['status'] = 'error';
+            $response['message'] = $e->getMessage();
+        }
+
+        // Return the response as JSON
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    }
 
 
 
