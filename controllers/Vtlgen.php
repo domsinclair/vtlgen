@@ -359,6 +359,11 @@ class Vtlgen extends Trongate
         $this->template('admin', $data);
     }
 
+
+    /**
+     * Generates documentation for the database in the Vtl Data Generator.
+     *
+     */
     public function vtlgenDocumentDatabase(): void
     {
         $this->generateDocumentation();
@@ -684,7 +689,7 @@ class Vtlgen extends Trongate
      * @return mixed The primary key field of the specified table, or null if not found.
      * @throws Exception Error message if there is an issue preparing or executing the query.
      */
-    private function getPrimaryKeyField($tableName)
+    private function getPrimaryKeyField($tableName): mixed
     {
         $query = "SHOW KEYS FROM `$tableName` WHERE Key_name = 'PRIMARY'";
 
@@ -1155,8 +1160,13 @@ class Vtlgen extends Trongate
     }
 
 
-
-    private function generateMarkdownTable($data)
+    /**
+     * Generates a markdown table based on the input data.
+     *
+     * @param mixed $data The data to be converted into a markdown table.
+     * @return string The generated markdown table.
+     */
+    private function generateMarkdownTable($data): string
     {
         if (empty($data)) {
             return '';
@@ -1179,6 +1189,10 @@ class Vtlgen extends Trongate
         return $table . PHP_EOL;
     }
 
+
+    /**
+     * Generates documentation based on database queries and templates.
+     */
     private function generateDocumentation(): void{
         $database = DATABASE;
         $folderPath = DOCUMENTATION_LOCATION;
@@ -1246,8 +1260,14 @@ class Vtlgen extends Trongate
     }
 
 
+    /**
+     * Retrieves the documentation query result from the database.
+     *
+     * @param string $sql The SQL query to execute.
+     * @return array|false An array of associative arrays containing the fetched rows, or false on failure.
+     */
 
-    private function getDocumentationQueryResult($sql)
+    private function getDocumentationQueryResult($sql): false|array
     {
         try {
             // Prepare and execute the query

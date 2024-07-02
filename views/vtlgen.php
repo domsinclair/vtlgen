@@ -276,7 +276,8 @@
         <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
     </div>
 </dialog>
-<script src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
+<script defer src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
+
 </body>
 </html>
 <script>
@@ -373,6 +374,13 @@
             font-weight: bold; /* Make the headings bold */
             /*margin-top: 10px;*/
         }
+        button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            position: relative;
+        }
 
         button:hover {
             background-color: transparent;
@@ -380,7 +388,7 @@
         }
 
         .svg-button {
-            background: none;
+            background: transparent;
             border: none;
             cursor: pointer;
             padding: 0;
@@ -467,5 +475,14 @@
     #version{
         font-size: 12px;
     }
+
+    #vtlOverlay, #vtlModal {
+        display: none;
+    }
+
+    #vtlOverlay.visible, #vtlModal.visible {
+        display: block;
+    }
+
 
 </style>
