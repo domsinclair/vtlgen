@@ -261,7 +261,7 @@
 
 </section>
 <div class="container">
-    <p class="text-center" id="version">Version: 3.2</p>
+    <p class="text-center" id="version">Version: 3.3</p>
 </div>
 <!-- vtl modal, overlay and script ref. Place just above lower body tag-->
 <div id="vtlOverlay" class="vtlOverlay"></div>

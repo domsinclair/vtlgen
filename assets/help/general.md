@@ -449,6 +449,7 @@ Once you are ready to actually generate the table then click the 'Generate Table
 
 There are two other buttons that provide you with some additional functionality.  You can opt to save the Sql statement that you have created which will easily allow you to create a library of tables, and you can opt to create a table from and existing sql query.  This effectively allows you to create a reusable library of ready made table creation statements.
 
+Lastly once a table has been successfully generated you will be offered the opportunity to create a Trongate Module for your new table.  It will generate the correct module folder structure, a simple controller and view and an api.json for the module.
 <br>
 
 <div class = "text-center">
