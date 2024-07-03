@@ -416,9 +416,7 @@
             display: block;
             background-color: transparent; /*rgba(255, 255, 255, 0.8); /* Transparent background on hover */
         }
-        #sidebar h3 {
-            color: #555555;
-        }
+
     }
     .flex {
         display: flex;

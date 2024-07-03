@@ -85,6 +85,13 @@ actually displaying the markdown with parsedown its as simple as this;
     </div>
 </section>
 ```
+<br>
+
+## Code-Input
+
+Code-Input is a web component (designed and created by Oliver Greer) that takes PrismJs and uses it to create a syntax highlighted code editor.  The Vtl Data Generator makes use of this in its Create Sql Queries view.  Generally it's much easier to follow code when it's syntactically highlighted and this was such a nice, simple example of a working syntax enabled code editor that it I felt it was worth using and brining to the attention of those of you using the Generator.
+
+<br>
 
 ## FakerPhp
 

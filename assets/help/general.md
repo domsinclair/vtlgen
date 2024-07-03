@@ -18,7 +18,6 @@ The module has four key areas of operation and a set of comprehensive help files
             <li><a href="#deleterecords">Delete Records</a></li>
             <li><a href="#browse">Browse Data</a></li>
             <li><a href="#createsql">Create Sql Queries</a></li>
-
         </ul>
     <li><a href="#indexops">Index and Documentation Operations</a></li>
         <ul>
@@ -49,8 +48,11 @@ This latest iteration has involved a complete refactoring, and in some cases rew
 
 Every function is accessible from the home page which acts as a navigation hub. 
 
+As this was designed primarily as a development tool it is better suited to use on a desktop / laptop screen. 
+
 <br>
 <div id="datageneration" tabindex="-1"></div>
+
 ### Data Generation and Visualisation
 
 
@@ -123,7 +125,7 @@ Clearly if you go in for extensive customisation then it makes sense for you to 
 </div>
 
 
-<div id="browse"></div>
+
 
 - Select the table from which you wish to browse the data.
 - Data is displayed in a paginated table.
@@ -158,8 +160,9 @@ The location where the queries can be saved to is customisable via the config fi
 
 <br>
 <div id="indexops" tabindex="-1"></div>
-### Index and Documentation Operations
 
+### Index and Documentation Operations
+<br>
 
 <div class = "text-center">
 <div id="createindex" tabindex="-1"></div>
@@ -203,6 +206,7 @@ The location where the queries can be saved to is customisable via the config fi
 
 - Click the 'Drop Index' button.
 
+<br>
 
 <div class = "text-center">
 <div id="browseindex" tabindex="-1"></div>
@@ -216,6 +220,8 @@ The location where the queries can be saved to is customisable via the config fi
 </div>
 
 You can opt to see all of the indexes that are present in the database by choosing this option.  They will be displayed in a table (which itself will be paginated if necessary).  The option to download the information to HTML, CSV or Json is present if required.
+
+<br>
 
 <div class = "text-center">
 <div id="document" tabindex="-1"></div>
@@ -235,8 +241,10 @@ Simply click the button and documentation will be created.  There is a setting i
 
 <br>
 <div id="keyops" tabindex="-1"></div>
+
 ### Foreign and Primary Key Operations
 
+<br>
 
 <div class = "text-center">
 <div id="createkey" tabindex="-1"></div>
@@ -257,6 +265,7 @@ Creating Foreign Keys requires the linking of fields in two tables.  Imagine tha
 - On the Related To side select the table that the foreign side will be related to and then from the list of columns that is shown select the column that will form the other half of the relationship.
 - Once you have selected a single column from each table click the 'Create Foreign Key' button.
 
+<br>
 
 <div class = "text-center">
 <div id="dropkey" tabindex="-1"></div>
@@ -274,6 +283,8 @@ Creating Foreign Keys requires the linking of fields in two tables.  Imagine tha
 - From the provided table listing all the foreign keys in the database select those that you wish to drop.
 - Click the 'Drop Foreign Key' button.
 
+<br>
+
 <div class = "text-center">
 <div id="browseforeign" tabindex="-1"></div>
 <figure>
@@ -288,6 +299,8 @@ Creating Foreign Keys requires the linking of fields in two tables.  Imagine tha
 
 
 From this table you can view all of the foreign keys that are present in the database.  There is the option to export the information to HTML, CSV or Json.
+
+<br>
 
 <div class = "text-center">
 <div id="browseprimary" tabindex="-1"></div>
@@ -306,6 +319,7 @@ From this table you can see all of the database table's primary keys, and the va
 
 <br>
 <div id="dbase" tabindex="-1"></div>
+
 ### Database Operations
 
 
@@ -369,11 +383,17 @@ This is the data Type for the column.  This is a list box of data types (shown b
 
 This covers the majority of common data types used in MySql and or MariaDb.
 
+<br>
+
 > <b> Note the autoincrement datatype.  Technically no such data type exists but this has been added specifically to make it easy for you to set up auto incrementing columns.  At the point at which the relevant SQL statement is created it will be substituted for an integer data type.</b>
+
+<br>
 
 #### Nullable
 
 You can decide whether a column should allow null values or not, by default null values will be allowed.
+
+<br>
 
 #### Default Value
 
@@ -401,13 +421,19 @@ You may opt for a column to add a defaulyt value.  By default the following data
                             break;
 ```
 
+<br>
+
 #### Primary Key
 
 Select this if the column is to be the primary key, or form part of the primary key.
 
+<br>
+
 #### Unique
 
 Select this if the column should only contain unique values.
+
+<br>
 
 #### Delete Row
 
@@ -423,6 +449,8 @@ Once you are ready to actually generate the table then click the 'Generate Table
 
 There are two other buttons that provide you with some additional functionality.  You can opt to save the Sql statement that you have created which will easily allow you to create a library of tables, and you can opt to create a table from and existing sql query.  This effectively allows you to create a reusable library of ready made table creation statements.
 
+<br>
+
 <div class = "text-center">
 <div id="droptable" tabindex="-1"></div>
 <figure>
@@ -437,6 +465,8 @@ There are two other buttons that provide you with some additional functionality.
 
 
 - Select the table, or tables that you want to drop from the database and then click the 'Drop Table' button.  Tables that form part of existing table relationships will not be dropped.
+
+<br>
 
 <div class = "text-center">
 <div id="edittable" tabindex="-1"></div>
@@ -457,10 +487,15 @@ There are two other buttons that provide you with some additional functionality.
 - As soo as you have completed your edits click the 'Generate Sql' button to view the sql statement that will be used to effect your proposed changes.
 - If you are happy with your changes then click the 'Save Changes' button.
 
+<br>
+
 > <b>You are responsible for ensuring the integrity of any data that exists in the table before you effect any changes to the table structure itself.</b>
  
+<br>
+
 If you are familiar with the process for creating new database tables then the operation of this view should be easy and it has been deliberately designed to replicate the procedure for creating tables.
 
+<br>
 
 <div class = "text-center">
 <div id="export" tabindex="-1"></div>
@@ -479,3 +514,6 @@ If you are familiar with the process for creating new database tables then the o
 - Click the 'Export Tables' button.
 
 A backup script will then be generated and saved to a special backups folder in the module's assets directory.  The location of this folder can be customised, more details of which can be found in the customisation help file.
+
+<br>
+
