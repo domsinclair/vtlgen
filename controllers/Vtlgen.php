@@ -3119,6 +3119,17 @@ class Vtlgen extends Trongate
     //endregion
 
 
+    //region Create Sql Functions
+
+    /**
+     * Set content-type header to application/json
+     * Get the raw POST data
+     * Check if 'sql' is present in the POST data
+     * Prepare and execute the SQL statement
+     * Fetch all results as associative arrays
+     * Send the response with the data
+     * Send the error message in case of an exception
+     */
     public function createsqlGetDataFromSuppliedSql(): void {
         // Set content-type header to application/json
         header('Content-Type: application/json');
@@ -3160,6 +3171,15 @@ class Vtlgen extends Trongate
         }
     }
 
+
+    /**
+     * Set content-type header to application/json
+     * Get the raw POST data
+     * Check if 'name' and 'sql' are present in the POST data
+     * Save the SQL script to a file
+     * Send the response
+     * Send the error message in case of an exception
+     */
     public function createsqlSaveEndUserCreatedQuery(): void {
         // Retrieve raw POST data from the request body
         $rawPostData = file_get_contents('php://input');
@@ -3203,6 +3223,7 @@ class Vtlgen extends Trongate
         header('Content-Type: application/json');
         echo json_encode($response);
     }
+    //endregion
 
 
 
