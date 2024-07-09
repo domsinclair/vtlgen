@@ -25,6 +25,8 @@ define('FAKER_TIME_FORMAT', 'H:i:s');
 define('FAKER_TIMESTAMP_FORMAT', 'Y-m-d H:i:s');
 define ('SQL_SCRIPTS_LOCATION', __DIR__ . '/../assets/sqltablescripts');
 define ('BACKUP_SCRIPTS_LOCATION', __DIR__ . '/../assets/backups');
+define ('DOCUMENTATION_LOCATION', __DIR__ . '/../assets/documentation');
+define ('DOCUMENTATION_LEVEL', 'concise'); //set to verbose for a more detailed result.
 ```
 
 Setting your locale will immediately improve the quality of data generated to make it more appropriate to your region.
@@ -36,8 +38,10 @@ You can alter the seed value if you wish. The purpose behind seeding the Faker G
 similar records are created on each run. Being able to predict that a record with a primary key of 'x' will contain
 columns with specific values can be extremely beneficial when it comes to testing.
 
-You can also set the default locations for where the Generator should save generated sql scripts for table creation and backup export scripts.  This could be particularly useful if you decide to extensively customise the generator to suit your own particular needs.
+You can also set the default locations for where the Generator should save generated sql scripts for table creation, backup export scripts and documentation files that you create.  This could be particularly useful if you decide to extensively customise the generator to suit your own particular needs.
 
+Although not currently implemented documentation should be creatable in both concise and verbose styles and in the language of your locale.
+At present just concise, English generation is possible.
 
 The VTL Data Generator has implemented seeding by default but it can be very easily disabled by commenting out the
 relevant line in the createdataCreateFakeData() method in the Vtlgen.php controller.

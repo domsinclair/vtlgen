@@ -264,13 +264,13 @@
 <div class="container">
     <div class="flex" style="display: flex; align-items: baseline; vertical-align: middle ">
         <?php if ($update_available): ?>
-        <a href="<?= BASE_URL ?>vtlgen/vtlgenUpdateModule" class="svg-button" aria-label="Update" style="display: inline-flex; align-items: center; margin-right: 10px; text-decoration: none;">
-            <picture style="display: flex; align-items: center;">
-                <source srcset="vtlgen_module/help/images/vtlUpdateDark.svg" media="(prefers-color-scheme: dark)">
-                <img class="svg-icon" src="vtlgen_module/help/images/vtlUpdate.svg" alt="Create Data Icon" style="width: 24px; height: 24px; display: block;">
-            </picture>
-            <div class="popup popupLeft">Update to <?= $new_version ?></div>
-        </a>
+            <a href="#" onclick="initiateUpdate(); return false;" class="svg-button" aria-label="Update" style="display: inline-flex; align-items: center; margin-right: 10px; text-decoration: none;">
+                <picture style="display: flex; align-items: center;">
+                    <source srcset="vtlgen_module/help/images/vtlUpdateDark.svg" media="(prefers-color-scheme: dark)">
+                    <img class="svg-icon" src="vtlgen_module/help/images/vtlUpdate.svg" alt="Update Icon" style="width: 24px; height: 24px; display: block;">
+                </picture>
+                <div class="popup popupLeft">Update to <?= $new_version ?></div>
+            </a>
         <?php endif; ?>
         <p class="text-center" id="version" style="margin: 0; font-size: 16px; line-height: 24px;"><?=VERSION?></p>
 
@@ -302,8 +302,26 @@
         <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
     </div>
 </dialog>
-<script defer src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
 
+<div id="vtlQuestionOverlay" class="vtlOverlay"></div>
+<dialog id="vtlQuestionModal" class="vtlModal">
+    <div id="vtlQuestionModalHeader" class="vtlModalHeader">
+        <picture id="vtlQuestionIconPicture" class="vtlModalIcon">
+            <source id="vtlQuestionIconDark" media="(prefers-color-scheme: dark)">
+            <img id="vtlQuestionIconLight" src="" alt="Icon">
+        </picture>
+        <h2 class="vtlModalTitle" id="vtlQuestionModalTitle">Question Title</h2>
+    </div>
+    <div class="vtlModalContentWrapper">
+        <p id="vtlQuestionContent">Question content</p>
+    </div>
+    <div class="vtlModalFooter">
+        <button class="vtlAcceptButton" id="vtlAcceptQuestion">Accept</button>
+        <button class="vtlCancelButton" id="vtlCancelQuestion">Cancel</button>
+    </div>
+</dialog>
+<script defer src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
+<script src="<?= BASE_URL ?>vtlgen_module/js/vtlQuestionModal.js"></script>
 </body>
 </html>
 <script>
@@ -348,6 +366,77 @@
         };
 
         xhr.send();
+    }
+
+    function initiateUpdate() {
+        openVtlQuestionModal(
+            "Update VTL Data Generator",
+            `Do you want to update the VTL Data Generator to version <?= $new_version ?>?`,
+            "vtlUpdate",
+            "info"
+        );
+
+        document.getElementById('vtlQuestionModal').addEventListener('vtlQuestionAccepted', performUpdate, { once: true });
+        document.getElementById('vtlQuestionModal').addEventListener('vtlQuestionCancelled', cancelUpdate, { once: true });
+    }
+
+    function performUpdate() {
+        // Show loading indicator
+        document.body.style.cursor = 'wait';
+        document.querySelector('.svg-button[aria-label="Update"]').style.pointerEvents = 'none';
+
+        // First, check prerequisites
+        fetch('<?= BASE_URL ?>vtlgen/vtlgenCheckUpdatePrerequisites')
+            .then(response => response.json())
+            .then(data => {
+                if (data.canUpdate) {
+                    // If prerequisites are met, proceed with the update
+                    return fetch('<?= BASE_URL ?>vtlgen/performUpdate');
+                } else {
+                    // If prerequisites are not met, show modal with error message and exit the function
+                    openVtlModal(
+                        "Update Prerequisites Not Met",
+                        false,
+                        data.message
+                    );
+                    // Reset cursor and button state
+                    document.body.style.cursor = 'default';
+                    document.querySelector('.svg-button[aria-label="Update"]').style.pointerEvents = 'auto';
+                    // Exit the function
+                    return Promise.reject('Prerequisites not met');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                openVtlModal(
+                    "Update Result",
+                    true,
+                    data.message
+                );
+                // You might want to refresh the page or update the UI here
+                // depending on the update process result
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (error !== 'Prerequisites not met') {
+                    openVtlModal(
+                        "Error",
+                        false,
+                        "An unexpected error occurred while updating. Please try again later."
+                    );
+                }
+            })
+            .finally(() => {
+                // Hide loading indicator
+                document.body.style.cursor = 'default';
+                document.querySelector('.svg-button[aria-label="Update"]').style.pointerEvents = 'auto';
+            });
+    }
+
+
+    function cancelUpdate() {
+        console.log("Update cancelled");
+        // You can add any additional actions here if needed when the update is cancelled
     }
 
 </script>

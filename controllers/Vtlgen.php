@@ -284,6 +284,53 @@ class Vtlgen extends Trongate
 
     //region vtlgen page redirect functions
 
+
+    /**
+     * Executes the update operation for the VTL Generator module.
+     *
+     * @throws No specific exceptions are thrown by this method.
+     * @return void
+     */
+    public function vtlgenPerformUpdate() {
+        $result = $this->updateModule();
+        echo json_encode(['message' => $result]);
+    }
+
+
+    /**
+     * Checks the prerequisites for updating the VTL Generator module.
+     *
+     * @return array The result array containing canUpdate, message, execEnabled, and gitInstalled keys.
+     */
+    public function vtlgenCheckUpdatePrerequisites(): array
+    {
+        $result = [
+            'canUpdate' => true,
+            'message' => '',
+            'execEnabled' => function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions')))),
+            'gitInstalled' => false
+        ];
+
+        if (!$result['execEnabled']) {
+            $result['canUpdate'] = false;
+            $result['message'] = 'The PHP exec() function is not available. Please contact your server administrator.';
+            return $result;
+        }
+
+        // Check if Git is installed
+        exec('git --version', $output, $returnVar);
+        $result['gitInstalled'] = ($returnVar === 0);
+
+        if (!$result['gitInstalled']) {
+            $result['canUpdate'] = false;
+            $result['message'] = 'Git is not installed or not accessible. Please install Git or contact your server administrator.';
+        }
+
+        return $result;
+    }
+
+
+
     /**
      * Displays the Vtl Data Generator: Create Data page.
      *
@@ -595,6 +642,90 @@ class Vtlgen extends Trongate
     //endregion
 
     //region private functions
+
+    /**
+     * Define paths, clone the new version from a GitHub repository, compare versions, inform the user, and update the version check cache.
+     *
+     * @return string Information about the update process or any errors encountered.
+     */
+    public function updateModule() {
+        // Define paths
+        $modulesPath = APPPATH . 'modules/';
+        $currentVtlgenPath = $modulesPath . 'vtlgen/';
+        $newVtlgenPath = $modulesPath . 'vtlgen_new_' . time() . '/';
+        $githubRepo = 'https://github.com/domsinclair/vtlgen.git';
+
+        // Step 1: Clone the new version
+        $output = null;
+        $returnVar = null;
+        exec("git clone $githubRepo $newVtlgenPath 2>&1", $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            // Handle error
+            $error = implode("\n", $output);
+            return "Failed to clone repository: $error";
+        }
+
+        // Step 2: Compare versions
+        $currentVersion = $this->getVersion($currentVtlgenPath);
+        $newVersion = $this->getVersion($newVtlgenPath);
+
+        if (version_compare($newVersion, $currentVersion, '<=')) {
+            $this->removeDirectory($newVtlgenPath);
+            return "Current version ($currentVersion) is up to date. No update needed.";
+        }
+
+        // Step 3: Inform user about the update
+        $message = "A new version ($newVersion) has been downloaded. " .
+            "Please review the changes in the 'vtlgen_new_" . time() . "' directory " .
+            "and manually merge your customizations.";
+
+        // Step 4: Update the version check cache
+        $this->updateVersionCache($newVersion);
+
+        return $message;
+    }
+
+    /**
+     * Retrieves the version number from the specified configuration file.
+     *
+     * @param string $path The path to the configuration file.
+     * @return string|null The version number if found, null otherwise.
+     */
+    private function getVersion($path) {
+        $configFile = $path . 'assets/vtlgenConfig.php';
+        if (!file_exists($configFile)) {
+            return null;
+        }
+        $content = file_get_contents($configFile);
+        preg_match("/define\s*\(\s*'VERSION'\s*,\s*'Version:\s*([\d.]+)'\s*\)/", $content, $matches);
+        return isset($matches[1]) ? $matches[1] : null;
+    }
+
+
+    /**
+     * Updates the version cache with the new version information.
+     *
+     * @param datatype $newVersion The new version to update in the cache.
+     * @throws Some_Exception_Class Description of exception
+     * @return Some_Return_Value
+     */
+    private function updateVersionCache($newVersion) {
+        $cache_file = APPPATH . 'modules/vtlgen/assets/vtlUpdateCache.json';
+        $cache_data = json_decode(file_get_contents($cache_file), true);
+        $cache_data['update_available'] = false;
+        $cache_data['last_check'] = time();
+        $cache_data['new_version'] = $newVersion;
+        file_put_contents($cache_file, json_encode($cache_data));
+    }
+
+    /**
+     * Initializes the update cache file with default data if it doesn't exist.
+     *
+     * This function creates the cache file with initial data structure if it doesn't already exist.
+     *
+     * @throws Exception If unable to write to the cache file.
+     */
     private function initializeUpdateCache() {
         $cache_file = APPPATH . 'modules/vtlgen/assets/vtlUpdateCache.json';
 
@@ -613,6 +744,41 @@ class Vtlgen extends Trongate
         }
     }
 
+    /**
+     * A recursive function to remove a directory and its contents.
+     *
+     * @param string $dir The path to the directory to be removed.
+     * @throws Exception If an error occurs during directory removal.
+     * @return bool True if the directory was successfully removed, false otherwise.
+     */
+    private function removeDirectory($dir) {
+        if (!file_exists($dir)) {
+            return true;
+        }
+
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+
+            if (!$this->removeDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+
+        return rmdir($dir);
+    }
+
+
+    /**
+     * Check for updates on Github and return the update status.
+     *
+     * @return array The update status containing 'update_available', 'last_check', 'error', and 'new_version'.
+     */
     private function CheckGithubForUpdates() {
         $cache_file = APPPATH . 'modules/vtlgen/assets/vtlUpdateCache.json';
         $cache_time = 86400; // 24 hours
