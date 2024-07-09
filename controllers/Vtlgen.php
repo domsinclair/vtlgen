@@ -1839,7 +1839,315 @@ class Vtlgen extends Trongate
 
     //endregion
 
+    //region createtable view functions
 
+    /**
+     * Saves the SQL data table creation script to a file.
+     *
+     * This function retrieves the raw POST data from the request body, decodes it into an associative array,
+     * extracts the table name and SQL script from the decoded JSON data. It then creates a folder if it doesn't exist
+     * and saves the SQL script to a file with the table name and .sql extension. If the file cannot be saved, an
+     * exception is thrown. The function returns a JSON response indicating the status and message of the operation.
+     *
+     * @throws Exception if the SQL script cannot be saved to the file
+     * @return void
+     */
+    public function createtableSaveSqlDataTableCreationScript(): void{
+        // Retrieve raw POST data from the request body
+        $rawPostData = file_get_contents('php://input');
+
+        // Decode the JSON data into an associative array
+        $postData = json_decode($rawPostData, true);
+
+        // Extract relevant data from the decoded JSON
+        $tableName = $postData['tableName'];
+        $sql = $postData['sql'];
+
+        // Initialize response array
+        $response = ['status' => '', 'message' => ''];
+        try {
+            $folderPath = SQL_SCRIPTS_LOCATION;
+            //$folderPath = __DIR__ . '/../assets/sqltablescripts';
+            if (is_dir($folderPath)) {
+                // we have a folder
+            } else {
+                if (mkdir($folderPath, 0777, true)) {
+                    // Creates the directory recursively if it doesn't exist
+                } else {
+                    echo "Failed to create folder!";
+                }
+            }
+            // Define the filename with the table name and .sql extension
+            $fileName = $folderPath . '/CreateTable_' . $tableName . '.sql';
+
+            // Save the SQL script to the file
+            if (file_put_contents($fileName, $sql) === false) {
+                throw new Exception("Failed to save SQL script to file!");
+            }
+
+            // Set the response status and message
+            $response['status'] = 'success';
+            $response['message'] = 'SQL script saved successfully.';
+        } catch (Exception $e) {
+            $response['status'] = 'error';
+            $response['message'] = $e->getMessage();
+        }
+        // Return the response as JSON
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    }
+
+
+    /**
+     * Creates a new data table by executing the SQL statement provided in the request body.
+     *
+     * @throws Exception if the SQL statement execution fails
+     * @return void
+     */
+    public function createtableCreateNewDataTable(): void{
+        // Retrieve raw POST data from the request body
+        $rawPostData = file_get_contents('php://input');
+
+        // Decode the JSON data into an associative array
+        $postData = json_decode($rawPostData, true);
+
+        // Extract relevant data from the decoded JSON
+        $sql = $postData['sql'];
+
+        // Initialize response array
+        $response = ['status' => '', 'message' => ''];
+
+        // Execute the SQL statement and handle any exceptions
+        try {
+            $this->dbh->exec($sql);
+            $response['status'] = 'success';
+            $response['message'] = 'Operation completed successfully.';
+        } catch (Exception $e) {
+            $response['status'] = 'error';
+            $response['message'] = 'Operation failed: ' . $e->getMessage();
+        }
+
+        // Return the response as JSON
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    }
+
+    // The following code leans heavily on work done by Simon Field and Jake Castelli
+
+    /**
+     * Creates a new module folder structure based on the provided module name.
+     *
+     * @throws Exception if an error occurs during the module creation process.
+     * @return void
+     */
+    public function createtableGenerateModule(): void {
+        // Retrieve raw POST data from the request body
+        $rawPostData = file_get_contents('php://input');
+
+        // Decode the JSON data into an associative array
+        $postData = json_decode($rawPostData, true);
+
+        // Initialize response array
+        $response = ['status' => '', 'message' => ''];
+
+        // Validate JSON input
+        if ($postData === null || !isset($postData['tableName'])) {
+            $response['status'] = 'error';
+            $response['message'] = 'Invalid input data';
+            echo json_encode($response);
+            return;
+        }
+
+        // Extract relevant data from the decoded JSON
+        $moduleName = $postData['tableName'];
+
+        // Define the path to the modules directory
+        $modulesDir = APPPATH . 'modules';
+
+        // Now create the basic module folder structure
+        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . $moduleName;
+        if (is_dir($modulePath)) {
+            // we have a folder
+            $response['status'] = 'error';
+            $response['message'] = 'Module already exists!';
+        } else {
+            try {
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName)) {
+                    $response['status'] = 'success';
+                    $response['message'] = 'Operation completed successfully.';
+                } else {
+                    $response['status'] = 'error';
+                    $response['message'] = 'Operation failed due to an unknown error.';
+                }
+            } catch (Exception $e) {
+                $response['status'] = 'error';
+                $response['message'] = 'Operation failed: ' . $e->getMessage();
+            }
+        }
+
+        echo json_encode($response);
+    }
+
+    /**
+     * Generate the infrastructure for a new module, including directories for controllers, views, and assets.
+     *
+     * @param string $modulePath The path where the module will be created.
+     * @param string $moduleName The name of the module.
+     * @throws Exception If an error occurs during the generation process.
+     * @return bool Returns true if the infrastructure generation is successful.
+     */
+    private function generateModuleInfrastructure($modulePath, $moduleName): bool {
+        try {
+            $this->createDirectory($modulePath);
+            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
+            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'views');
+            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets');
+            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
+            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
+            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'images');
+
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName);
+            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName);
+            $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
+            $this->generateCustomJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
+            $this->generateCustomCss($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
+
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Creates a directory at the specified path.
+     *
+     * @param string $path The path where the directory should be created.
+     * @throws Exception Failed to create directory: $path
+     */
+    private function createDirectory($path): void {
+        if (!mkdir($path, 0777, true) && !is_dir($path)) {
+            throw new Exception("Failed to create directory: $path");
+        }
+    }
+
+
+    /**
+     * Generates a module controller file based on the provided module name.
+     *
+     * @param string $moduleControllersPath The path where the module controller file will be generated.
+     * @param string $moduleName The name of the module.
+     * @throws Exception Failed to read controller template or write controller file.
+     */
+    private function generateModuleController($moduleControllersPath, $moduleName): void {
+        $controllerPath = $moduleControllersPath . DIRECTORY_SEPARATOR . ucfirst($moduleName) . '.php';
+        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php';
+
+        $controllerContent = file_get_contents($templatePath);
+        if ($controllerContent === false) {
+            throw new Exception("Failed to read controller template");
+        }
+
+        // Replace placeholders with actual values
+        $controllerContent = str_replace('{{ModuleName}}', ucfirst($moduleName), $controllerContent);
+        $controllerContent = str_replace('{{moduleName}}', strtolower($moduleName), $controllerContent);
+
+        // Write the processed content to the new controller file
+        if (file_put_contents($controllerPath, $controllerContent) === false) {
+            throw new Exception("Failed to write controller file");
+        }
+    }
+
+
+
+    /**
+     * A description of the entire PHP function.
+     *
+     * @param string $moduleViewsPath description
+     * @param string $moduleName description
+     * @throws Some_Exception_Class description of exception
+     * @return void
+     */
+    private function generateModuleView($moduleViewsPath, $moduleName): void {
+        $viewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'display.php';
+        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'display.php';
+
+        $viewContent = file_get_contents($templatePath);
+        if ($viewContent === false) {
+            throw new Exception("Failed to read view template");
+        }
+
+        // Replace placeholders with actual values
+        $viewContent = str_replace('{{moduleName}}', strtolower($moduleName), $viewContent);
+
+        // Write the processed content to the new view file
+        if (file_put_contents($viewPath, $viewContent) === false) {
+            throw new Exception("Failed to write view file");
+        }
+    }
+
+
+    /**
+     * Generates the API file for a specific module using the provided paths.
+     *
+     * @param string $moduleAssetsPath The path to the assets folder of the module.
+     * @param string $moduleName The name of the module.
+     * @throws Exception Failed to read API template or failed to write API file.
+     * @return void
+     */
+    private function generateModuleApi($moduleAssetsPath, $moduleName): void {
+        $apiPath = $moduleAssetsPath . DIRECTORY_SEPARATOR . 'api.json';
+        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' .DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'api.json';
+
+        $apiContent = file_get_contents($templatePath);
+        if ($apiContent === false) {
+            throw new Exception("Failed to read API template");
+        }
+
+        // Replace placeholders with actual values
+        $apiContent = str_replace('{{moduleName}}', strtolower($moduleName), $apiContent);
+
+        // Write the processed content to the new API file
+        if (file_put_contents($apiPath, $apiContent) === false) {
+            throw new Exception("Failed to write API file");
+        }
+    }
+
+
+    /**
+     * Write custom JS content to a new custom.js file.
+     *
+     * @param string $moduleAssetsJsPath The path to the JavaScript assets folder of the module.
+     * @return void
+     */
+    private function generateCustomJs($moduleAssetsJsPath): void {
+        $jsPath = $moduleAssetsJsPath . DIRECTORY_SEPARATOR . 'custom.js';
+        $jsContent = "// Add your custom JS here";
+
+        // Write the JS content to the new custom.js file
+        if (file_put_contents($jsPath, $jsContent) === false) {
+            throw new Exception("Failed to write custom.js file");
+        }
+    }
+
+
+
+    /**
+     * Write custom CSS content to a new custom.css file.
+     *
+     * @param string $moduleAssetsCssPath The path to the CSS assets folder of the module.
+     * @return void
+     */
+    private function generateCustomCss($moduleAssetsCssPath): void {
+        $cssPath = $moduleAssetsCssPath . DIRECTORY_SEPARATOR . 'custom.css';
+        $cssContent = "/* Add your custom CSS here */";
+
+        // Write the CSS content to the new custom.css file
+        if (file_put_contents($cssPath, $cssContent) === false) {
+            throw new Exception("Failed to write custom.css file");
+        }
+    }
+
+    //endregion
 
     //region DeleteOrDrop view functions
 
@@ -2092,7 +2400,6 @@ class Vtlgen extends Trongate
 
     //endregion
 
-
     //region Drop Index orForeign Key View Functions
 
     /**
@@ -2199,7 +2506,6 @@ class Vtlgen extends Trongate
         }
     }
     //endregion
-
 
     //region Faker functions
 
@@ -3205,8 +3511,6 @@ class Vtlgen extends Trongate
     }
     //endregion
 
-
-
     //region edittable view functions
 
     /**
@@ -3254,7 +3558,6 @@ class Vtlgen extends Trongate
     }
 
     //endregion
-
 
     //region Create Sql Functions
 

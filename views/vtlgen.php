@@ -321,7 +321,7 @@
     </div>
 </dialog>
 <script defer src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
-<script src="<?= BASE_URL ?>vtlgen_module/js/vtlQuestionModal.js"></script>
+<script defer src="<?= BASE_URL ?>vtlgen_module/js/vtlQuestionModal.js"></script>
 </body>
 </html>
 <script>

@@ -8,6 +8,17 @@ The Vtl Data Generator is a module designed to help you with everyday database a
 > There is no implied warranty with this module, you use it at your own risk. That being said it is robust and is routinely tested but it is impossible to replicate every possible Trongate implementation.  As such no responsibility for any data loss or other loss can or will be entertained.
 <br>
 
+<div class="text-center">
+    <figure>
+        <a href="https://www.youtube.com/watch?v=LIOIDaalP9I" target="_blank" rel="noopener noreferrer">
+            <picture>
+                <source srcset="vtlgen_module/help/images/vtlYoutubeDark.svg" media="(prefers-color-scheme: dark)">
+                <img src="vtlgen_module/help/images/vtlYoutube.svg" alt="YouTube video thumbnail">
+            </picture>
+        </a>
+        <figcaption>View Introduction Video</figcaption>
+    </figure>
+</div>
 The module has four key areas of operation and a set of comprehensive help files to assist you with understanding how it all works and can be tweaked to your own liking.
 
 <div>
