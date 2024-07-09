@@ -260,9 +260,35 @@
     </div>
 
 </section>
+
 <div class="container">
-    <p class="text-center" id="version">Version: 3.3</p>
+    <div class="flex" style="display: flex; align-items: baseline; vertical-align: middle ">
+        <?php if ($update_available): ?>
+        <a href="<?= BASE_URL ?>vtlgen/vtlgenUpdateModule" class="svg-button" aria-label="Update" style="display: inline-flex; align-items: center; margin-right: 10px; text-decoration: none;">
+            <picture style="display: flex; align-items: center;">
+                <source srcset="vtlgen_module/help/images/vtlUpdateDark.svg" media="(prefers-color-scheme: dark)">
+                <img class="svg-icon" src="vtlgen_module/help/images/vtlUpdate.svg" alt="Create Data Icon" style="width: 24px; height: 24px; display: block;">
+            </picture>
+            <div class="popup popupLeft">Update to <?= $new_version ?></div>
+        </a>
+        <?php endif; ?>
+        <p class="text-center" id="version" style="margin: 0; font-size: 16px; line-height: 24px;"><?=VERSION?></p>
+
+        <a href="https://github.com/domsinclair/vtlgen" target="_blank" class="svg-button" aria-label="Github" style="display: inline-flex; align-items: center; margin-left: 10px;">
+            <picture style="display: flex; align-items: center;">
+                <source srcset="vtlgen_module/help/images/vtlGithubDark.svg" media="(prefers-color-scheme: dark)">
+                <img class="svg-icon" src="vtlgen_module/help/images/vtlGithub.svg" alt="Github Icon" style="width: 24px; height: 24px; display: block;">
+            </picture>
+            <div class="popup popupRight">Github</div>
+        </a>
+    </div>
 </div>
+
+
+
+
+
+
 <!-- vtl modal, overlay and script ref. Place just above lower body tag-->
 <div id="vtlOverlay" class="vtlOverlay"></div>
 <dialog id="vtlModal" class="vtlModal">
