@@ -391,7 +391,7 @@
             .then(data => {
                 if (data.canUpdate) {
                     // If prerequisites are met, proceed with the update
-                    return fetch('<?= BASE_URL ?>vtlgen/performUpdate');
+                    return fetch('<?= BASE_URL ?>vtlgen/vtlgenPerformUpdate');
                 } else {
                     // If prerequisites are not met, show modal with error message and exit the function
                     openVtlModal(
