@@ -781,7 +781,7 @@ class Vtlgen extends Trongate
      */
     private function CheckGithubForUpdates() {
         $cache_file = APPPATH . 'modules/vtlgen/assets/vtlUpdateCache.json';
-        $cache_time = 86400; // 24 hours
+        $cache_time = 21600; // 6 hours
 
         if (file_exists($cache_file)) {
             $cache_data = json_decode(file_get_contents($cache_file), true);
