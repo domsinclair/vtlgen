@@ -61,6 +61,33 @@ Every function is accessible from the home page which acts as a navigation hub.
 
 As this was designed primarily as a development tool it is better suited to use on a desktop / laptop screen. 
 
+<div class = "text-center">
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlUpdateDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlUpdate.svg">
+</picture>
+<figcaption>Update</figcaption> 
+</figure>
+</div>
+
+If you see the Update Icon appear on the Home Page to the left of the Version Text then it means that an update to the Vtl Data Generator is available.  Clicking this button will trigger that update.
+
+> <b>YOU MUST have Php Exec priveleges and the machine MUST HAVE Git installed to be able to perform the update.</b>
+
+<br>
+
+Once the update has been completed a new vtlgen module directory will have been created suffixed with the the time.  If you have customised the old module then you need to copy those customisations over to the new module.  Those customisations will likely be in the following places.
+
+- The Config file where you may have setup custom locations to save files.
+- The three files in the Vtlgen controller (located in the 'Customisable Functions' region at the bottom) where you made have made some specific customisations.
+- The Faker files where you may have added your own custom providers.
+
+Those should all be copied over if you had made your own customisations.
+
+Once that has been done delete the old vtlgen directory and then rename the new one to vtlgen.  With that done the update will be complete.
+
+
 <br>
 <div id="datageneration" tabindex="-1"></div>
 

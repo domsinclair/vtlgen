@@ -27,6 +27,7 @@ define ('SQL_SCRIPTS_LOCATION', __DIR__ . '/../assets/sqltablescripts');
 define ('BACKUP_SCRIPTS_LOCATION', __DIR__ . '/../assets/backups');
 define ('DOCUMENTATION_LOCATION', __DIR__ . '/../assets/documentation');
 define ('DOCUMENTATION_LEVEL', 'concise'); //set to verbose for a more detailed result.
+define ('VERSION', 'Version: 3.3'); // used to control auto updates
 ```
 
 Setting your locale will immediately improve the quality of data generated to make it more appropriate to your region.
@@ -534,7 +535,7 @@ The way to approach this is as follows.
 - Decide on the number of Orders that you want to create (we'll say 150 for this example)
 - Add custom generation for the Field names productid and orderid when generating the OrderDetails rows.
 
-Within the vtl_faker controller file you will find the following function
+Within the vtlgen controller file you will find the following function (located in the Customisable Functions region at the bottom of the controller)
 
 ```php
  /**

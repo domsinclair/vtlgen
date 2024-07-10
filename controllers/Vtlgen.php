@@ -65,7 +65,7 @@ class Vtlgen extends Trongate
         }
 
         // check for updates
-        $this->initializeUpdateCache();
+        $this->initialiseUpdateCache();
         $this->updateInfo = $this->CheckGithubForUpdates();
 
         // Initialize the Faker instance
@@ -726,7 +726,7 @@ class Vtlgen extends Trongate
      *
      * @throws Exception If unable to write to the cache file.
      */
-    private function initializeUpdateCache() {
+    private function initialiseUpdateCache() {
         $cache_file = APPPATH . 'modules/vtlgen/assets/vtlUpdateCache.json';
 
         if (!file_exists($cache_file)) {
@@ -1521,51 +1521,7 @@ class Vtlgen extends Trongate
 
     //region createdata view functions
 
-    /**
-     * Creates fake data for the selected table.
-     *
-     * @throws Exception if the JSON data is invalid.
-     * @return void
-     */
-    public function createdataCreateFakeData(): void{
-        // Initialize Faker instance
-        $faker = null;
-        $faker = $this->$faker;
 
-        // register any custom provider(s) with the faker
-        $faker->addProvider(new Faker\Provider\Commerce($faker));
-        $faker->addProvider(new Faker\Provider\Blog($faker));
-
-        // Seed the faker.  This will ensure that the same data gets recreated
-        // which can be useful for testing purposes.
-        // Comment out the line below if you don't want to use a seeded faker.
-
-        //$faker->seed(FAKER_SEED);
-
-        $rawPostData = file_get_contents('php://input');
-        // Decode the JSON data into an associative array
-        $postData = json_decode($rawPostData, true);
-        // Ensure JSON decoding was successful
-        if ($postData === null) {
-            throw new Exception("Invalid JSON data");
-        }
-        // Extract relevant data from the decoded JSON
-        $selectedTable = $postData['selectedTable'];
-        $selectedRows = $postData['selectedRows'];
-        $numRows = $postData['numRows'];
-
-        // Now is the time to hive off highly customised data creation for particular tables
-        // like Trongate pages
-
-        switch ($selectedTable) {
-            case 'trongate_pages':
-                $this->transferImagesToTrongatePages();
-                $this->generateDataForTrongatePages($faker, $selectedTable, $selectedRows, $numRows);
-                break;
-            default :
-                $this->processGeneralTablesThatAreNotSpecialCases($faker, $selectedTable, $selectedRows, $numRows);
-        }
-    }
 
 
 
@@ -2722,366 +2678,9 @@ class Vtlgen extends Trongate
         return array($type, $length);
     }
 
-    /**
-     * Generates a value based on the provided field name and length.
-     *
-     * @param \Faker\Generator $faker The Faker generator instance.
-     * @param string $fieldName The name of the field.
-     * @param int $length The length of the field.
-     * @return mixed Returns the generated value.
-     */
-    private function generateValueFromFieldName(\Faker\Generator $faker, string $fieldName, int $length): mixed
-    {
-        $statement = null;
-        $value = null;
-        switch ($fieldName) {
-            case 'firstname':
-                $value = $faker->firstName();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'lastname':
-                $value = $faker->lastName();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'customername':
-            case 'name':
-                $value = $faker->name();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'username':
-                $value = $faker->userName();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'customeremail':
-            case 'emailaddress':
-            case 'email':
-                $value = $faker->email();
-            //$statement = '"' . $value . '"';
-            $statement = $value;
-                break;
-
-            case 'password':
-                $value = $faker->password();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'age':
-                $value = $faker->numberBetween($min = 18, $max = 99);
-                $statement = $value;
-                break;
-
-            case 'customeraddress':
-            case 'companyaddress':
-            case 'address':
-                $value = $faker->address();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'city':
-            case 'town':
-                $value = $faker->city();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
 
 
-            case 'addressline1':
-            case 'addressline2':
-            case 'addressline3':
-            case 'streetaddress':
-                $value = $faker->streetAddress();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
 
-            case 'state';
-                $value = $faker->state();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'county':
-                $value = $faker->county();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'country':
-                $value = $faker->country();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'zipcode':
-            case 'postcode':
-                $value = $faker->postcode();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'phone':
-                $value = $faker->phoneNumber();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'company':
-                $value = $faker->company();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'job':
-                $value = $faker->jobTitle();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'title':
-                $value = $faker->title();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'deliverydate':
-            case 'orderdate':
-            case 'lastupdateddate':
-            case 'datemodified':
-            case 'dateadded':
-            case 'date':
-            case 'dateofbirth':
-            case 'dob':
-                $value = $faker->date($format = 'Y-m-d', $max = 'now');
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'gender':
-                $value = $faker->randomElement(['Male', 'Female']);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'website':
-                $value = $faker->url();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'comment':
-            case 'productdescription':
-            case 'description':
-                $value = $faker->text();
-                if ($length == -1) {
-                    //$statement = '"' . $value . '"';
-                    $statement = $value;
-                } else {
-                    if (!is_int($length)) {
-                        $length = intval($length);
-                    }
-                    //$statement = '"' . substr($value, 0, $length) . '"';
-                    $statement = substr($value, 0, $length);
-                }
-                break;
-
-            case 'lastupdated':
-            case 'datecreated':
-                $value = $faker->unixTime(new dateTime('-3 days'));
-                $statement = $value;
-                break;
-
-            case 'active':
-            case 'isactive':
-                $value = $faker->boolean();
-                $statement = $value;
-                break;
-
-            case 'productname':
-                $value = $faker->productName();
-                if ($length == -1) {
-                    //$statement = '"' . $value . '"';
-                    $statement = $value;
-                } else {
-                    if (!is_int($length)) {
-                        $length = intval($length);
-                    }
-                    //$statement = '"' . substr($value, 0, $length) . '"';
-                    $statement = substr($value, 0, $length);
-                }
-                break;
-
-            case 'category':
-                $value = $faker->category();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'sku':
-            case 'productsku':
-                $value = $faker->sku();
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'pagetitle':
-                $value = $faker->words(5);
-                if (is_array($value)) {
-                    //$statement = '"' . implode(' ', $value) . '"';
-                    $statement =implode($value);
-                } else {
-                    //$statement = '"' . $value . '"';
-                    $statement = $value;
-                }
-                break;
-            case 'metakeywords':
-                $value = $faker->words;
-                if (is_array($value)) {
-                    //$statement = '"' . implode(', ', $value) . '"';
-                    $statement =implode($value);
-                } else {
-                    //$statement = '"' . $value . '"';
-                    $statement = $value;
-                }
-                break;
-            case 'metadescription':
-                $value = $faker->sentence(7);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-            case 'pagebody':
-                $value = $faker->realText(200, 2);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-            case 'picture':
-            case 'pictureurl':
-            case 'productimage':
-            case 'productimageurl':
-            case 'image':
-            case 'imageurl':
-                $value = $faker->randomElement(['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img7.jpg', 'img8.jpg', 'img9.jpg', 'img10.jpg', 'img11.jpg']);
-            //$statement = '"' . $value . '"';
-            $statement = $value;
-                break;
-            case 'totalamount':
-            case 'total':
-            case 'ordernumber':
-            case 'quantity':
-            case 'price':
-            case 'productprice':
-                $value = $faker->numberBetween($min = 0, $max = 1000000);
-                $statement = $value;
-                break;
-
-            case 'orderstatus':
-                $value = $faker->randomElement(['Processed', 'Out for Delivery', 'Fulfilled']);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'deliverystatus':
-                $value = $faker->randomElement(['Delivered', 'Returned']);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'paymentmethod':
-                $value = $faker->randomElement(['Cash', 'Credit Card', 'PayPal']);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'paymentstatus':
-                $value = $faker->randomElement(['Paid', 'Unpaid']);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'paymenttype':
-                $value = $faker->randomElement(['Credit Card', 'Cash', 'PayPal']);
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-            case 'transactionid':
-                $value = $faker->uuid();
-                $statement = $value;
-                break;
-
-            case 'discount':
-            case 'discountpercentage':
-                $value = $faker->numberBetween($min = 0, $max = 100);
-                $statement = $value;
-                break;
-
-            case 'taxamount':
-                $value = $faker->randomFloat(2, 0, 50);
-                $statement = $value;
-                break;
-
-            case 'task':
-            case 'tasktitle':
-                $value = $faker->complexTask(); //This could be substituted with task()
-                //$statement = '"' . $value . '"';
-                $statement = $value;
-                break;
-
-
-            default:
-                $statement = 'nothing';
-        }
-        //allow for the fact that a known field name may still fail to get data
-        if ($statement === null) {
-            $statement = 'nothing';
-        }
-        return $statement;
-    }
-
-    /**
-     * Checks if the given field name requires custom field name generation.
-     *
-     * @param string $field The field name to check.
-     * @param \Faker\Generator $faker The Faker generator instance.
-     * @return mixed The generated statement or 'nothing' if no custom generation is required.
-     */
-    private function checkForCustomFieldNameGeneration(string $field, \Faker\Generator $faker): mixed
-    {
-        $statement = null;
-        $value = null;
-        switch ($field) {
-            // Add your custom field name generation here:
-            //This would be in the form of a case statement
-
-//            case 'productid';
-//                $value = $faker->$faker->numberBetween($min = 0, $max = 250);
-//                $statement = $value;
-//                break;
-
-
-            //  NB   if dealing with string values $statement should be set like this
-            //  $statement = '"' . $value . '"';
-
-            // DO NOT DELETE THIS PART OR THE SWITCH STATEMENT OR YOU WILL BREAK THE GENERATOR
-            default:
-                $statement = 'nothing';
-        }
-        //allow for the fact that a known field name may still fail to get data
-        if ($statement === null) {
-            $statement = 'nothing';
-        }
-        return $statement;
-
-    }
 
     /**
      * Generates a value based on the given type and length using the Faker library.
@@ -3665,6 +3264,414 @@ class Vtlgen extends Trongate
     }
     //endregion
 
+    //region Customisable Functions
+    /**
+     * Creates fake data for the selected table.
+     *
+     * @throws Exception if the JSON data is invalid.
+     * @return void
+     */
+    public function createdataCreateFakeData(): void{
+        // Initialize Faker instance
+        $faker = null;
+        $faker = $this->$faker;
 
+        // register any custom provider(s) with the faker
+        $faker->addProvider(new Faker\Provider\Commerce($faker));
+        $faker->addProvider(new Faker\Provider\Blog($faker));
+
+        // Seed the faker.  This will ensure that the same data gets recreated
+        // which can be useful for testing purposes.
+        // Comment out the line below if you don't want to use a seeded faker.
+
+        //$faker->seed(FAKER_SEED);
+
+        $rawPostData = file_get_contents('php://input');
+        // Decode the JSON data into an associative array
+        $postData = json_decode($rawPostData, true);
+        // Ensure JSON decoding was successful
+        if ($postData === null) {
+            throw new Exception("Invalid JSON data");
+        }
+        // Extract relevant data from the decoded JSON
+        $selectedTable = $postData['selectedTable'];
+        $selectedRows = $postData['selectedRows'];
+        $numRows = $postData['numRows'];
+
+        // Now is the time to hive off highly customised data creation for particular tables
+        // like Trongate pages
+
+        switch ($selectedTable) {
+            case 'trongate_pages':
+                $this->transferImagesToTrongatePages();
+                $this->generateDataForTrongatePages($faker, $selectedTable, $selectedRows, $numRows);
+                break;
+            default :
+                $this->processGeneralTablesThatAreNotSpecialCases($faker, $selectedTable, $selectedRows, $numRows);
+        }
+    }
+
+    /**
+     * Checks if the given field name requires custom field name generation.
+     *
+     * @param string $field The field name to check.
+     * @param \Faker\Generator $faker The Faker generator instance.
+     * @return mixed The generated statement or 'nothing' if no custom generation is required.
+     */
+    private function checkForCustomFieldNameGeneration(string $field, \Faker\Generator $faker): mixed
+    {
+        $statement = null;
+        $value = null;
+        switch ($field) {
+            // Add your custom field name generation here:
+            //This would be in the form of a case statement
+
+//            case 'productid';
+//                $value = $faker->$faker->numberBetween($min = 0, $max = 250);
+//                $statement = $value;
+//                break;
+
+
+            //  NB   if dealing with string values $statement should be set like this
+            //  $statement = '"' . $value . '"';
+
+            // DO NOT DELETE THIS PART OR THE SWITCH STATEMENT OR YOU WILL BREAK THE GENERATOR
+            default:
+                $statement = 'nothing';
+        }
+        //allow for the fact that a known field name may still fail to get data
+        if ($statement === null) {
+            $statement = 'nothing';
+        }
+        return $statement;
+
+    }
+
+    /**
+     * Generates a value based on the provided field name and length.
+     *
+     * @param \Faker\Generator $faker The Faker generator instance.
+     * @param string $fieldName The name of the field.
+     * @param int $length The length of the field.
+     * @return mixed Returns the generated value.
+     */
+    private function generateValueFromFieldName(\Faker\Generator $faker, string $fieldName, int $length): mixed
+    {
+        $statement = null;
+        $value = null;
+        switch ($fieldName) {
+            case 'firstname':
+                $value = $faker->firstName();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'lastname':
+                $value = $faker->lastName();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'customername':
+            case 'name':
+                $value = $faker->name();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'username':
+                $value = $faker->userName();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'customeremail':
+            case 'emailaddress':
+            case 'email':
+                $value = $faker->email();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'password':
+                $value = $faker->password();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'age':
+                $value = $faker->numberBetween($min = 18, $max = 99);
+                $statement = $value;
+                break;
+
+            case 'customeraddress':
+            case 'companyaddress':
+            case 'address':
+                $value = $faker->address();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'city':
+            case 'town':
+                $value = $faker->city();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+
+            case 'addressline1':
+            case 'addressline2':
+            case 'addressline3':
+            case 'streetaddress':
+                $value = $faker->streetAddress();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'state';
+                $value = $faker->state();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'county':
+                $value = $faker->county();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'country':
+                $value = $faker->country();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'zipcode':
+            case 'postcode':
+                $value = $faker->postcode();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'phone':
+                $value = $faker->phoneNumber();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'company':
+                $value = $faker->company();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'job':
+                $value = $faker->jobTitle();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'title':
+                $value = $faker->title();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'deliverydate':
+            case 'orderdate':
+            case 'lastupdateddate':
+            case 'datemodified':
+            case 'dateadded':
+            case 'date':
+            case 'dateofbirth':
+            case 'dob':
+                $value = $faker->date($format = 'Y-m-d', $max = 'now');
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'gender':
+                $value = $faker->randomElement(['Male', 'Female']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'website':
+                $value = $faker->url();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'comment':
+            case 'productdescription':
+            case 'description':
+                $value = $faker->text();
+                if ($length == -1) {
+                    //$statement = '"' . $value . '"';
+                    $statement = $value;
+                } else {
+                    if (!is_int($length)) {
+                        $length = intval($length);
+                    }
+                    //$statement = '"' . substr($value, 0, $length) . '"';
+                    $statement = substr($value, 0, $length);
+                }
+                break;
+
+            case 'lastupdated':
+            case 'datecreated':
+                $value = $faker->unixTime(new dateTime('-3 days'));
+                $statement = $value;
+                break;
+
+            case 'active':
+            case 'isactive':
+                $value = $faker->boolean();
+                $statement = $value;
+                break;
+
+            case 'productname':
+                $value = $faker->productName();
+                if ($length == -1) {
+                    //$statement = '"' . $value . '"';
+                    $statement = $value;
+                } else {
+                    if (!is_int($length)) {
+                        $length = intval($length);
+                    }
+                    //$statement = '"' . substr($value, 0, $length) . '"';
+                    $statement = substr($value, 0, $length);
+                }
+                break;
+
+            case 'category':
+                $value = $faker->category();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'sku':
+            case 'productsku':
+                $value = $faker->sku();
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'pagetitle':
+                $value = $faker->words(5);
+                if (is_array($value)) {
+                    //$statement = '"' . implode(' ', $value) . '"';
+                    $statement =implode($value);
+                } else {
+                    //$statement = '"' . $value . '"';
+                    $statement = $value;
+                }
+                break;
+            case 'metakeywords':
+                $value = $faker->words;
+                if (is_array($value)) {
+                    //$statement = '"' . implode(', ', $value) . '"';
+                    $statement =implode($value);
+                } else {
+                    //$statement = '"' . $value . '"';
+                    $statement = $value;
+                }
+                break;
+            case 'metadescription':
+                $value = $faker->sentence(7);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+            case 'pagebody':
+                $value = $faker->realText(200, 2);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+            case 'picture':
+            case 'pictureurl':
+            case 'productimage':
+            case 'productimageurl':
+            case 'image':
+            case 'imageurl':
+                $value = $faker->randomElement(['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img7.jpg', 'img8.jpg', 'img9.jpg', 'img10.jpg', 'img11.jpg']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+            case 'totalamount':
+            case 'total':
+            case 'ordernumber':
+            case 'quantity':
+            case 'price':
+            case 'productprice':
+                $value = $faker->numberBetween($min = 0, $max = 1000000);
+                $statement = $value;
+                break;
+
+            case 'orderstatus':
+                $value = $faker->randomElement(['Processed', 'Out for Delivery', 'Fulfilled']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'deliverystatus':
+                $value = $faker->randomElement(['Delivered', 'Returned']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'paymentmethod':
+                $value = $faker->randomElement(['Cash', 'Credit Card', 'PayPal']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'paymentstatus':
+                $value = $faker->randomElement(['Paid', 'Unpaid']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'paymenttype':
+                $value = $faker->randomElement(['Credit Card', 'Cash', 'PayPal']);
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+            case 'transactionid':
+                $value = $faker->uuid();
+                $statement = $value;
+                break;
+
+            case 'discount':
+            case 'discountpercentage':
+                $value = $faker->numberBetween($min = 0, $max = 100);
+                $statement = $value;
+                break;
+
+            case 'taxamount':
+                $value = $faker->randomFloat(2, 0, 50);
+                $statement = $value;
+                break;
+
+            case 'task':
+            case 'tasktitle':
+                $value = $faker->complexTask(); //This could be substituted with task()
+                //$statement = '"' . $value . '"';
+                $statement = $value;
+                break;
+
+
+            default:
+                $statement = 'nothing';
+        }
+        //allow for the fact that a known field name may still fail to get data
+        if ($statement === null) {
+            $statement = 'nothing';
+        }
+        return $statement;
+    }
+
+    //endregion
 
 }
