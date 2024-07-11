@@ -253,7 +253,7 @@ When the end user clicks the update button it initially instigates a check to se
 <br>
 
 ```php
-  public function vtlgenCheckUpdatePrerequisites(): array
+   public function vtlgenCheckUpdatePrerequisites()
     {
         $result = [
             'canUpdate' => true,
@@ -265,19 +265,56 @@ When the end user clicks the update button it initially instigates a check to se
         if (!$result['execEnabled']) {
             $result['canUpdate'] = false;
             $result['message'] = 'The PHP exec() function is not available. Please contact your server administrator.';
-            return $result;
+            return $this->output_json($result);
         }
 
         // Check if Git is installed
-        exec('git --version', $output, $returnVar);
-        $result['gitInstalled'] = ($returnVar === 0);
+        $gitPath = $this->getGitPath();
+        if ($gitPath) {
+            exec("\"$gitPath\" --version", $output, $returnVar);
+            $result['gitInstalled'] = ($returnVar === 0);
+        }
 
         if (!$result['gitInstalled']) {
             $result['canUpdate'] = false;
             $result['message'] = 'Git is not installed or not accessible. Please install Git or contact your server administrator.';
+        } else {
+            $result['message'] = 'All prerequisites are met.';
         }
 
-        return $result;
+        return $this->output_json($result);
+    }
+
+    private function getGitPath()
+    {
+        // For Windows
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $possiblePaths = [
+                'C:\Program Files\Git\bin\git.exe',
+                'C:\Program Files (x86)\Git\bin\git.exe',
+            ];
+            foreach ($possiblePaths as $path) {
+                if (file_exists($path)) {
+                    return $path;
+                }
+            }
+        } else {
+            // For Unix-like systems
+            $output = null;
+            $returnVar = null;
+            exec('which git', $output, $returnVar);
+            if ($returnVar === 0 && !empty($output[0])) {
+                return $output[0];
+            }
+        }
+        return null;
+    }
+
+    private function output_json($data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 ```
 
