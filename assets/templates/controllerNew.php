@@ -26,7 +26,7 @@ class {{ModuleName}} extends Trongate {
 
 
         $data['headline'] = 'Manage {{moduleName}}';
-        $all_rows = $this->model->get('{{primaryKey}} asc');
+        $all_rows = $this->model->get($this->primary_key . ' asc');
 
 
         $pagination_data['total_rows'] = count($all_rows);

@@ -215,6 +215,20 @@
             <div class="grid-item"></div>
             <div class="grid-item"></div>
 
+            <!-- Group Title for Module Operations -->
+
+            <div class="grid-item module-heading" colspan="4">Module Operations</div>
+
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Create Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenCreateModules'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlCreateModuleDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlCreateModule.svg" alt="Create Data Icon">
+                    </picture>
+                    <div class="popup popupRight">Create Module</div>
+                </button>
+            </div>
+
             <!-- Group Title for Help Operations -->
 
             <div class="grid-item help-heading" colspan="4">Help</div>
@@ -443,7 +457,7 @@
 <style>
 
     @media (prefers-color-scheme: light) {
-        .data-heading, .index-heading,.fk-heading, .dbase-heading, .help-heading {
+        .data-heading, .index-heading,.fk-heading, .dbase-heading, .module-heading, .help-heading {
             grid-column: span 4; /* Span all 4 columns */
             color: #000000; /* Optional: Add a background color for the headings */
             text-align: center; /* Center the text in headings */
@@ -482,7 +496,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-        .data-heading, .index-heading,.fk-heading, .dbase-heading, .help-heading {
+        .data-heading, .index-heading,.fk-heading, .dbase-heading,.module-heading, .help-heading {
             grid-column: span 4; /* Span all 4 columns */
             color: #f0f0f0; /* Optional: Add a background color for the headings */
             text-align: center; /* Center the text in headings */

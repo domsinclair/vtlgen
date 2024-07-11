@@ -285,6 +285,23 @@ class Vtlgen extends Trongate
     //region vtlgen page redirect functions
 
 
+    public function vtlgenCreateModules(): void {
+        $tables = [];
+        foreach ($this->applicationModules as $module) {
+            if (isset($module['orphaned_tables'])) {
+                $tables = array_values($module['orphaned_tables']);
+                break;
+            }
+        }
+        $data['tables'] = $tables;
+        $data['headline'] = 'Vtl Data Generator: Create Module';
+        $data['instruction1'] = 'select those tables for which you wish to create modules.';
+        $data['instruction2'] = '';
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'createmodule';
+        $this->template('admin', $data);
+    }
+
     /**
      * Executes the update operation for the VTL Generator module.
      *
@@ -1937,6 +1954,12 @@ class Vtlgen extends Trongate
         echo json_encode($response);
     }
 
+
+
+    //endregion
+
+    //region Generate Module
+
     // The following code leans heavily on work done by Simon Field and Jake Castelli
 
     /**
@@ -2151,7 +2174,6 @@ class Vtlgen extends Trongate
             throw new Exception("Failed to write custom.css file");
         }
     }
-
     //endregion
 
     //region DeleteOrDrop view functions
