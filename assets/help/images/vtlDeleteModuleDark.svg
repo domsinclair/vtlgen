@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="32px" height="32px" viewBox="0 0 32 32" enable-background="new 0 0 32 32" xml:space="preserve">
+  <g id="main">
+    <g id="icon">
+      <path d="M2.5,18.28L2.904,18.01L3.841,17.54L4.843,17.19L5.899,16.97L7,16.9L7.828,16.94L8.632,17.06L9.409,17.26L10.15,17.54L10.86,17.88L11.53,18.28L12.15,18.75L12.73,19.27L13.25,19.85L13.72,20.47L14.12,21.14L14.46,21.85L14.74,22.59L14.94,23.37L15.06,24.17L15.1,25L15.03,26.1L14.81,27.16L14.46,28.16L14.29,28.5L31,28.5L31.19,28.46L31.35,28.35L31.46,28.19L31.5,28L31.5,5.5L2.5,5.5zz" fill="#404040"/>
+      <path d="M2,18.63L2.042,18.59L2.904,18.01L3,17.96L3,6L31,6L31,28L14.52,28L14.46,28.16L14.04,29L31,29L31.39,28.92L31.71,28.71L31.92,28.39L32,28L32,5L2,5zz" fill="#D0D0D0"/>
+      <path d="M3.118,1.029L2.855,1.11L2.617,1.239L2.41,1.41L2.239,1.617L2.11,1.855L2.029,2.118L2,2.4L2,6L32,6L32,2.4L31.97,2.118L31.89,1.855L31.76,1.617L31.59,1.41L31.38,1.239L31.14,1.11L30.88,1.029L30.6,1L3.4,1zz" fill="#51A3E5"/>
+      <path d="M5,14L13,14L13,9L5,9zM12,10L12,13L6,13L6,10zz" fill-rule="evenodd" fill="#D0D0D0"/>
+      <path d="M6,13L12,13L12,10L6,10zz" fill-rule="evenodd" fill="#707070" opacity="0.3"/>
+      <path d="M20,14L29,14L29,9L20,9zM28,10L28,13L21,13L21,10zz" fill-rule="evenodd" fill="#D0D0D0"/>
+      <path d="M21,13L28,13L28,10L21,10zz" fill-rule="evenodd" fill="#707070" opacity="0.3"/>
+      <path d="M20,20L29,20L29,15L20,15zM28,16L28,19L21,19L21,16zz" fill-rule="evenodd" fill="#D0D0D0"/>
+      <path d="M21,19L28,19L28,16L21,16zz" fill-rule="evenodd" fill="#707070" opacity="0.3"/>
+      <path d="M20,26L29,26L29,21L20,21zM28,22L28,25L21,25L21,22zz" fill-rule="evenodd" fill="#D0D0D0"/>
+      <path d="M21,25L28,25L28,22L21,22zz" fill-rule="evenodd" fill="#707070" opacity="0.3"/>
+      <path d="M13,12L16,12L16,17L16,18L16,23L16,24L17,24L20,24L20,23L17,23L17,18L20,18L20,17L17,17L17,12L20,12L20,11L13,11zz" fill-rule="evenodd" fill="#51A3E5"/>
+    </g>
+    <g id="overlay">
+      <path d="M7,18c-3.866,0,-7,3.134,-7,7c0,3.866,3.134,7,7,7s7,-3.134,7,-7C14,21.134,10.866,18,7,18zM2,26v-2h10v2H2z" fill-rule="evenodd" fill="#F96C55"/>
+      <rect x="2" y="24" width="10" height="2" fill-rule="evenodd" fill="#404040"/>
+    </g>
+  </g>
+</svg>

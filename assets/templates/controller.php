@@ -1,6 +1,17 @@
 <?php
 class {{ModuleName}} extends Trongate {
 
+    private $default_limit = 20;
+
+    private $per_page_options = array(10, 20, 50, 100);
+
+    private $columns = [];
+
+   public function __construct() {
+       parent::__construct();
+       $this->columns = json_decode('{{columns}}', true);
+   }
+
     function index () {
         $data['view_module'] = '{{moduleName}}';
         $this->view('display', $data);
@@ -13,5 +24,456 @@ class {{ModuleName}} extends Trongate {
         //$this->template('template method here', $data);
     }
 
-}
 
+    function manage() {
+
+
+        $data['headline'] = 'Manage {{moduleName}}';
+        $all_rows = $this->model->get('{{primaryKey}} asc');
+
+
+        $pagination_data['total_rows'] = count($all_rows);
+        $pagination_data['page_num_segment'] = 3;
+        $pagination_data['limit'] = $this->_get_limit();
+        $pagination_data['pagination_root'] = '{{moduleName}}/'.segment(2);
+        $pagination_data['record_name_plural'] = '{{moduleName}}';
+        $pagination_data['include_showing_statement'] = true;
+        $data['pagination_data'] = $pagination_data;
+
+        $data['rows'] = $this->_reduce_rows($all_rows);
+        $data['selected_per_page'] = $this->_get_selected_per_page();
+        $data['per_page_options'] = $this->per_page_options;
+        $data['view_module'] = '{{moduleName}}';
+
+
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+        $template_to_use = 'admin';
+        $view_file_to_use = 'manage';
+
+        $data['table_headers'] = '{{tableHeaders}}';
+        $data['view_file'] = $view_file_to_use;
+        $this->template($template_to_use, $data);
+    }
+
+    function _get_limit() {
+        if (isset($_SESSION['selected_per_page'])) {
+            $limit = $this->per_page_options[$_SESSION['selected_per_page']];
+        } else {
+            $limit = $this->default_limit;
+        }
+
+        return $limit;
+    }
+
+    function _get_selected_per_page() {
+        if (!isset($_SESSION['selected_per_page'])) {
+            $selected_per_page = $this->per_page_options[1];
+        } else {
+            $selected_per_page = $_SESSION['selected_per_page'];
+        }
+
+        return $selected_per_page;
+    }
+
+    function _reduce_rows($all_rows) {
+        $start_index = $this->_get_offset();
+        $limit = $this->_get_limit();
+
+        return array_slice($all_rows, $start_index, $limit);
+    }
+
+    function _get_offset() {
+        $page_num = segment(3);
+
+        if (!is_numeric($page_num)) {
+            $page_num = 0;
+        }
+
+        if ($page_num>1) {
+            $offset = ($page_num-1)*$this->_get_limit();
+        } else {
+            $offset = 0;
+        }
+
+        return $offset;
+    }
+
+    function create() {
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        $update_id = segment(3);
+        $submit = post('submit');
+
+        if ((is_numeric($update_id)) && ($submit == '')) {
+            $data[0] = $this->getDataFromDB($update_id); // Adjusted to match expected data structure
+        } else {
+            $data[0] = $this->getDataFromPost(); // Adjusted to match expected data structure
+        }
+
+        if (is_numeric($update_id)) {
+            $data['headline'] = 'Update Customers Record';
+            $data['cancel_url'] = BASE_URL . 'customers/show/' . $update_id;
+        } else {
+            $data['headline'] = 'Create New Customers Record';
+            $data['cancel_url'] = BASE_URL . 'customers/manage';
+        }
+
+        $data['form_location'] = BASE_URL . 'customers/submit/' . $update_id;
+        $data['formFields'] = json_encode($this->columns); // Pass columns to view
+        $data['view_file'] = 'create';
+        $data['view_module'] = 'customers';
+        $this->template('admin', $data);
+    }
+
+
+
+    public function submit() {
+
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        $submit = post('submit', true);
+
+        if ($submit == 'Submit') {
+            // Dynamically set validation rules based on columns
+            foreach ($this->columns as $column) {
+                if ($column['Field'] !== '{{primaryKey}}') {
+                    $this->validation_helper->set_rules($column['Field'], ucfirst($column['Field']), 'required');
+                }
+            }
+
+            $result = $this->validation_helper->run();
+
+            if ($result == true) {
+                $update_id = (int) segment(3);
+                $data = $this->getDataFromPost();
+                $data['{{primaryKey}}'] = $update_id;
+
+                if ($update_id > 0) {
+                    $this->model->update_where('{{primaryKey}}', $update_id, $data, strtolower('{{moduleName}}'));
+                    $flash_msg = 'The record was successfully updated';
+                } else {
+                    $update_id = $this->model->insert($data, strtolower('{{moduleName}}'));
+                    $flash_msg = 'The record was successfully created';
+                }
+
+                set_flashdata($flash_msg);
+                redirect(strtolower('{{moduleName}}').'/show/'.$update_id);
+            } else {
+                $this->create();
+            }
+        }
+
+    }
+
+    public function submit_delete(): void {
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        $submit = post('submit');
+        $params['update_id'] = (int) segment(3);
+
+        if (($submit == 'Yes - Delete Now') && ($params['update_id'] > 1)) {
+            //delete all of the comments associated with this record
+            $sql = 'delete from trongate_comments where target_table = :module and update_id = :update_id';
+            $params['module'] = 'trongate_pages';
+            $this->model->query_bind($sql, $params);
+
+            // Create a custom delete query to cater for primary keys that are not named id
+            $moduleName = strtolower('{{moduleName}}'); // Replace with the actual module name
+            $primaryKey = '{{primaryKey}}'; // Replace with the actual primary key
+            $sql = 'DELETE FROM ' . strtolower($moduleName) . ' WHERE ' . $primaryKey . ' = :update_id';
+            $params = [
+                'update_id' => $update_id
+            ];
+
+            $this->model->query_bind($sql, $params);
+
+
+            //set the flashdata
+            $flash_msg = 'The record was successfully deleted';
+            set_flashdata($flash_msg);
+
+            //redirect to the manage page
+            redirect('trongate_pages/manage');
+        } elseif ($params['update_id'] === 1) {
+            $form_submission_errors['update_id'][] = 'Deletion of the homepage record is not permitted.';
+            $_SESSION['form_submission_errors'] = $form_submission_errors;
+            redirect('trongate_pages/manage');
+        }
+    }
+
+    private function getDataFromPost(){
+        $data = [];
+        foreach ($this->columns as $column) {
+            $fieldName = $column['Field'];
+            $data[$fieldName] = post($fieldName);
+        }
+        return $data;
+    }
+
+    private function getDataFromDb($update_id) {
+        $record = $this->model->get_where_custom('{{primaryKey}}', $update_id,  order_by:'{{primaryKey}}');
+        return (array) $record;
+    }
+
+
+    public function show() {
+        $this->module('trongate_security');
+        $token = $this->trongate_security->_make_sure_allowed();
+        $update_id = (int) segment(3);
+
+        if ($update_id == 0) {
+            redirect('orders/manage');
+        }
+
+        $data = $this->getDataFromDB($update_id);
+        $data['token'] = $token;
+
+        if ($data == false) {
+            redirect('orders/manage');
+        } else {
+            // Check if the module has a picture field
+            $data['draw_picture_uploader'] = $this->hasPictureField();
+            $picture_settings = null;
+
+            if ($data['draw_picture_uploader']) {
+                $picture_settings = $this->_init_picture_settings();
+                $this->_make_sure_got_destination_folders($update_id, $picture_settings);
+                $data['picture_path'] = $this->get_picture_path($update_id);
+            }
+
+            // Attempt to get the current picture
+            if ($picture_settings) {
+                $column_name = $picture_settings['target_column_name'];
+
+                if (!empty($data[$column_name])) {
+                    // We have a picture - display picture preview
+                    $data['draw_picture_uploader'] = false;
+                    $picture = $data[$column_name];
+
+                    if ($picture_settings['upload_to_module'] == true) {
+                        $module_assets_dir = BASE_URL . segment(1) . MODULE_ASSETS_TRIGGER;
+                        $data['picture_path'] = $module_assets_dir . '/' . $picture_settings['destination'] . '/' . $update_id . '/' . $picture;
+                    } else {
+                        $data['picture_path'] = BASE_URL . $picture_settings['destination'] . '/' . $update_id . '/' . $picture;
+                    }
+                } else {
+                    // No picture - draw upload form
+                    $data['draw_picture_uploader'] = true;
+                }
+            }
+
+            $data['columns'] = $this->columns;
+            $data['update_id'] = $update_id;
+            $data['headline'] = 'View ' . ucfirst('{{moduleName}}') . ' Record';
+            $data['view_file'] = 'show';
+            $this->template('admin', $data);
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Picture Uploader Related Functions
+    ///////////////////////////////////////////////////////////////////////////
+
+    private function hasPictureField() {
+        foreach ($this->columns as $column) {
+            if (strpos($column['Field'], 'picture') !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _init_picture_settings() {
+        $picture_settings['max_file_size'] = 2000;
+        $picture_settings['max_width'] = 1200;
+        $picture_settings['max_height'] = 1200;
+        $picture_settings['resized_max_width'] = 450;
+        $picture_settings['resized_max_height'] = 450;
+        $picture_settings['destination'] = '{{moduleName}}_pics';
+        $picture_settings['target_column_name'] = 'picture';
+        $picture_settings['thumbnail_dir'] = '{{moduleName}}_pics_thumbnails';
+        $picture_settings['thumbnail_max_width'] = 120;
+        $picture_settings['thumbnail_max_height'] = 120;
+        $picture_settings['upload_to_module'] = true;
+        $picture_settings['make_rand_name'] = false;
+        return $picture_settings;
+    }
+
+    function _make_sure_got_destination_folders($update_id, $picture_settings) {
+        $destination = $picture_settings['destination'];
+        $destination = 'modules/'.segment(1).'/assets/images/'.$destination;
+        $target_dir = APPPATH.$destination.'/'.$update_id;
+
+        if (!file_exists($target_dir)) {
+            //generate the image folder
+            mkdir($target_dir, 0777, true);
+        }
+
+    }
+
+    function submit_upload_picture($update_id) {
+
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        if ($_FILES['picture']['name'] == '') {
+            redirect($_SERVER['HTTP_REFERER']);
+        }
+
+        $submit = post('submit');
+
+        if ($submit == 'Upload') {
+            $picture_settings = $this->_init_picture_settings();
+            extract($picture_settings);
+
+            $validation_str = 'allowed_types[gif,jpg,jpeg,png]|max_size['.$max_file_size.']|max_width['.$max_width.']|max_height['.$max_height.']';
+            $this->validation_helper->set_rules('picture', 'item picture', $validation_str);
+
+            $result = $this->validation_helper->run();
+
+            if ($result == true) {
+
+                $config['destination'] = $destination.'/'.$update_id;
+                $config['max_width'] = $resized_max_width;
+                $config['max_height'] = $resized_max_height;
+
+                //upload the picture
+                $this->upload_picture_alt($config);
+
+                //update the database
+                $data[$target_column_name] = $_FILES['picture']['name'];
+                $this->model->update($update_id, $data);
+
+                $flash_msg = 'The picture was successfully uploaded';
+                set_flashdata($flash_msg);
+                redirect($_SERVER['HTTP_REFERER']);
+
+            } else {
+                redirect($_SERVER['HTTP_REFERER']);
+            }
+        }
+
+    }
+
+    function upload_picture_alt($data) {
+        //check for valid image width and mime type
+        $userfile = array_keys($_FILES)[0];
+        $target_file = $_FILES[$userfile];
+
+        $dimension_data = getimagesize($target_file['tmp_name']);
+        $image_width = $dimension_data[0];
+
+        if (!is_numeric($image_width)) {
+            die('ERROR: non numeric image width');
+        }
+
+        $content_type = mime_content_type($target_file['tmp_name']);
+
+        $str = substr($content_type, 0, 6);
+        if ($str !== 'image/') {
+            die('ERROR: not an image.');
+        }
+
+        $tmp_name = $target_file['tmp_name'];
+        $data['image'] = new Image($tmp_name);
+
+        $dir_path = 'modules/'.segment(1).'/assets/images/';
+        $data['destination'] = $dir_path.$data['destination'];
+        $data['filename'] = '../'.$data['destination'].'/'.$target_file['name'];
+        $data['tmp_file_width'] = $data['image']->getWidth();
+        $data['tmp_file_height'] = $data['image']->getHeight();
+
+        if (!isset($data['max_width'])) {
+            $data['max_width'] = NULL;
+        }
+
+        if (!isset($data['max_height'])) {
+            $data['max_height'] = NULL;
+        }
+
+        $this->save_that_pic_alt($data);
+
+    }
+
+    function save_that_pic_alt($data) {
+        extract($data);
+        $reduce_width = false;
+        $reduce_height = false;
+
+        if (!isset($data['compression'])) {
+            $compression = 100;
+        } else {
+            $compression = $data['compression'];
+        }
+
+        if (!isset($data['permissions'])) {
+            $permissions = 775;
+        } else {
+            $permissions = $data['permissions'];
+        }
+
+        //do we need to resize the picture?
+        if ((isset($max_width)) && ($tmp_file_width>$max_width)) {
+            $reduce_width = true;
+        }
+
+        if ((isset($max_height)) && ($tmp_file_width>$max_height)) {
+            $reduce_height = true;
+        }
+
+        //resize rules figured out, let's rock...
+        if (($reduce_width == true) && ($reduce_height == false)) {
+            $image->resizeToWidth($max_width);
+            $image->save($filename, $compression);
+        }
+
+        if (($reduce_width == false) && ($reduce_height == true)) {
+            $image->resizeToHeight($max_height);
+            $image->save($filename, $compression);
+        }
+
+        if (($reduce_width == false) && ($reduce_height == false)) {
+            $image->save($filename, $compression);
+        }
+
+        if (($reduce_width == true) && ($reduce_height == true)) {
+            $image->resizeToWidth($max_width);
+            $image->resizeToHeight($max_height);
+            $image->save($filename, $compression);
+        }
+    }
+
+    function ditch_picture($update_id) {
+
+        if (!is_numeric($update_id)) {
+            redirect($_SERVER['HTTP_REFERER']);
+        }
+
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        $result = $this->model->get_where($update_id);
+
+        if ($result == false) {
+            redirect($_SERVER['HTTP_REFERER']);
+        }
+
+        $target_dir = APPPATH.'modules/news/assets/images/news_pics/'.$update_id;
+        $this->_rrmdir($target_dir);
+
+        $picture_settings = $this->_init_picture_settings();
+        $target_column_name = $picture_settings['target_column_name'];
+        $data[$target_column_name] = '';
+        $this->model->update($update_id, $data);
+
+        $flash_msg = 'The picture was successfully deleted';
+        set_flashdata($flash_msg);
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
+}

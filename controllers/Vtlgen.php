@@ -97,7 +97,7 @@ class Vtlgen extends Trongate
         unset($_SESSION['selectedDataTable']);
 
         // Define the list item HTML with a newline character at the end
-        $listItemHTML = "\n<li>" . anchor('vtlgen', '<img src="vtlgen_module/help/images/vtlgen.svg"> Vtl Data Generator') . '</li>' . "\n";
+         $listItemHTML = "\n<li>" . anchor('vtlgen', '<img src="vtlgen_module/help/images/vtlgen.svg"> Vtl Data Generator'). '</li>' . "\n";
 
 // Path to the dynamic_nav.php file
         $filePath = APPPATH . 'templates/views/partials/admin/dynamic_nav.php';
@@ -294,6 +294,7 @@ class Vtlgen extends Trongate
             }
         }
         $data['tables'] = $tables;
+        $data['columns'] = $this->getColumnDataForGivenTable($tables[2]);
         $data['headline'] = 'Vtl Data Generator: Create Module';
         $data['instruction1'] = 'select those tables for which you wish to create modules.';
         $data['instruction2'] = '';
@@ -1187,6 +1188,24 @@ class Vtlgen extends Trongate
     }
 
     /**
+     * Retrieves column data for a given table.
+     *
+     * @param string $tableName The name of the table to retrieve column data for.
+     * @return array The column data for the specified table.
+     */
+    private function getColumnDataForGivenTable(string $tableName): array{
+        //var_dump('Fetching column Information for ' . $tableName);
+        $sql = "SHOW COLUMNS FROM $tableName";
+        $stmt = $this->dbh->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        return $result ?: [];
+    }
+
+
+    /**
      * Retrieves all tables with rows from the database.
      *
      * @return array List of tables with rows
@@ -1960,49 +1979,52 @@ class Vtlgen extends Trongate
 
     //region Generate Module
 
-    // The following code leans heavily on work done by Simon Field and Jake Castelli
 
-    /**
-     * Creates a new module folder structure based on the provided module name.
-     *
-     * @throws Exception if an error occurs during the module creation process.
-     * @return void
-     */
-    public function createtableGenerateModule(): void {
-        // Retrieve raw POST data from the request body
-        $rawPostData = file_get_contents('php://input');
-
-        // Decode the JSON data into an associative array
-        $postData = json_decode($rawPostData, true);
+    public function createModules(): void {
+        $posted_data = json_decode(file_get_contents('php://input'), true);
+        $table_name = $posted_data['table'];
 
         // Initialize response array
         $response = ['status' => '', 'message' => ''];
 
-        // Validate JSON input
-        if ($postData === null || !isset($postData['tableName'])) {
+        // Validate table name
+        if (!$table_name) {
             $response['status'] = 'error';
-            $response['message'] = 'Invalid input data';
+            $response['message'] = 'Invalid table name';
             echo json_encode($response);
             return;
         }
 
-        // Extract relevant data from the decoded JSON
-        $moduleName = $postData['tableName'];
+        // Get module details
+        $moduleName = ucfirst($table_name);
+
+        $columnInfo = $this->getColumnDataForGivenTable($table_name);
+
+        $primaryKey = $this->getPrimaryKey($table_name);
+
+        // Debugging: Check the value of $columnInfo
+//        if ($columnInfo === null) {
+//            var_dump("Column information for table '$table_name' is null");
+//        } else {
+//            var_dump("Column information for table '$table_name': " . json_encode($columnInfo));
+//        }
+
+       // var_dump('Column Info(columns)'.$columnInfo['columns']);
 
         // Define the path to the modules directory
         $modulesDir = APPPATH . 'modules';
+        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . strtolower($moduleName) ;
 
-        // Now create the basic module folder structure
-        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . $moduleName;
         if (is_dir($modulePath)) {
-            // we have a folder
+            // Module already exists
             $response['status'] = 'error';
             $response['message'] = 'Module already exists!';
         } else {
             try {
-                if ($this->generateModuleInfrastructure($modulePath, $moduleName)) {
+                // Generate module infrastructure
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey)) {
                     $response['status'] = 'success';
-                    $response['message'] = 'Operation completed successfully.';
+                    $response['message'] = 'Module created successfully.';
                 } else {
                     $response['status'] = 'error';
                     $response['message'] = 'Operation failed due to an unknown error.';
@@ -2016,6 +2038,70 @@ class Vtlgen extends Trongate
         echo json_encode($response);
     }
 
+
+    // The following code leans heavily on work done by Simon Field and Jake Castelli
+
+    /**
+     * Creates a new module folder structure based on the provided module name.
+     *
+     * @throws Exception if an error occurs during the module creation process.
+     * @return void
+     */
+//    public function createtableGenerateModule(): void {
+//        // Retrieve raw POST data from the request body
+//        $rawPostData = file_get_contents('php://input');
+//
+//        // Decode the JSON data into an associative array
+//        $postData = json_decode($rawPostData, true);
+//
+//        // Initialize response array
+//        $response = ['status' => '', 'message' => ''];
+//
+//        // Validate JSON input
+//        if ($postData === null || !isset($postData['tableName'])) {
+//            $response['status'] = 'error';
+//            $response['message'] = 'Invalid input data';
+//            echo json_encode($response);
+//            return;
+//        }
+//
+//        // Extract relevant data from the decoded JSON
+//        $moduleName = $postData['tableName'];
+//
+//        // Get the other information required for the module creation
+//        $columnInfo = $this -> getColumnDataForGivenTable($moduleName);
+//        $primaryKey = $this -> getPrimaryKey($moduleName);
+//
+//        // Define the path to the modules directory
+//        $modulesDir = APPPATH . 'modules';
+//
+//        // Now create the basic module folder structure
+//        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . $moduleName;
+//        if (is_dir($modulePath)) {
+//            // we have a folder
+//            $response['status'] = 'error';
+//            $response['message'] = 'Module already exists!';
+//        } else {
+//            try {
+//                if ($this->generateModuleInfrastructure($modulePath, $moduleName)) {
+//                    $response['status'] = 'success';
+//                    $response['message'] = 'Operation completed successfully.';
+//                } else {
+//                    $response['status'] = 'error';
+//                    $response['message'] = 'Operation failed due to an unknown error.';
+//                }
+//            } catch (Exception $e) {
+//                $response['status'] = 'error';
+//                $response['message'] = 'Operation failed: ' . $e->getMessage();
+//            }
+//        }
+//
+//        echo json_encode($response);
+//    }
+
+
+
+
     /**
      * Generate the infrastructure for a new module, including directories for controllers, views, and assets.
      *
@@ -2024,7 +2110,7 @@ class Vtlgen extends Trongate
      * @throws Exception If an error occurs during the generation process.
      * @return bool Returns true if the infrastructure generation is successful.
      */
-    private function generateModuleInfrastructure($modulePath, $moduleName): bool {
+    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey): bool {
         try {
             $this->createDirectory($modulePath);
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
@@ -2034,9 +2120,14 @@ class Vtlgen extends Trongate
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'images');
 
-            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName);
-            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName);
+            // Process columns info
+            $processedColumns = $this->processColumnInfo($columnInfo, $primaryKey);
+
+            // Generate module files
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey);
+            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
+            // Additional assets generation if needed
             $this->generateCustomJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
             $this->generateCustomCss($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
 
@@ -2045,6 +2136,84 @@ class Vtlgen extends Trongate
             throw $e;
         }
     }
+
+
+
+
+//    private function generateModuleInfrastructure($modulePath, $moduleName): bool {
+//        try {
+//            $this->createDirectory($modulePath);
+//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
+//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'views');
+//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets');
+//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
+//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
+//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'images');
+//
+//            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName);
+//            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName);
+//            $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
+//            $this->generateCustomJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
+//            $this->generateCustomCss($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
+//
+//            return true;
+//        } catch (Exception $e) {
+//            throw $e;
+//        }
+//    }
+
+    private function processColumnInfo($columnInfo, $primaryKey) {
+        $columns = array_filter($columnInfo, function($column) use ($primaryKey) {
+            return $column['Field'] === $primaryKey || $column['Key'] !== 'PRI';
+        });
+
+        array_unshift($columns, [
+            "Field" => $primaryKey,
+            "Type" => "int(11)",
+            "Null" => "NO",
+            "Key" => "PRI",
+            "Default" => null,
+            "Extra" => "auto_increment"
+        ]);
+
+        $tableHeaders = array_map(function($column) {
+            return $column['Field'];
+        }, $columns);
+
+        return [
+            'columns' => $columns,
+            'tableHeaders' => implode(', ', $tableHeaders)
+        ];
+    }
+
+
+//    private function processColumnInfo($columnInfo, $primaryKey) {
+//        $columns = array_filter($columnInfo, function($column) use ($primaryKey) {
+//            return $column['Field'] === $primaryKey || $column['Key'] !== 'PRI';
+//        });
+//
+//        // Limit to 3 additional columns + primary key
+//        $columns = array_slice($columns, 0, 3);
+//
+//        array_unshift($columns, [
+//            "Field" => $primaryKey,
+//            "Type" => "int(11)",
+//            "Null" => "NO",
+//            "Key" => "PRI",
+//            "Default" => null,
+//            "Extra" => "auto_increment"
+//        ]);
+//
+//        $tableHeaders = array_map(function($column) {
+//            return $column['Field'];
+//        }, $columns);
+//
+//        return [
+//            'columns' => $columns,
+//            'tableHeaders' => implode(', ', $tableHeaders)
+//        ];
+//    }
+
 
     /**
      * Creates a directory at the specified path.
@@ -2066,24 +2235,73 @@ class Vtlgen extends Trongate
      * @param string $moduleName The name of the module.
      * @throws Exception Failed to read controller template or write controller file.
      */
-    private function generateModuleController($moduleControllersPath, $moduleName): void {
-        $controllerPath = $moduleControllersPath . DIRECTORY_SEPARATOR . ucfirst($moduleName) . '.php';
-        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php';
+    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey) {
+        var_dump('In the generate module controller function');
+        $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
 
-        $controllerContent = file_get_contents($templatePath);
-        if ($controllerContent === false) {
-            throw new Exception("Failed to read controller template");
-        }
+        $replacements = [
+            '{{ModuleName}}' => ucfirst($moduleName),
+            '{{moduleName}}' => $moduleName,
+            '{{tableHeaders}}' => $processedColumns['tableHeaders'],
+            '{{columns}}' => json_encode($processedColumns['columns']),
+            '{{primaryKey}}' => $primaryKey
+        ];
 
-        // Replace placeholders with actual values
-        $controllerContent = str_replace('{{ModuleName}}', ucfirst($moduleName), $controllerContent);
-        $controllerContent = str_replace('{{moduleName}}', strtolower($moduleName), $controllerContent);
+        $controllerContent = str_replace(array_keys($replacements), array_values($replacements), $template);
 
-        // Write the processed content to the new controller file
-        if (file_put_contents($controllerPath, $controllerContent) === false) {
-            throw new Exception("Failed to write controller file");
+        file_put_contents($controllerPath . DIRECTORY_SEPARATOR . ucfirst($moduleName) . '.php', $controllerContent);
+
+        // Update admin menu
+        $this->updateAdminMenu($moduleName);
+    }
+
+    private function updateAdminMenu($moduleName) {
+        // Define the list item HTML with a newline character at the end
+        $listItemHTML = "\n<li><?= anchor('" . $moduleName . "/manage', 'Manage " . ucfirst($moduleName) . "') ?></li>\n";
+
+        // Path to the dynamic_nav.php file
+        $filePath = APPPATH . 'templates/views/partials/admin/dynamic_nav.php';
+
+        // Read the content of dynamic_nav.php
+        $fileContent = file_get_contents($filePath);
+
+        // Check if the list item already exists in the file
+        if (strpos($fileContent, $listItemHTML) === false) {
+            // Find the position to insert the new list item after the opening <ul> tag
+            $pos = strpos($fileContent, '<ul>');
+            if ($pos !== false) {
+                // Move the position to after the opening <ul> tag
+                $pos += strlen('<ul>') + 1; // +1 to include the newline after <ul>
+
+                // Insert the list item after the opening <ul> tag
+                $newContent = substr_replace($fileContent, "\n" . $listItemHTML, $pos, 0);
+
+                // Write the modified content back to the file
+                file_put_contents($filePath, $newContent);
+            }
         }
     }
+
+
+
+//    private function generateModuleController($moduleControllersPath, $moduleName,$processedColumns, $primaryKey ): void {
+//        $controllerPath = $moduleControllersPath . DIRECTORY_SEPARATOR . ucfirst($moduleName) . '.php';
+//        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controllerold.php';
+//
+//        $controllerContent = file_get_contents($templatePath);
+//        if ($controllerContent === false) {
+//            throw new Exception("Failed to read controller template");
+//        }
+//
+//        // Replace placeholders with actual values
+//        $controllerContent = str_replace('{{ModuleName}}', ucfirst($moduleName), $controllerContent);
+//        $controllerContent = str_replace('{{moduleName}}', strtolower($moduleName), $controllerContent);
+//
+//        // Write the processed content to the new controller file
+//        if (file_put_contents($controllerPath, $controllerContent) === false) {
+//            throw new Exception("Failed to write controller file");
+//        }
+//    }
 
 
 
@@ -2095,23 +2313,91 @@ class Vtlgen extends Trongate
      * @throws Some_Exception_Class description of exception
      * @return void
      */
-    private function generateModuleView($moduleViewsPath, $moduleName): void {
-        $viewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'display.php';
-        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'display.php';
+    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey): void {
+        var_dump('In the generate module views function');
+        // Paths for display and manage view templates
+        $displayViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'display.php';
+        $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
+        $createViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'create.php';
+        $showViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'show.php';
 
-        $viewContent = file_get_contents($templatePath);
-        if ($viewContent === false) {
-            throw new Exception("Failed to read view template");
+        $displayTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'display.php';
+        $manageTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'manage.php';
+        $createTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'create.php';
+        $showTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'show.php';
+
+        // Process display view template
+        $displayContent = file_get_contents($displayTemplatePath);
+        if ($displayContent === false) {
+            throw new Exception("Failed to read display view template");
+        }
+        $displayContent = str_replace('{{moduleName}}', strtolower($moduleName), $displayContent);
+        if (file_put_contents($displayViewPath, $displayContent) === false) {
+            throw new Exception("Failed to write display view file");
         }
 
-        // Replace placeholders with actual values
-        $viewContent = str_replace('{{moduleName}}', strtolower($moduleName), $viewContent);
+        // Process manage view template
+        $manageContent = file_get_contents($manageTemplatePath);
+        if ($manageContent === false) {
+            throw new Exception("Failed to read manage view template");
+        }
+        $tableHeaders = array_column($columnInfo, 'Field');
+        $manageContent = str_replace('{{moduleName}}', strtolower($moduleName), $manageContent);
+        $manageContent = str_replace('{{tableHeaders}}', json_encode($tableHeaders), $manageContent);
+        $manageContent = str_replace('{{primaryKey}}', $primaryKey, $manageContent);
+        if (file_put_contents($manageViewPath, $manageContent) === false) {
+            throw new Exception("Failed to write manage view file");
+        }
 
-        // Write the processed content to the new view file
-        if (file_put_contents($viewPath, $viewContent) === false) {
-            throw new Exception("Failed to write view file");
+        // Process create view template
+        $createContent = file_get_contents($createTemplatePath);
+        if ($createContent === false) {
+            throw new Exception("Failed to read create view template");
+        }
+        $formFields = json_encode($columnInfo);
+        $createContent = str_replace('{{moduleName}}', strtolower($moduleName), $createContent);
+        $createContent = str_replace('{{formFields}}', $formFields, $createContent);
+        if (file_put_contents($createViewPath, $createContent) === false) {
+            throw new Exception("Failed to write create view file");
+        }
+
+        // Process show view template
+        $showContent = file_get_contents($showTemplatePath);
+        if ($showContent === false) {
+            throw new Exception("Failed to read show view template");
+        }
+        $columnsData = '';
+        foreach ($columnInfo as $column) {
+            if ($column['Extra'] != 'auto_increment') {
+                $columnsData .= '<div class="row"><div>' . $column['Field'] . '</div><div><?= out($' . $column['Field'] . ') ?></div></div>';
+            }
+        }
+        $showContent = str_replace('{{moduleName}}', strtolower($moduleName), $showContent);
+        $showContent = str_replace('{{columns}}', $columnsData, $showContent);
+        if (file_put_contents($showViewPath, $showContent) === false) {
+            throw new Exception("Failed to write show view file");
         }
     }
+
+
+
+//    private function generateModuleView($moduleViewsPath, $moduleName): void {
+//        $viewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'display.php';
+//        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'display.php';
+//
+//        $viewContent = file_get_contents($templatePath);
+//        if ($viewContent === false) {
+//            throw new Exception("Failed to read view template");
+//        }
+//
+//        // Replace placeholders with actual values
+//        $viewContent = str_replace('{{moduleName}}', strtolower($moduleName), $viewContent);
+//
+//        // Write the processed content to the new view file
+//        if (file_put_contents($viewPath, $viewContent) === false) {
+//            throw new Exception("Failed to write view file");
+//        }
+//    }
 
 
     /**

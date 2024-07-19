@@ -33,7 +33,7 @@
     </div>
 </section>
 <section>
-    <div class="container" id="progress" style="display: none" >
+    <div class="container" id="progressContainer" style="display: none">
         <div class="progress-bar" id="progress-bar" style="display: none" >
             <div class="progress" id="progress" ></div>
         </div>
@@ -101,27 +101,63 @@
 
     });
 
-    function createModules() {
+    async function createModules() {
         // Get the selected rows from the Tabulator datatable
         var table = Tabulator.findTable("#datatable")[0];
         var selectedRows = table.getSelectedData();
 
-        // Filter the selected rows to include only the table name
-        var filteredRows = selectedRows.map(row => {
-            return {
-                table: row.table // Ensure the correct field name is used
-            };
-        });
+        // Filter the selected rows to include only the table names
+        var tableNames = selectedRows.map(row => row.table);
 
-        // At this stage we might need to invoke a function to iterate over a loop so that we can have a progress bar.
+        // Initialize progress bar
+        var progressBarContainer = document.getElementById('progressContainer');
+        var progressBar = document.getElementById('progress-bar');
+        var progress = document.getElementById('progress');
 
-        // Prepare the data to send
-        var postData = {
-            selectedTables: filteredRows
-        };
+        progressBarContainer.style.display = 'block';
+        progressBar.style.display = 'block';
+        progress.style.width = '0%';
 
+        // Iterate over each selected table and call the backend
+        for (let i = 0; i < tableNames.length; i++) {
+            let tableName = tableNames[i];
 
+            try {
+                let response = await fetch('<?= BASE_URL ?>vtlgen/createModules', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ table: tableName })
+                });
+
+                if (response.ok) {
+                    let result = await response.json();
+
+                    // Update progress bar
+                    let progressPercentage = ((i + 1) / tableNames.length) * 100;
+                    progress.style.width = progressPercentage + '%';
+                    progress.textContent = progressPercentage + '%';
+
+                    // Handle success or error for each table
+                    if (result.status === 'success') {
+                        console.log('Module created for table:', tableName);
+                    } else {
+                        console.error('Failed to create module for table:', tableName, '-', result.message);
+                    }
+                } else {
+                    console.error('Failed to create module for table:', tableName);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Optionally, you can display a completion message or refresh the page
+        openVtlModal('Modules Created', true, 'All modules created successfully.');
     }
+
+
 </script>
 <style>
     :root {
@@ -175,6 +211,28 @@
     input[type="checkbox"] {
         margin: 6px;
         align-self: inherit;
+    }
+
+    .progress-bar {
+        max-width: var(--max-progress-width);
+        height: var(--progress-height);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        position: relative;
+        display: block;
+    }
+    .progress {
+        background-color: var(--primary);
+        /*transition: width 0.1s ease-in-out;*/
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 16px;
+        position: absolute;
+        width: 0;
+
     }
 
 </style>

@@ -1,11 +1,15 @@
+<?php
+$table_headers = json_decode('{{tableHeaders}}', true);
+$primaryKey = '{{primaryKey}}';
+?>
 <h1><?= $headline ?></h1>
 <?php
 flashdata();
 echo validation_errors();
 echo '<p>';
-echo anchor('{{moduleName}}/create', 'Create New {{ModuleName}} Record', array("class" => "button")).'</p>';
+echo anchor('{{moduleName}}/create', 'Create New {{moduleName}} Record', array("class" => "button")).'</p>';
 if (strtolower(ENV) === 'dev') {
-    echo anchor('api/explorer/{{ModuleName}}', 'API Explorer', array("class" => "button alt"));
+    echo anchor('api/explorer/{{moduleName}}', 'API Explorer', array("class" => "button alt"));
 }
 echo '</p>';
 
@@ -30,7 +34,7 @@ if (count($rows) > 0) { ?>
                     <td><?= $row->$header ?? '' ?></td>
                 <?php endforeach; ?>
                 <td>
-                    <?= anchor('{{moduleName}}/show/'.$row->id, 'View', array('class' => 'button alt')) ?>
+                    <?= anchor('{{moduleName}}/show/'.$row->{{primaryKey}}, 'View', array('class' => 'button alt')) ?>
                 </td>
             </tr>
         <?php endforeach; ?>

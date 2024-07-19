@@ -223,9 +223,18 @@
                 <button class="svg-button" aria-label="Create Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenCreateModules'">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlCreateModuleDark.svg" media="(prefers-color-scheme: dark)">
-                        <img class="svg-icon" src="vtlgen_module/help/images/vtlCreateModule.svg" alt="Create Data Icon">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlCreateModule.svg" alt="Create Module Icon">
                     </picture>
                     <div class="popup popupRight">Create Module</div>
+                </button>
+            </div>
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Delete Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenDeleteModules'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlDeleteModuleDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlDeleteModule.svg" alt="Delete Module Icon">
+                    </picture>
+                    <div class="popup popupLeft">Delete Module</div>
                 </button>
             </div>
 
