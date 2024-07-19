@@ -51,6 +51,12 @@ The module has four key areas of operation and a set of comprehensive help files
              <li><a href="#edittable">Edit Table</a></li>
             <li><a href="#export">Export Script</a></li>
         </ul>
+     <li><a href="#moduleops">Module Operations</a></li>
+        <ul>
+             <li><a href="#createmodule">Create Module</a></li>
+            <li><a href="#dropmodule">Delete Module</a></li>
+        </ul>
+
      
 </ul>
 </div>
@@ -555,4 +561,43 @@ If you are familiar with the process for creating new database tables then the o
 A backup script will then be generated and saved to a special backups folder in the module's assets directory.  The location of this folder can be customised, more details of which can be found in the customisation help file.
 
 <br>
+<div id="mods" tabindex="-1"></div>
 
+### Module Operations
+
+<br>
+
+<div class = "text-center">
+<div id="createmodule" tabindex="-1"></div>
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlCreateModuleDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlCreateModule.svg">
+</picture>
+<figcaption>Create Module</figcaption> 
+</figure>
+</div>
+
+<br>
+
+- Select the table (or tables) for which you wish to create a Module or Modules.
+- Click Create Module.
+
+The Data Generator will then create a fully functional module.  It will have an assets folder containing a css folder with an empty css file, an images folder and a js folder with an empty js file.
+It will create a controllers folder containing a controller file and it will create a views folder with a manage, create and show views.
+
+> Whilst the Data Generator is capable of producing a pretty realistic Module, given the caveat that it is effectively doing so blind, it's important to realise that there may well be inaccuracies.
+> It is incumbent on you to verify that the basic crud operations work the way that you expect them to.
+
+<br>
+
+<div class = "text-center">
+<div id="dropmodule" tabindex="-1"></div>
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlDeleteModuleDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlDeleteModule.svg">
+</picture>
+<figcaption>Delete Module</figcaption> 
+</figure>
+</div>

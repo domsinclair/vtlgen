@@ -1979,7 +1979,14 @@ class Vtlgen extends Trongate
 
     //region Generate Module
 
+    // The following code leans heavily on work done by Simon Field and Jake Castelli
 
+    /**
+     * Creates a new module folder structure based on the provided module name.
+     *
+     * @throws Exception if an error occurs during the module creation process.
+     * @return void
+     */
     public function createModules(): void {
         $posted_data = json_decode(file_get_contents('php://input'), true);
         $table_name = $posted_data['table'];
@@ -2001,15 +2008,6 @@ class Vtlgen extends Trongate
         $columnInfo = $this->getColumnDataForGivenTable($table_name);
 
         $primaryKey = $this->getPrimaryKey($table_name);
-
-        // Debugging: Check the value of $columnInfo
-//        if ($columnInfo === null) {
-//            var_dump("Column information for table '$table_name' is null");
-//        } else {
-//            var_dump("Column information for table '$table_name': " . json_encode($columnInfo));
-//        }
-
-       // var_dump('Column Info(columns)'.$columnInfo['columns']);
 
         // Define the path to the modules directory
         $modulesDir = APPPATH . 'modules';
@@ -2037,68 +2035,6 @@ class Vtlgen extends Trongate
 
         echo json_encode($response);
     }
-
-
-    // The following code leans heavily on work done by Simon Field and Jake Castelli
-
-    /**
-     * Creates a new module folder structure based on the provided module name.
-     *
-     * @throws Exception if an error occurs during the module creation process.
-     * @return void
-     */
-//    public function createtableGenerateModule(): void {
-//        // Retrieve raw POST data from the request body
-//        $rawPostData = file_get_contents('php://input');
-//
-//        // Decode the JSON data into an associative array
-//        $postData = json_decode($rawPostData, true);
-//
-//        // Initialize response array
-//        $response = ['status' => '', 'message' => ''];
-//
-//        // Validate JSON input
-//        if ($postData === null || !isset($postData['tableName'])) {
-//            $response['status'] = 'error';
-//            $response['message'] = 'Invalid input data';
-//            echo json_encode($response);
-//            return;
-//        }
-//
-//        // Extract relevant data from the decoded JSON
-//        $moduleName = $postData['tableName'];
-//
-//        // Get the other information required for the module creation
-//        $columnInfo = $this -> getColumnDataForGivenTable($moduleName);
-//        $primaryKey = $this -> getPrimaryKey($moduleName);
-//
-//        // Define the path to the modules directory
-//        $modulesDir = APPPATH . 'modules';
-//
-//        // Now create the basic module folder structure
-//        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . $moduleName;
-//        if (is_dir($modulePath)) {
-//            // we have a folder
-//            $response['status'] = 'error';
-//            $response['message'] = 'Module already exists!';
-//        } else {
-//            try {
-//                if ($this->generateModuleInfrastructure($modulePath, $moduleName)) {
-//                    $response['status'] = 'success';
-//                    $response['message'] = 'Operation completed successfully.';
-//                } else {
-//                    $response['status'] = 'error';
-//                    $response['message'] = 'Operation failed due to an unknown error.';
-//                }
-//            } catch (Exception $e) {
-//                $response['status'] = 'error';
-//                $response['message'] = 'Operation failed: ' . $e->getMessage();
-//            }
-//        }
-//
-//        echo json_encode($response);
-//    }
-
 
 
 
@@ -2140,28 +2076,19 @@ class Vtlgen extends Trongate
 
 
 
-//    private function generateModuleInfrastructure($modulePath, $moduleName): bool {
-//        try {
-//            $this->createDirectory($modulePath);
-//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
-//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'views');
-//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets');
-//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
-//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
-//            $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'images');
-//
-//            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName);
-//            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName);
-//            $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
-//            $this->generateCustomJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
-//            $this->generateCustomCss($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
-//
-//            return true;
-//        } catch (Exception $e) {
-//            throw $e;
-//        }
-//    }
 
+    /**
+     * Processes the column information and returns an array containing the modified columns and table headers.
+     *
+     * @param array $columnInfo The array of column information.
+     * @param string $primaryKey The primary key of the table.
+     * @return array An array containing the modified columns and table headers.
+     *               The array has the following structure:
+     *               [
+     *                   'columns' => array, // The modified columns array.
+     *                   'tableHeaders' => string, // The table headers as a comma-separated string.
+     *               ]
+     */
     private function processColumnInfo($columnInfo, $primaryKey) {
         $columns = array_filter($columnInfo, function($column) use ($primaryKey) {
             return $column['Field'] === $primaryKey || $column['Key'] !== 'PRI';
@@ -2187,32 +2114,7 @@ class Vtlgen extends Trongate
     }
 
 
-//    private function processColumnInfo($columnInfo, $primaryKey) {
-//        $columns = array_filter($columnInfo, function($column) use ($primaryKey) {
-//            return $column['Field'] === $primaryKey || $column['Key'] !== 'PRI';
-//        });
-//
-//        // Limit to 3 additional columns + primary key
-//        $columns = array_slice($columns, 0, 3);
-//
-//        array_unshift($columns, [
-//            "Field" => $primaryKey,
-//            "Type" => "int(11)",
-//            "Null" => "NO",
-//            "Key" => "PRI",
-//            "Default" => null,
-//            "Extra" => "auto_increment"
-//        ]);
-//
-//        $tableHeaders = array_map(function($column) {
-//            return $column['Field'];
-//        }, $columns);
-//
-//        return [
-//            'columns' => $columns,
-//            'tableHeaders' => implode(', ', $tableHeaders)
-//        ];
-//    }
+
 
 
     /**
@@ -2255,9 +2157,16 @@ class Vtlgen extends Trongate
         $this->updateAdminMenu($moduleName);
     }
 
+    /**
+     * Updates the admin menu by adding a new list item for the given module.
+     *
+     * @param string $moduleName The name of the module to add to the admin menu.
+     * @throws None
+     * @return void
+     */
     private function updateAdminMenu($moduleName) {
         // Define the list item HTML with a newline character at the end
-        $listItemHTML = "\n<li><?= anchor('" . $moduleName . "/manage', 'Manage " . ucfirst($moduleName) . "') ?></li>\n";
+        $listItemHTML = "\n<li><?= anchor('" . strtolower($moduleName) . "/manage', 'Manage " . ucfirst($moduleName) . "') ?></li>\n";
 
         // Path to the dynamic_nav.php file
         $filePath = APPPATH . 'templates/views/partials/admin/dynamic_nav.php';
@@ -2283,28 +2192,6 @@ class Vtlgen extends Trongate
     }
 
 
-
-//    private function generateModuleController($moduleControllersPath, $moduleName,$processedColumns, $primaryKey ): void {
-//        $controllerPath = $moduleControllersPath . DIRECTORY_SEPARATOR . ucfirst($moduleName) . '.php';
-//        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controllerold.php';
-//
-//        $controllerContent = file_get_contents($templatePath);
-//        if ($controllerContent === false) {
-//            throw new Exception("Failed to read controller template");
-//        }
-//
-//        // Replace placeholders with actual values
-//        $controllerContent = str_replace('{{ModuleName}}', ucfirst($moduleName), $controllerContent);
-//        $controllerContent = str_replace('{{moduleName}}', strtolower($moduleName), $controllerContent);
-//
-//        // Write the processed content to the new controller file
-//        if (file_put_contents($controllerPath, $controllerContent) === false) {
-//            throw new Exception("Failed to write controller file");
-//        }
-//    }
-
-
-
     /**
      * A description of the entire PHP function.
      *
@@ -2316,25 +2203,15 @@ class Vtlgen extends Trongate
     private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey): void {
         var_dump('In the generate module views function');
         // Paths for display and manage view templates
-        $displayViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'display.php';
         $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
         $createViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'create.php';
         $showViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'show.php';
 
-        $displayTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'display.php';
+
         $manageTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'manage.php';
         $createTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'create.php';
         $showTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'show.php';
 
-        // Process display view template
-        $displayContent = file_get_contents($displayTemplatePath);
-        if ($displayContent === false) {
-            throw new Exception("Failed to read display view template");
-        }
-        $displayContent = str_replace('{{moduleName}}', strtolower($moduleName), $displayContent);
-        if (file_put_contents($displayViewPath, $displayContent) === false) {
-            throw new Exception("Failed to write display view file");
-        }
 
         // Process manage view template
         $manageContent = file_get_contents($manageTemplatePath);
@@ -2378,26 +2255,6 @@ class Vtlgen extends Trongate
             throw new Exception("Failed to write show view file");
         }
     }
-
-
-
-//    private function generateModuleView($moduleViewsPath, $moduleName): void {
-//        $viewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'display.php';
-//        $templatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'display.php';
-//
-//        $viewContent = file_get_contents($templatePath);
-//        if ($viewContent === false) {
-//            throw new Exception("Failed to read view template");
-//        }
-//
-//        // Replace placeholders with actual values
-//        $viewContent = str_replace('{{moduleName}}', strtolower($moduleName), $viewContent);
-//
-//        // Write the processed content to the new view file
-//        if (file_put_contents($viewPath, $viewContent) === false) {
-//            throw new Exception("Failed to write view file");
-//        }
-//    }
 
 
     /**

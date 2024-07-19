@@ -1,15 +1,4 @@
 {
-  "Remember Positions": {
-    "url_segments": "{{moduleName}}/remember_positions",
-    "request_type": "POST",
-    "description": "Remember positions of some child nodes",
-    "enableParams": true,
-    "authorization": {
-      "roles": [
-        "admin"
-      ]
-    }
-  },
   "Get": {
     "url_segments": "api/get/{{moduleName}}",
     "request_type": "GET",
