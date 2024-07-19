@@ -172,24 +172,21 @@ class {{ModuleName}} extends Trongate {
         $this->module('trongate_security');
         $this->trongate_security->_make_sure_allowed();
 
+
         $submit = post('submit');
         $params['update_id'] = (int) segment(3);
-
+        $moduleName = strtolower('{{moduleName}}');
         if (($submit == 'Yes - Delete Now') && ($params['update_id'] > 1)) {
             //delete all of the comments associated with this record
             $sql = 'delete from trongate_comments where target_table = :module and update_id = :update_id';
-            $params['module'] = 'trongate_pages';
+            $params['module'] = $moduleName;
             $this->model->query_bind($sql, $params);
 
             // Create a custom delete query to cater for primary keys that are not named id
-            $moduleName = strtolower('{{moduleName}}'); // Replace with the actual module name
-            $primaryKey = '{{primaryKey}}'; // Replace with the actual primary key
-            $sql = 'DELETE FROM ' . strtolower($moduleName) . ' WHERE ' . $primaryKey . ' = :update_id';
-            $params = [
-                'update_id' => $update_id
-            ];
 
-            $this->model->query_bind($sql, $params);
+            $primaryKey = '{{primaryKey}}'; // Replace with the actual primary key
+            $sqlDelete = 'DELETE FROM ' . $moduleName . ' WHERE ' . $primaryKey . ' = ' .$params['update_id'];
+            $this->model->query($sqlDelete);
 
 
             //set the flashdata
@@ -197,11 +194,11 @@ class {{ModuleName}} extends Trongate {
             set_flashdata($flash_msg);
 
             //redirect to the manage page
-            redirect('trongate_pages/manage');
+            redirect('{{moduleName}}/manage');
         } elseif ($params['update_id'] === 1) {
             $form_submission_errors['update_id'][] = 'Deletion of the homepage record is not permitted.';
             $_SESSION['form_submission_errors'] = $form_submission_errors;
-            redirect('trongate_pages/manage');
+            redirect('{{moduleName}}/manage');
         }
     }
 

@@ -17,21 +17,7 @@
     </div>
 </div>
 <div class="three-col">
-<!--    <div class="card">-->
-<!--        <div class="card-heading"> --><?php //= ucfirst('{{moduleName}}') ?><!-- Details</div>-->
-<!--        <div class="card-body">-->
-<!--            <div class="record-details">-->
-<!--                --><?php //foreach ($columns as $column): ?>
-<!--                    --><?php //if ($column['Extra'] != 'auto_increment'): ?>
-<!--                        <div class="row">-->
-<!--                            <div>--><?php //= $column['Field'] ?><!--</div>-->
-<!--                            <div>--><?php //= out($data[$column['Field']]) ?><!--</div>-->
-<!--                        </div>-->
-<!--                    --><?php //endif; ?>
-<!--                --><?php //endforeach; ?>
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
+
     <div class="card">
         <div class="card-heading"> <?= ucfirst('{{moduleName}}') ?> Details</div>
         <div class="card-body">
@@ -113,7 +99,7 @@
 <div class="modal" id="delete-modal" style="display: none;">
     <div class="modal-heading danger"><i class="fa fa-trash"></i> Delete Record</div>
     <div class="modal-body">
-        <?= form_open('<?= {{moduleName}} ?>/submit_delete/'.$update_id) ?>
+        <?= form_open('{{moduleName}}/submit_delete/'.$update_id) ?>
         <p>Are you sure?</p>
         <p>You are about to delete a <?= ucfirst('{{moduleName}}') ?> record. This cannot be undone. Do you really want to do this?</p>
         <?php
