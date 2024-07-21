@@ -238,12 +238,21 @@
                 </button>
             </div>
             <div class="grid-item">
-                <button class="svg-button" aria-label="Zip Project" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenZipProject'">
+                <button class="svg-button" aria-label="Zip Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenZipModuleProject'">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlZipDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlZip.svg" alt="Create Module Icon">
                     </picture>
-                    <div class="popup popupRight">Zip Project</div>
+                    <div class="popup popupRight">Zip Mod / Proj</div>
+                </button>
+            </div>
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Unzip Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenZipModuleProject'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlUnzipDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlUnzip.svg" alt="Create Module Icon">
+                    </picture>
+                    <div class="popup popupLeft">Unzip Mod</div>
                 </button>
             </div>
 

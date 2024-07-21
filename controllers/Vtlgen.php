@@ -284,7 +284,48 @@ class Vtlgen extends Trongate
 
     //region vtlgen page redirect functions
 
+    /**
+     * Generates the view for zipping a module or project in the Vtl Data Generator.
+     *
+     * @return void
+     */
+    public function vtlgenZipModuleProject(): void {
+        $headline = 'Vtl Data Generator: Zip Module or Project';
+        $instruction1 = 'Select the module(s) that you want to zip.';
+        $instruction2 = 'Alternatively zip the entire application';
+        $task = 'zip';
+        $this ->showDeleteOrZipView($headline, $instruction1, $instruction2, $task);
 
+    }
+
+    /**
+     * Deletes a module by displaying a view for the user to select the module(s) to delete.
+     *
+     * @return void
+     */
+   public function vtlgenDeleteModules(): void {
+       $headline = 'Vtl Data Generator: Delete Module';
+       $instruction1 = 'Select the module(s) that you want to delete.';
+       $instruction2 = '';
+       $task = 'delete';
+      $this ->showDeleteOrZipView($headline, $instruction1, $instruction2, $task);
+   }
+
+    /**
+     * Generates the view for creating modules in the Vtl Data Generator.
+     *
+     * This function retrieves the tables with orphaned modules from the
+     * application modules and assigns them to the 'tables' key in the $data
+     * array. It also retrieves the columns for the second table in the
+     * 'tables' array and assigns them to the 'columns' key in the $data
+     * array.
+     *
+     * The $data array is then populated with additional information such as
+     * the headline, instructions, view module, and view file. Finally, the
+     * 'admin' template is rendered with the $data array.
+     *
+     * @return void
+     */
     public function vtlgenCreateModules(): void {
         $tables = [];
         foreach ($this->applicationModules as $module) {
@@ -3888,4 +3929,16 @@ class Vtlgen extends Trongate
 
     //endregion
 
+    private function showDeleteOrZipView($headline, $instruction1, $instruction2, $task):void{
+
+        $data = [];
+        $data['modules'] = $this -> applicationModules;
+        $data['headline'] = $headline;
+        $data['instruction1'] = $instruction1;
+        $data['instruction2'] = $instruction2;
+        $data['task'] = $task;
+        $data['view_module'] = 'vtlgen';
+        $data['view_file'] = 'deleteorzip';
+        $this -> template('admin', $data);
+    }
 }
