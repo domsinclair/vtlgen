@@ -49,7 +49,6 @@
     <div class="container">
         <div class="flex">
             <button id="generate-table">Generate Table</button>
-            <button id="generate-module" style=" display: none;">Generate Module</button>
             <button id="save-sql">Save SQL</button>
             <button id="use-existing-sql">Use Existing SQL</button>
             <!--            <button id="create-module">Create Module</button>-->
@@ -76,11 +75,9 @@
 <script>
     var isSqlLoaded = false;
     var initialSetupComplete = false; // Add a flag for initial setup
-    var generateModuleButton = document.getElementById('generate-module');
 
-    function showGenerateModuleButton() {
-        generateModuleButton.style.display = 'inline-block';
-    }
+
+
 
     document.addEventListener('DOMContentLoaded', function () {
         var table = new Tabulator("#datatable", {
@@ -324,7 +321,6 @@
                     var response = JSON.parse(xhr.responseText);
                     if (response.status === 'success') {
                         openVtlModal('Table Created',true,response.message);
-                        showGenerateModuleButton();
                     } else {
                         openVtlModal('Error Creating Table',false,response.message);
                     }
@@ -382,33 +378,7 @@
 
     });
 
-    document.getElementById('generate-module').addEventListener('click', function () {
-        var tableName = getTableNameFromSQLCode(); // Implement this function to extract table name from SQL code
-        if (!tableName) {
-            alert('Failed to extract table name from SQL code.');
-            return;
-        }
-        var postData = {
-            tableName: tableName
-        };
-        var xhr = new XMLHttpRequest();
-        var targetUrl = '<?= BASE_URL ?>vtlgen/createtableGenerateModule';
-        xhr.open('POST', targetUrl, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify(postData));
-        xhr.onload = function () {
-            if (xhr.status === 200 && xhr.responseText) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.status === 'success') {
-                    openVtlModal('Module Created',true,response.message);
-                } else {
-                    openVtlModal('Error Creating Module',false,response.message);
-                }
-            } else {
-                openVtlModal('Error Creating Module',false,response.message);
-            }
-        };
-    })
+
 
     function getTableNameFromSQLCode() {
         var sqlCode = document.getElementById('sqlCode').innerText;

@@ -237,6 +237,15 @@
                     <div class="popup popupLeft">Delete Module</div>
                 </button>
             </div>
+            <div class="grid-item">
+                <button class="svg-button" aria-label="Zip Project" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenZipProject'">
+                    <picture>
+                        <source srcset="vtlgen_module/help/images/vtlZipDark.svg" media="(prefers-color-scheme: dark)">
+                        <img class="svg-icon" src="vtlgen_module/help/images/vtlZip.svg" alt="Create Module Icon">
+                    </picture>
+                    <div class="popup popupRight">Zip Project</div>
+                </button>
+            </div>
 
             <!-- Group Title for Help Operations -->
 
