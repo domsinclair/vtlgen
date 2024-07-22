@@ -97,7 +97,7 @@ class Vtlgen extends Trongate
         unset($_SESSION['selectedDataTable']);
 
         // Define the list item HTML with a newline character at the end
-         $listItemHTML = "\n<li>" . anchor('vtlgen', '<img src="vtlgen_module/help/images/vtlgen.svg"> Vtl Data Generator'). '</li>' . "\n";
+        $listItemHTML = "\n<li><?= anchor('vtlgen', '<img src=\"vtlgen_module/help/images/vtlgen.svg\" alt=\"Vtl Data Generator\"> Vtl Data Generator') ?></li>\n";
 
 // Path to the dynamic_nav.php file
         $filePath = APPPATH . 'templates/views/partials/admin/dynamic_nav.php';
@@ -2215,8 +2215,12 @@ class Vtlgen extends Trongate
         // Read the content of dynamic_nav.php
         $fileContent = file_get_contents($filePath);
 
+        // Normalize newlines and spaces for both the file content and the list item HTML
+        $normalizedFileContent = preg_replace('/\s+/', ' ', $fileContent);
+        $normalizedListItemHTML = preg_replace('/\s+/', ' ', $listItemHTML);
+
         // Check if the list item already exists in the file
-        if (strpos($fileContent, $listItemHTML) === false) {
+        if (strpos($normalizedFileContent, $normalizedListItemHTML) === false) {
             // Find the position to insert the new list item after the opening <ul> tag
             $pos = strpos($fileContent, '<ul>');
             if ($pos !== false) {
@@ -2231,6 +2235,7 @@ class Vtlgen extends Trongate
             }
         }
     }
+
 
 
     /**
