@@ -29,6 +29,11 @@
     </section>
     <div id="task" style="display: none"><?= $task ?></div>
     <section>
+        <div class="container" id="deleteModule" style="display: none;">
+            <button id="deleteModuleSubmitBtn" onclick='deleteSelectedModule()' >Delete Module</button>
+        </div>
+    </section>
+    <section>
         <div class="container" id="zipCheckbox" style="display: none;" >
             <label><input type="checkbox" id="zipProjectCheckbox" name="zipProject" >Zip Project</label>
             <div>
@@ -38,7 +43,7 @@
     </section>
     <section>
         <div class="container" id="zipModule" style="display: none;">
-            <button id="zipModuleSubmitBtn" onclick='zipModule()' >Zip Module</button>
+            <button id="zipModuleSubmitBtn" onclick='zipSelectedModule()' >Zip Module</button>
         </div>
     </section>
     <div id="vtlOverlay" class="vtlOverlay"></div>
@@ -80,13 +85,23 @@
     const zipProjectCheckbox = document.getElementById('zipProjectCheckbox');
     const zipProjectSubmitBtn = document.getElementById('zipProjectSubmitBtn');
     const zipModule = document.getElementById('zipModule');
+    const deleteModule = document.getElementById('deleteModule');
     let table;
+
+
+    vtlModal.addEventListener('vtlModalClosed', () => {
+        var task = document.getElementById('task');
+        if (task.innerText === 'delete') {
+            location.reload();
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         // Sample data from PHP
         let tableData = <?php echo json_encode($data['modules']); ?>;
 
-        // Filter out the orphaned_tables entry
-        tableData = tableData.filter(item => !item.orphaned_tables);
+        // Filter out the orphaned_tables entry and the "vtlgen" module
+        tableData = tableData.filter(item => !item.orphaned_tables && item.module_name !== 'vtlgen');
 
         // Map the module data to the correct format for Tabulator
         let formattedData = tableData.map(module => ({ table: module.module_name }));
@@ -108,19 +123,23 @@
             //row - row component for the selected row
             row.getElement().style.backgroundColor = "var(--primary)";
             row.getElement().style.color = "white";
+            if (zipProjectSubmitBtn.style.display === 'block') {
+                zipProjectSubmitBtn.style.display = 'none';
+            }
         });
         table.on("rowDeselected", function(row){
             //row - row component for the deselected row
             row.getElement().style.backgroundColor = '';
             row.getElement().style.color = '';
+
         });
         table.on("rowSelectionChanged", function(data, rows, selected, deselected){
             switch (task) {
                 case 'delete':
                    if (selected.length > 0) {
-                        zipModule.style.display = 'block';
+                        deleteModule.style.display = 'block';
                     } else {
-                        zipModule.style.display = 'none';
+                        deleteModule.style.display = 'none';
                     }
                     break;
                 case 'zip':
@@ -183,7 +202,117 @@
         }
     }
 
+    function zipSelectedModule(){
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+        var modulesToZip = selectedRows.map(row => row.table);
 
+        // Prepare the data to send
+        var postData = {
+            modulesToZip: modulesToZip
+        };
+
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/deleteorzipZipModules';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+
+                        if (response.status === 'success') {
+                            openVtlModal('Zip Successful', true, response.message);
+                        } else {
+                            openVtlModal('Error', false, response.message);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openVtlModal('Error Parsing JSON', false, 'An error occurred while processing the response.');
+                    }
+                } else {
+                    var errorResponse = xhr.responseText;
+                    openVtlModal('Error', false, errorResponse);
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+            openVtlModal('Error', false, 'An error occurred: ' + error);
+        }
+    }
+
+    function deleteSelectedModule(){
+        var table = Tabulator.findTable("#datatable")[0];
+        var selectedRows = table.getSelectedData();
+        var modulesToDelete = selectedRows.map(row => row.table);
+
+        // Prepare the data to send
+        var postData = {
+            modulesToDelete: modulesToDelete
+        };
+        // Send the POST request
+        try {
+            // Create a new XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // Specify the PHP file or endpoint to handle the data
+            var targetUrl = '<?= BASE_URL ?>vtlgen/deleteorzipDeleteModules';
+
+            // Open a POST request to the specified URL
+            xhr.open('POST', targetUrl, true);
+
+            // Set the content type to JSON
+            xhr.setRequestHeader('Content-type', 'application/json');
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        // Parse the JSON response
+                        var response = JSON.parse(xhr.responseText);
+
+                        if (response.status === 'success') {
+                            openVtlModal('Delete Successful', true, response.message);
+                        } else {
+                            openVtlModal('Error', false, response.message);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        openVtlModal('Error Parsing JSON', false, 'An error occurred while processing the response.');
+                    }
+                } else {
+                    var errorResponse = xhr.responseText;
+                    openVtlModal('Error', false, errorResponse);
+                }
+            };
+
+            // Convert the data object to a JSON string
+            var jsonData = JSON.stringify(postData);
+            // Send the request with the JSON data
+            xhr.send(jsonData);
+        } catch (error) {
+            console.error('Error:', error);
+            openVtlModal('Error', false, 'An error occurred: ' + error);
+        }
+
+    }
 </script>
 <style>
     :root {

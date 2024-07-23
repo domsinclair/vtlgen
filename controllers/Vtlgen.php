@@ -303,6 +303,48 @@ class Vtlgen extends Trongate
     //region vtlgen page redirect functions
 
     /**
+     * Unzips a module or project in the Vtl Data Generator.
+     *
+     * @return void
+     */
+    public function vtlgenUnzipModule():void{
+        // Define the target directory
+        $targetDir =  APPPATH . 'modules' ;
+
+        // Check if the request contains a file
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['zipFile'])) {
+            $file = $_FILES['zipFile'];
+
+            // Ensure the uploaded file is a ZIP file
+            if ($file['type'] !== 'application/zip') {
+                echo json_encode(['success' => false, 'message' => 'Invalid file type. Please upload a ZIP file.']);
+                exit;
+            }
+
+            // Define the target file path
+            $targetFilePath = $targetDir . basename($file['name']);
+
+            // Move the uploaded file to the target directory
+            if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+                // Unzip the file
+                $zip = new ZipArchive;
+                if ($zip->open($targetFilePath) === TRUE) {
+                    $zip->extractTo($targetDir);
+                    $zip->close();
+                    unlink($targetFilePath); // Optionally delete the ZIP file after extraction
+                    echo json_encode(['success' => true]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to unzip the file.']);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to move the uploaded file.']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No file uploaded.']);
+        }
+    }
+
+    /**
      * Generates the view for zipping a module or project in the Vtl Data Generator.
      *
      * @return void
@@ -324,7 +366,7 @@ class Vtlgen extends Trongate
    public function vtlgenDeleteModules(): void {
        $headline = 'Vtl Data Generator: Delete Module';
        $instruction1 = 'Select the module(s) that you want to delete.';
-       $instruction2 = '';
+       $instruction2 = 'This Process is Irreversible!';
        $task = 'delete';
       $this ->showDeleteOrZipView($headline, $instruction1, $instruction2, $task);
    }
@@ -2634,7 +2676,7 @@ class Vtlgen extends Trongate
 
     //endregion
 
-    //region Drop Index orForeign Key View Functions
+    //region Drop Index or Foreign Key View Functions
 
     /**
      * A function to delete indexes or foreign keys from the database.
@@ -4040,6 +4082,115 @@ class Vtlgen extends Trongate
         }
     }
 
+    /**
+     * Zips the selected modules.
+     *
+     * @param void
+     * @throws Exception An error occurred while zipping the modules.
+     * @return void
+     */
+    public function deleteorzipZipModules(): void {
+        header('Content-Type: application/json'); // Set the content type to JSON
+
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        $response = array('status' => '', 'message' => '', 'errors' => array());
+
+        if (!isset($postData['modulesToZip'])) {
+            $response['status'] = 'error';
+            $response['message'] = 'No modules specified for zipping.';
+            echo json_encode($response);
+            return;
+        }
+
+        $selectedModules = $postData['modulesToZip'];
+
+        try {
+            foreach ($selectedModules as $selectedModule) {
+                $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
+                $zipFile = $modulePath . '/' . $selectedModule . '.zip';
+                $this->zipApplication($modulePath, $zipFile);
+            }
+            $response['status'] = 'success';
+            $response['message'] = 'Modules zipped successfully.';
+        } catch (Exception $e) {
+            $response['status'] = 'error';
+            $response['message'] = 'An error occurred while zipping the modules.';
+            $response['errors'][] = $e->getMessage();
+        }
+
+        echo json_encode($response);
+    }
+
+    /**
+     * Deletes the selected modules.
+     *
+     * @param void
+     * @throws Exception An error occurred while deleting the modules.
+     * @return void
+     */
+    public function deleteorzipDeleteModules(): void{
+        header('Content-Type: application/json'); // Set the content type to JSON
+
+        $rawPostData = file_get_contents('php://input');
+        $postData = json_decode($rawPostData, true);
+
+        $response = array('status' => '', 'message' => '', 'errors' => array());
+
+        if (!isset($postData['modulesToDelete'])) {
+            $response['status'] = 'error';
+            $response['message'] = 'No modules specified for deletion.';
+            echo json_encode($response);
+            return;
+        }
+
+        $selectedModules = $postData['modulesToDelete'];
+
+        try {
+            foreach ($selectedModules as $selectedModule) {
+                $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
+               // Delete the module here
+                if ($this->deleteDirectory($modulePath)) {
+                    $response['message'] .= "Module $selectedModule deleted successfully. ";
+                } else {
+                    throw new Exception("Failed to delete module $selectedModule.");
+                }
+            }
+            $response['status'] = 'success';
+            $response['message'] = 'Modules zipped successfully.';
+        } catch (Exception $e) {
+            $response['status'] = 'error';
+            $response['message'] = 'An error occurred while zipping the modules.';
+            $response['errors'][] = $e->getMessage();
+        }
+
+        echo json_encode($response);
+    }
+
+    /**
+     * Recursively deletes a directory and its contents.
+     *
+     * @param string $dir The path to the directory to be deleted.
+     * @return bool True if the directory was successfully deleted, false otherwise.
+     */
+    private function deleteDirectory($dir) {
+        if (!file_exists($dir)) {
+            return true;
+        }
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+        return rmdir($dir);
+    }
 
 
     //endregion

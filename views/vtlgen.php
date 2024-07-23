@@ -246,16 +246,18 @@
                     <div class="popup popupRight">Zip Mod / Proj</div>
                 </button>
             </div>
-            <div class="grid-item">
-                <button class="svg-button" aria-label="Unzip Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenZipModuleProject'">
-                    <picture>
-                        <source srcset="vtlgen_module/help/images/vtlUnzipDark.svg" media="(prefers-color-scheme: dark)">
-                        <img class="svg-icon" src="vtlgen_module/help/images/vtlUnzip.svg" alt="Create Module Icon">
-                    </picture>
-                    <div class="popup popupLeft">Unzip Mod</div>
-                </button>
-            </div>
 
+
+        <div class="grid-item">
+            <button class="svg-button" aria-label="Unzip Module" onclick="document.getElementById('zipFileInput').click()">
+                <picture>
+                    <source srcset="vtlgen_module/help/images/vtlUnzipDark.svg" media="(prefers-color-scheme: dark)">
+                    <img class="svg-icon" src="vtlgen_module/help/images/vtlUnzip.svg" alt="Create Module Icon">
+                </picture>
+                <div class="popup popupLeft">Unzip Mod</div>
+            </button>
+            <input type="file" id="zipFileInput" style="display: none;" accept=".zip" onchange="uploadAndUnzipFile(event)">
+        </div>
             <!-- Group Title for Help Operations -->
 
             <div class="grid-item help-heading" colspan="4">Help</div>
@@ -479,7 +481,29 @@
         console.log("Update cancelled");
         // You can add any additional actions here if needed when the update is cancelled
     }
+    function uploadAndUnzipFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
 
+        const formData = new FormData();
+        formData.append('zipFile', file);
+
+        fetch('<?= BASE_URL ?>vtlgen/vtlgenUnzipModule', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                   openVtlModal('Module Unzipped', true, data.message);
+                } else {
+                    openVtlModal('Error Unzipping Module', false, data.message);
+                }
+            })
+            .catch(error => {
+                openVtlModal('Error Unzipping Module', false, error.message);
+            });
+    }
 </script>
 <style>
 
