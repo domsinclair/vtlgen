@@ -4108,7 +4108,7 @@ class Vtlgen extends Trongate
 
         try {
             foreach ($selectedModules as $selectedModule) {
-                $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
+                $modulePath = APPPATH . 'modules';
                 $zipFile = $modulePath . '/' . $selectedModule . '.zip';
                 $this->zipApplication($modulePath, $zipFile);
             }
@@ -4152,6 +4152,8 @@ class Vtlgen extends Trongate
                 $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
                // Delete the module here
                 if ($this->deleteDirectory($modulePath)) {
+                    // delete the admin sidebar menu item
+                    $this -> removeFromAdminMenu($selectedModule);
                     $response['message'] .= "Module $selectedModule deleted successfully. ";
                 } else {
                     throw new Exception("Failed to delete module $selectedModule.");
@@ -4166,6 +4168,35 @@ class Vtlgen extends Trongate
         }
 
         echo json_encode($response);
+    }
+
+    /**
+     * Remove a specific list item HTML from the dynamic_nav.php file if it exists.
+     *
+     * @param string $moduleName The name of the module for which the list item HTML should be removed.
+     */
+    private function removeFromAdminMenu($moduleName) {
+        // Path to the dynamic_nav.php file
+        $filePath = APPPATH . 'templates/views/partials/admin/dynamic_nav.php';
+
+        // Read the content of dynamic_nav.php
+        $fileContent = file_get_contents($filePath);
+
+        // Define the list item HTML to be removed
+        $listItemHTML = "\n<li><?= anchor('" . strtolower($moduleName) . "/manage', 'Manage " . ucfirst($moduleName) . "') ?></li>\n";
+
+        // Normalize newlines and spaces for both the file content and the list item HTML
+        $normalizedFileContent = preg_replace('/\s+/', ' ', $fileContent);
+        $normalizedListItemHTML = preg_replace('/\s+/', ' ', $listItemHTML);
+
+        // Check if the list item exists in the file
+        if (strpos($normalizedFileContent, $normalizedListItemHTML) !== false) {
+            // Replace the list item HTML with an empty string
+            $newContent = str_replace($listItemHTML, '', $fileContent);
+
+            // Write the modified content back to the file
+            file_put_contents($filePath, $newContent);
+        }
     }
 
     /**
