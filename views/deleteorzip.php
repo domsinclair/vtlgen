@@ -27,13 +27,18 @@
     <section>
         <div class="container" id="datatable"></div>
     </section>
+    <div id="task" style="display: none"><?= $task ?></div>
     <section>
-        <div id="task" style="display: none"><?= $task ?></div>
-        <div class="container" id="zipCheckbox" style="display: none">
+        <div class="container" id="zipCheckbox" style="display: none;" >
             <label><input type="checkbox" id="zipProjectCheckbox" name="zipProject" >Zip Project</label>
             <div>
-                <button id="submitBtn" onclick='zipProject()' style=" margin-bottom: 15px;">Zip Project</button>
+                <button id="zipProjectSubmitBtn" onclick='zipProject()' style=" margin-bottom: 15px; display: none">Zip Project</button>
             </div>
+        </div>
+    </section>
+    <section>
+        <div class="container" id="zipModule" style="display: none;">
+            <button id="zipModuleSubmitBtn" onclick='zipModule()' >Zip Module</button>
         </div>
     </section>
     <div id="vtlOverlay" class="vtlOverlay"></div>
@@ -71,6 +76,11 @@
 </html>
 <script>
     const task = "<?= $task ?>";
+    const projectContainer = document.getElementById('zipCheckbox');
+    const zipProjectCheckbox = document.getElementById('zipProjectCheckbox');
+    const zipProjectSubmitBtn = document.getElementById('zipProjectSubmitBtn');
+    const zipModule = document.getElementById('zipModule');
+    let table;
     document.addEventListener('DOMContentLoaded', function() {
         // Sample data from PHP
         let tableData = <?php echo json_encode($data['modules']); ?>;
@@ -82,7 +92,7 @@
         let formattedData = tableData.map(module => ({ table: module.module_name }));
 
         // Create Tabulator
-        let table = new Tabulator("#datatable", {
+         table = new Tabulator("#datatable", {
             data: formattedData,
             layout: "fitColumns",
             selectable: true,
@@ -105,18 +115,75 @@
             row.getElement().style.color = '';
         });
         table.on("rowSelectionChanged", function(data, rows, selected, deselected){
-            var task = document.getElementById('task');
-            var createMods = document.getElementById('createModuleDiv');
-
-
-            if (createMods.style.display === 'block') {
-                createMods.style.display = 'none';
-            } else {
-                createMods.style.display = 'block';
+            switch (task) {
+                case 'delete':
+                   if (selected.length > 0) {
+                        zipModule.style.display = 'block';
+                    } else {
+                        zipModule.style.display = 'none';
+                    }
+                    break;
+                case 'zip':
+                    if (selected.length > 0) {
+                        zipProjectCheckbox.checked = false;
+                        zipModule.style.display = 'block';
+                    } else {
+                        zipModule.style.display = 'none';
+                    }
+                    break;
             }
-        });
 
+
+
+
+        });
+        if (task === 'zip') {
+            projectContainer.style.display = 'block';
+        }
     });
+
+    zipProjectCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            table.deselectRow();
+            zipProjectSubmitBtn.style.display = 'block';
+        } else {
+            zipProjectSubmitBtn.style.display = 'none';
+        }
+    })
+
+    function zipProject() {
+        const targetUrl = "<?= BASE_URL ?>vtlgen/deleteorzipZipProject";
+
+        try {
+            // Create a new XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+
+            // Open a GET request to the specified URL
+            xhr.open('GET', targetUrl, true);
+
+            // Define a callback function to handle the response
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // If you expect a response, you can process it here
+                    console.log('Response from server:', xhr.responseText);
+                    // You can also display the response using a modal or alert
+                    openVtlModal('Zip Project', true, xhr.responseText);
+                } else {
+                    // Handle errors
+                    console.error('Request failed. Status:', xhr.status, 'Response:', xhr.responseText);
+                    openVtlModal('Error', false, 'Request failed with status ' + xhr.status);
+                }
+            };
+
+            // Send the request
+            xhr.send();
+        } catch (error) {
+            console.error('Error:', error);
+            openVtlModal('Error', false, 'An error occurred while sending the request.');
+        }
+    }
+
+
 </script>
 <style>
     :root {

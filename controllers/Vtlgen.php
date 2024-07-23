@@ -64,6 +64,24 @@ class Vtlgen extends Trongate
             die();
         }
 
+        // Assuming APPPATH is defined somewhere in the framework
+        $sourceDir = rtrim(APPPATH, '/\\'); // Remove trailing slashes
+        $parentDir = dirname($sourceDir); // Extract the parent directory path
+        $appname = basename($sourceDir); // Extract the last segment (application name)
+
+        // Define the constants for use with zip functions
+        if (!defined('SOURCE_DIR')) {
+            define('SOURCE_DIR', $sourceDir);
+        }
+
+        if (!defined('PARENT_DIR')) {
+            define('PARENT_DIR', $parentDir);
+        }
+
+        if (!defined('APP_NAME')) {
+            define('APP_NAME', $appname);
+        }
+
         // check for updates
         $this->initialiseUpdateCache();
         $this->updateInfo = $this->CheckGithubForUpdates();
@@ -292,7 +310,7 @@ class Vtlgen extends Trongate
     public function vtlgenZipModuleProject(): void {
         $headline = 'Vtl Data Generator: Zip Module or Project';
         $instruction1 = 'Select the module(s) that you want to zip.';
-        $instruction2 = 'Alternatively zip the entire application';
+        $instruction2 = 'Alternatively zip the entire application by checking the Zip Project checkbox.';
         $task = 'zip';
         $this ->showDeleteOrZipView($headline, $instruction1, $instruction2, $task);
 
@@ -3934,6 +3952,8 @@ class Vtlgen extends Trongate
 
     //endregion
 
+    //region Delete or Zip View Functions
+
     private function showDeleteOrZipView($headline, $instruction1, $instruction2, $task):void{
 
         $data = [];
@@ -3946,4 +3966,81 @@ class Vtlgen extends Trongate
         $data['view_file'] = 'deleteorzip';
         $this -> template('admin', $data);
     }
+
+    /**
+     * Deletes or zips the project.
+     *
+     * This function generates a zip file of the project. It gets the current date
+     * in YYYYMMDD format and appends it to the application name. The zip file is
+     * created in the parent directory. If the zip file is created successfully,
+     * it prints "Application zipped successfully." Otherwise, it prints "Failed
+     * to zip the application."
+     *
+     * @throws None
+     * @return void
+     */
+    public function deleteorzipZipProject(): void
+    {
+        // the constants for this are defined in the constructor at the top
+
+        $date = date('Ymd'); // Get the current date in YYYYMMDD format
+        $zipFile = PARENT_DIR . '/' . APP_NAME . '_' . $date . '.zip';
+        if ( $this -> zipApplication(SOURCE_DIR, $zipFile)) {
+            echo "Application zipped successfully.";
+        } else {
+            echo "Failed to zip the application.";
+        }
+    }
+
+    /**
+     * Recursively adds files and directories to the zip archive.
+     *
+     * @param string $source The source directory.
+     * @param ZipArchive $zip The zip archive instance.
+     * @param string $path The internal path within the zip archive.
+     */
+    function addFilesToZip($source, $zip, $path = '') {
+        $source = realpath($source);
+        if (is_dir($source)) {
+            $iterator = new RecursiveDirectoryIterator($source);
+            // Skip dot files while iterating
+            $iterator->setFlags(RecursiveDirectoryIterator::SKIP_DOTS);
+            $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::SELF_FIRST);
+
+            foreach ($files as $file) {
+                $filePath = realpath($file);
+                $relativePath = $path . '/' . substr($filePath, strlen($source) + 1);
+
+                if (is_dir($filePath)) {
+                    $zip->addEmptyDir($relativePath);
+                } elseif (is_file($filePath)) {
+                    $zip->addFile($filePath, $relativePath);
+                }
+            }
+        } elseif (is_file($source)) {
+            $zip->addFile($source, $path . '/' . basename($source));
+        }
+    }
+
+    /**
+     * Zips the entire application directory.
+     *
+     * @param string $sourceDir The directory to zip.
+     * @param string $zipFile The path to the output zip file.
+     * @return bool Returns true on success or false on failure.
+     */
+    private function zipApplication($sourceDir, $zipFile) {
+        $zip = new ZipArchive();
+        if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+            $this -> addFilesToZip($sourceDir, $zip);
+            $zip->close();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+
+    //endregion
 }
