@@ -217,7 +217,7 @@
 
             <!-- Group Title for Module Operations -->
 
-            <div class="grid-item module-heading" colspan="4">Module Operations</div>
+            <div class="grid-item module-heading" colspan="4">Module and Project Operations</div>
 
             <div class="grid-item">
                 <button class="svg-button" aria-label="Create Module" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenCreateModules'">

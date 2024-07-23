@@ -55,6 +55,8 @@ The module has four key areas of operation and a set of comprehensive help files
         <ul>
              <li><a href="#createmodule">Create Module</a></li>
             <li><a href="#dropmodule">Delete Module</a></li>
+            <li><a href="#zipmodule">Zip Module or Project</a></li>
+            <li><a href="#unzipmodule">Unzip Module</a></li>
         </ul>
 
      
@@ -563,7 +565,7 @@ A backup script will then be generated and saved to a special backups folder in 
 <br>
 <div id="mods" tabindex="-1"></div>
 
-### Module Operations
+### Module and Project Operations
 
 <br>
 
@@ -601,3 +603,59 @@ It will create a controllers folder containing a controller file and it will cre
 <figcaption>Delete Module</figcaption> 
 </figure>
 </div>
+
+><b>Note Carefully.  This action is irreversible</b>
+
+<br>
+- Select the module or modules you wish to delete.
+- Click the delete module button.
+
+<br>
+
+> This feature can really be useful when you decide to extend a datatable.  You can delete the existing module and then create a new module based on the changeds that you had made to the datatable.
+
+
+<br>
+
+<div class = "text-center">
+<div id="zipmodule" tabindex="-1"></div>
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlZipDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlZip.svg">
+</picture>
+<figcaption>Zip Module or Project</figcaption> 
+</figure>
+</div>
+
+
+
+<br>
+The zip module and project options will do just as they advertise.  This means that you could for example develop an mule that you know will be useful elsewhere and zip it up ready for transfere,
+
+> <b> By default and zip file created for a module will be placed in that module's directory. </b>
+
+The zip project feature will zip up your entire project , useful for keeping a running backup.  
+
+> <b> By default a zip file of a project will be placed in the directory in which the project sits.  For example if you use XAMPP and keep your projects in the htdocs folder then it will be that folder into which the zip file will be placed. </b>
+
+The ziping up of modules and projects is designed to be mutually exclusive.
+
+
+<br>
+
+
+<div class = "text-center">
+<div id="unzipmodule" tabindex="-1"></div>
+<figure>
+<picture>
+    <source srcset="vtlgen_module/help/images/vtlUnzipDark.svg" media="(prefers-color-scheme: dark)">
+    <img src="vtlgen_module/help/images/vtlUnzip.svg">
+</picture>
+<figcaption>Unzip Module</figcaption> 
+</figure>
+</div>
+
+<br>
+
+This feature will allow you to unzip a previously zipped module to your modules directory.
