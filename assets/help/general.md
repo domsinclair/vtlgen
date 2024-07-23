@@ -631,6 +631,9 @@ It will create a controllers folder containing a controller file and it will cre
 
 
 <br>
+> <b>NOTE CAREFULLY: For this to work you may have to alter your php.ini file.
+Look for this line --  ;extension=zip  and change it to  extension=zip</b>
+
 The zip module and project options will do just as they advertise.  This means that you could for example develop an mule that you know will be useful elsewhere and zip it up ready for transfere,
 
 > <b> By default and zip file created for a module will be placed in that module's directory. </b>
