@@ -488,22 +488,40 @@
         const formData = new FormData();
         formData.append('zipFile', file);
 
+        console.log(formData.get('zipFile')); // Debugging step
+
         fetch('<?= BASE_URL ?>vtlgen/vtlgenUnzipModule', {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
+            .then(response => response.json().catch(() => response.text()))
             .then(data => {
+                if (typeof data === 'string') {
+                    console.log('Non-JSON response:', data);
+                    openVtlModal('Error Unzipping Module', false, 'Server returned an unexpected response');
+                    return;
+                }
+
                 if (data.success) {
-                   openVtlModal('Module Unzipped', true, data.message);
+                    openVtlModal('Module Unzipped', true, data.message || 'Module unzipped successfully.');
                 } else {
                     openVtlModal('Error Unzipping Module', false, data.message);
+                }
+
+                // Log debugging messages to the console
+                if (data.debug) {
+                    console.log('Debug Messages:', data.debug);
                 }
             })
             .catch(error => {
                 openVtlModal('Error Unzipping Module', false, error.message);
+                console.log('Fetch error:', error); // Additional debugging for fetch errors
             });
     }
+
+
+
+
 </script>
 <style>
 

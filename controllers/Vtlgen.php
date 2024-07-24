@@ -307,42 +307,78 @@ class Vtlgen extends Trongate
      *
      * @return void
      */
-    public function vtlgenUnzipModule():void{
-        // Define the target directory
-        $targetDir =  APPPATH . 'modules' ;
+    public function vtlgenUnzipModule(): void {
+        header('Content-Type: application/json');
 
-        // Check if the request contains a file
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['zipFile'])) {
-            $file = $_FILES['zipFile'];
+        try {
+            // Define the target directory
+            $targetDir = APPPATH . 'modules/';
 
-            // Ensure the uploaded file is a ZIP file
-            if ($file['type'] !== 'application/zip') {
-                echo json_encode(['success' => false, 'message' => 'Invalid file type. Please upload a ZIP file.']);
-                exit;
+            // Ensure the directory ends with a slash
+            if (substr($targetDir, -1) !== DIRECTORY_SEPARATOR) {
+                $targetDir .= DIRECTORY_SEPARATOR;
             }
 
-            // Define the target file path
-            $targetFilePath = $targetDir . basename($file['name']);
+            // Initialize an array to store debugging messages
+            $debugMessages = [];
 
-            // Move the uploaded file to the target directory
-            if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
-                // Unzip the file
-                $zip = new ZipArchive;
-                if ($zip->open($targetFilePath) === TRUE) {
-                    $zip->extractTo($targetDir);
-                    $zip->close();
-                    unlink($targetFilePath); // Optionally delete the ZIP file after extraction
-                    echo json_encode(['success' => true]);
+            // Check if the request contains a file
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['zipFile'])) {
+                $file = $_FILES['zipFile'];
+                $debugMessages[] = "File upload detected: " . print_r($file, true);
+
+                // Ensure the uploaded file is a ZIP file
+                $fileType = mime_content_type($file['tmp_name']);
+                if ($fileType !== 'application/zip' && $fileType !== 'application/x-zip-compressed') {
+                    echo json_encode(['success' => false, 'message' => 'Invalid file type. Please upload a ZIP file.', 'debug' => $debugMessages]);
+                    exit;
+                }
+
+                // Define the target file path
+                $targetFilePath = $targetDir . basename($file['name']);
+                $debugMessages[] = "Target file path: " . $targetFilePath;
+
+                // Move the uploaded file to the target directory
+                if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+                    $debugMessages[] = "File moved to target directory.";
+
+                    // Create a directory named after the ZIP file
+                    $zipDirName = pathinfo($targetFilePath, PATHINFO_FILENAME);
+                    $extractToDir = $targetDir . $zipDirName;
+                    if (!is_dir($extractToDir)) {
+                        mkdir($extractToDir, 0755, true);
+                    }
+
+                    // Unzip the file
+                    $zip = new ZipArchive;
+                    if ($zip->open($targetFilePath) === TRUE) {
+                        $zip->extractTo($extractToDir);
+                        $zip->close();
+                        // Optionally delete the ZIP file after extraction
+                        // @unlink($targetFilePath);
+
+                        $debugMessages[] = "Unzipped to directory: " . $extractToDir;
+                        echo json_encode(['success' => true, 'debug' => $debugMessages]);
+                    } else {
+                        $debugMessages[] = "Failed to unzip the file.";
+                        echo json_encode(['success' => false, 'message' => 'Failed to unzip the file.', 'debug' => $debugMessages]);
+                    }
                 } else {
-                    echo json_encode(['success' => false, 'message' => 'Failed to unzip the file.']);
+                    $debugMessages[] = "Failed to move the uploaded file.";
+                    echo json_encode(['success' => false, 'message' => 'Failed to move the uploaded file.', 'debug' => $debugMessages]);
                 }
             } else {
-                echo json_encode(['success' => false, 'message' => 'Failed to move the uploaded file.']);
+                $debugMessages[] = "No file uploaded.";
+                echo json_encode(['success' => false, 'message' => 'No file uploaded.', 'debug' => $debugMessages]);
             }
-        } else {
-            echo json_encode(['success' => false, 'message' => 'No file uploaded.']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
+
+
+
+
 
     /**
      * Generates the view for zipping a module or project in the Vtl Data Generator.
@@ -4108,8 +4144,8 @@ class Vtlgen extends Trongate
 
         try {
             foreach ($selectedModules as $selectedModule) {
-                $modulePath = APPPATH . 'modules';
-                $zipFile = $modulePath . '/' . $selectedModule . '.zip';
+                $modulePath = APPPATH . 'modules'. '/' . $selectedModule;
+                $zipFile = APPPATH . 'modules' . '/' . $selectedModule . '.zip';
                 $this->zipApplication($modulePath, $zipFile);
             }
             $response['status'] = 'success';
