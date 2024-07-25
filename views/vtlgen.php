@@ -1,4 +1,4 @@
-<?php //echo json($data) ?>
+<?php  ?>
 <!doctype html>
 <html lang="en">
 <head>

@@ -14,14 +14,8 @@ class {{ModuleName}} extends Trongate {
 
     function index () {
         $data['view_module'] = '{{moduleName}}';
-        $this->view('display', $data);
-        /* Uncomment the lines below,
-         * Change the template method name,
-         * Remove lines above, if you want to load to the template
-         */
-        //$data['view_module'] = '{{moduleName}}';
-        //$data['view_file'] = 'display';
-        //$this->template('template method here', $data);
+        $this->view('manage', $data);
+
     }
 
 
@@ -113,17 +107,17 @@ class {{ModuleName}} extends Trongate {
         }
 
         if (is_numeric($update_id)) {
-            $data['headline'] = 'Update Customers Record';
-            $data['cancel_url'] = BASE_URL . 'customers/show/' . $update_id;
+            $data['headline'] = 'Update {{moduleName}} Record';
+            $data['cancel_url'] = BASE_URL . '{{moduleName}}/show/' . $update_id;
         } else {
-            $data['headline'] = 'Create New Customers Record';
-            $data['cancel_url'] = BASE_URL . 'customers/manage';
+            $data['headline'] = 'Create New {{moduleName}} Record';
+            $data['cancel_url'] = BASE_URL . '{{moduleName}}/manage';
         }
 
-        $data['form_location'] = BASE_URL . 'customers/submit/' . $update_id;
+        $data['form_location'] = BASE_URL . '{{moduleName}}/submit/' . $update_id;
         $data['formFields'] = json_encode($this->columns); // Pass columns to view
         $data['view_file'] = 'create';
-        $data['view_module'] = 'customers';
+        $data['view_module'] = '{{moduleName}}';
         $this->template('admin', $data);
     }
 
@@ -283,6 +277,14 @@ class {{ModuleName}} extends Trongate {
             }
         }
         return false;
+    }
+
+    private function getPicturePath($update_id) {
+        $picture_settings = $this->_init_picture_settings();
+        $destination = $picture_settings['destination'];
+        $destination = 'modules/'.segment(1).'/assets/images/'.$destination;
+        $target_dir = APPPATH.$destination.'/'.$update_id;
+        return $target_dir;
     }
 
     function _init_picture_settings() {
@@ -471,6 +473,22 @@ class {{ModuleName}} extends Trongate {
         $flash_msg = 'The picture was successfully deleted';
         set_flashdata($flash_msg);
         redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    function _rrmdir($dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (is_dir($dir. DIRECTORY_SEPARATOR .$object) && !is_link($dir."/".$object))
+                        $this->_rrmdir($dir. DIRECTORY_SEPARATOR .$object);
+                    else
+                        unlink($dir. DIRECTORY_SEPARATOR .$object);
+                }
+            }
+            rmdir($dir);
+        }
     }
 
 }
