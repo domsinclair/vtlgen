@@ -233,7 +233,7 @@ class {{ModuleName}} extends Trongate {
             if ($data['draw_picture_uploader']) {
                 $picture_settings = $this->_init_picture_settings();
                 $this->_make_sure_got_destination_folders($update_id, $picture_settings);
-                $data['picture_path'] = $this->get_picture_path($update_id);
+                $data['picture_path'] = $this->getPicturePath($update_id);
             }
 
             // Attempt to get the current picture

@@ -4197,10 +4197,10 @@ class Vtlgen extends Trongate
                 }
             }
             $response['status'] = 'success';
-            $response['message'] = 'Modules zipped successfully.';
+            $response['message'] = 'Modules Deleted successfully.';
         } catch (Exception $e) {
             $response['status'] = 'error';
-            $response['message'] = 'An error occurred while zipping the modules.';
+            $response['message'] = 'An error occurred while deleting the modules.';
             $response['errors'][] = $e->getMessage();
         }
 
