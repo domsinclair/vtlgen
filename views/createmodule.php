@@ -56,6 +56,7 @@
 </body>
 </html>
 <script>
+    var noDataMessage = "<?= $noDataMessage ?>";
     vtlModal.addEventListener('vtlModalClosed', () => {
             location.reload();
     });
@@ -76,6 +77,7 @@
                 },
                 { title: "Tables without Modules", field: "table", sorter: "string" }
             ],
+            placeholder: noDataMessage
         });
         table.on("rowSelected", function(row){
             //row - row component for the selected row

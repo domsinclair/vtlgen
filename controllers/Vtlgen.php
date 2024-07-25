@@ -435,6 +435,7 @@ class Vtlgen extends Trongate
         $data['headline'] = 'Vtl Data Generator: Create Module';
         $data['instruction1'] = 'select those tables for which you wish to create modules.';
         $data['instruction2'] = '';
+        $data['noDataMessage'] = 'There are currently no tables that do not have modules associated with them.';
         $data['view_module'] = 'vtlgen';
         $data['view_file'] = 'createmodule';
         $this->template('admin', $data);
