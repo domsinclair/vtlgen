@@ -1,4 +1,4 @@
-<?php // echo json($data);?>
+<?php //echo json($data);?>
 <?php $picDirectoryExists = false; ?>
 <!doctype html>
 <html lang="en">
@@ -84,7 +84,7 @@
 
 <script>
     vtlModal.addEventListener('vtlModalClosed', () => {
-            location.reload();
+            //location.reload();
     });
     async function setPictureDirectoryExistsForSelectedTableModule(selectedTable) {
         <?php $picDirectoryExists = false;?>
@@ -281,7 +281,9 @@
                         openVtlModal('Fake Data Generated',true,response.message);
 
                         // Additional logic based on response
-                        var picDirectoryExists = document.getElementById('picDirectoryExists').value === 'true';
+                        var picDirectoryExists = document.getElementById('picDirectoryExists').value ;
+
+                        console.log('picDirectoryExists:', picDirectoryExists);
 
                         if (picDirectoryExists && numRows <= 100) {
                             document.getElementById('submitBtn').style.display = 'none';

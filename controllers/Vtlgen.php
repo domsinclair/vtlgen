@@ -1044,6 +1044,7 @@ class Vtlgen extends Trongate
         string $viewFile
     ): void
     {
+        $data['Application Modules'] = $this->applicationModules;
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
         $data['headline'] = $headline;
@@ -1819,9 +1820,9 @@ class Vtlgen extends Trongate
             $selectedTable = $postData['selectedTable'];
 
             //TODO: Check that the query below will work with primary keys that are not named id
-
+            $primaryKey = $this->getPrimaryKey($selectedTable);
             // Construct SQL query to select id and picture from the selected table
-            $sql = 'SELECT id, picture FROM ' . $selectedTable;
+            $sql = 'SELECT ' . $primaryKey . ', picture FROM ' . $selectedTable;
 
             // Ensure the user is allowed to perform this action
             $this->module('trongate_security');
@@ -2202,6 +2203,7 @@ class Vtlgen extends Trongate
             $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
+            $this->generatePictureDirectoriesIfRequired($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName, $processedColumns);
             $this->generateCustomJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
             $this->generateCustomCss($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
 
@@ -2276,7 +2278,7 @@ class Vtlgen extends Trongate
      * @throws Exception Failed to read controller template or write controller file.
      */
     private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey) {
-        var_dump('In the generate module controller function');
+
         $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
 
         $replacements = [
@@ -2344,7 +2346,7 @@ class Vtlgen extends Trongate
      * @return void
      */
     private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey): void {
-        var_dump('In the generate module views function');
+
         // Paths for display and manage view templates
         $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
         $createViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'create.php';
@@ -2460,6 +2462,43 @@ class Vtlgen extends Trongate
             throw new Exception("Failed to write custom.css file");
         }
     }
+
+    /**
+     * Generate picture directories if required.
+     *
+     * This function checks if the 'picture' substring exists in the table headers.
+     * If it does, it creates two directories: one for the pictures and one for the thumbnails.
+     *
+     * @param string $moduleAssetsImagesPath The path to the images assets folder of the module.
+     * @param string $moduleName The name of the module.
+     * @param array $processedColumns The processed columns containing the table headers.
+     * @throws Exception If the table headers are not an array or if the directories cannot be created.
+     * @return void
+     */
+    private function generatePictureDirectoriesIfRequired($moduleAssetsPath, $moduleName, $processedColumns) {
+        // Determine if we need to proceed in the first place
+
+
+        // Ensure that $tableheaders is an array
+        $tableheaders = $processedColumns['tableHeaders'];
+        if (is_string($tableheaders)) {
+            $tableheaders = explode(',', $tableheaders); // Convert string to array
+        }
+
+        $pictureFieldExists = false;
+        foreach ($tableheaders as $tableheader) {
+            if (strpos($tableheader, 'picture') !== false) { // Check if 'picture' is a substring
+                $pictureFieldExists = true;
+                break; // No need to continue checking once we found it
+            }
+        }
+
+        if ($pictureFieldExists) {
+            $this->createDirectory($moduleAssetsPath.'/'.strtolower($moduleName).'_pics');
+            $this->createDirectory($moduleAssetsPath.'/'.strtolower($moduleName).'_pics_thumbnails');
+        }
+    }
+
     //endregion
 
     //region DeleteOrDrop view functions
