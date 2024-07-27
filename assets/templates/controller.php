@@ -13,7 +13,7 @@ class {{ModuleName}} extends Trongate {
    }
 
     function index () {
-        $data['view_module'] = strtolower('{{moduleName}}');
+        $data['view_module'] = '{{stlModuleName}}';
         $this->view('manage', $data);
 
     }
@@ -22,22 +22,22 @@ class {{ModuleName}} extends Trongate {
     function manage() {
 
 
-        $data['headline'] = 'Manage {{moduleName}}';
+        $data['headline'] = 'Manage {{ModuleName}}';
         $all_rows = $this->model->get('{{primaryKey}} asc');
 
 
         $pagination_data['total_rows'] = count($all_rows);
         $pagination_data['page_num_segment'] = 3;
         $pagination_data['limit'] = $this->_get_limit();
-        $pagination_data['pagination_root'] = strtolower('{{moduleName}}/').segment(2);
-        $pagination_data['record_name_plural'] = strtolower('{{moduleName}}');
+        $pagination_data['pagination_root'] = '{{stlModuleName}}/'.segment(2);
+        $pagination_data['record_name_plural'] = '{{stlModuleName}}';
         $pagination_data['include_showing_statement'] = true;
         $data['pagination_data'] = $pagination_data;
 
         $data['rows'] = $this->_reduce_rows($all_rows);
         $data['selected_per_page'] = $this->_get_selected_per_page();
         $data['per_page_options'] = $this->per_page_options;
-        $data['view_module'] = '{{moduleName}}';
+        $data['view_module'] = '{{stlModuleName}}';
 
 
         $this->module('trongate_security');
@@ -108,16 +108,16 @@ class {{ModuleName}} extends Trongate {
 
         if (is_numeric($update_id)) {
             $data['headline'] = 'Update {{moduleName}} Record';
-            $data['cancel_url'] = BASE_URL . strtolower('{{moduleName}}/show/' ). $update_id;
+            $data['cancel_url'] = BASE_URL . '{{stlModuleName}}/show/' . $update_id;
         } else {
             $data['headline'] = 'Create New {{moduleName}} Record';
-            $data['cancel_url'] = BASE_URL . strtolower('{{moduleName}}/manage');
+            $data['cancel_url'] = BASE_URL . '{{stlModuleName}}/manage';
         }
 
-        $data['form_location'] = BASE_URL . strtolower('{{moduleName}}/submit/' ). $update_id;
+        $data['form_location'] = BASE_URL . '{{stlModuleName}}/submit/' . $update_id;
         $data['formFields'] = json_encode($this->columns); // Pass columns to view
         $data['view_file'] = 'create';
-        $data['view_module'] = strtolower('{{moduleName}}');
+        $data['view_module'] = '{{stlModuleName}}';
         $this->template('admin', $data);
     }
 
@@ -147,15 +147,15 @@ class {{ModuleName}} extends Trongate {
                 $data['{{primaryKey}}'] = $update_id;
 
                 if ($update_id > 0) {
-                    $this->model->update_where('{{primaryKey}}', $update_id, $data, strtolower('{{moduleName}}'));
+                    $this->model->update_where('{{primaryKey}}', $update_id, $data, '{{stlModuleName}}');
                     $flash_msg = 'The record was successfully updated';
                 } else {
-                    $update_id = $this->model->insert($data, strtolower('{{moduleName}}'));
+                    $update_id = $this->model->insert($data, '{{stlModuleName}}');
                     $flash_msg = 'The record was successfully created';
                 }
 
                 set_flashdata($flash_msg);
-                redirect(strtolower('{{moduleName}}').'/show/'.$update_id);
+                redirect('{{stlModuleName}}'.'/show/'.$update_id);
             } else {
                 $this->create();
             }
@@ -170,17 +170,17 @@ class {{ModuleName}} extends Trongate {
 
         $submit = post('submit');
         $params['update_id'] = (int) segment(3);
-        $moduleName = strtolower('{{moduleName}}');
+        $moduleName = '{{stlModuleName}}';
         if (($submit == 'Yes - Delete Now') && ($params['update_id'] > 1)) {
             //delete all of the comments associated with this record
             $sql = 'delete from trongate_comments where target_table = :module and update_id = :update_id';
-            $params['module'] = $moduleName;
+            $params['module'] = $stlModuleName;
             $this->model->query_bind($sql, $params);
 
             // Create a custom delete query to cater for primary keys that are not named id
 
             $primaryKey = '{{primaryKey}}'; // Replace with the actual primary key
-            $sqlDelete = 'DELETE FROM ' . $moduleName . ' WHERE ' . $primaryKey . ' = ' .$params['update_id'];
+            $sqlDelete = 'DELETE FROM ' . $stlModuleName . ' WHERE ' . $primaryKey . ' = ' .$params['update_id'];
             $this->model->query($sqlDelete);
 
 
@@ -189,11 +189,11 @@ class {{ModuleName}} extends Trongate {
             set_flashdata($flash_msg);
 
             //redirect to the manage page
-            redirect(strtolower('{{moduleName}}/manage'));
+            redirect('{{stlModuleName}}/manage');
         } elseif ($params['update_id'] === 1) {
             $form_submission_errors['update_id'][] = 'Deletion of the homepage record is not permitted.';
             $_SESSION['form_submission_errors'] = $form_submission_errors;
-            redirect(strtolower('{{moduleName}}/manage'));
+            redirect('{{stlModuleName}}/manage');
         }
     }
 
@@ -218,52 +218,65 @@ class {{ModuleName}} extends Trongate {
         $update_id = (int) segment(3);
 
         if ($update_id == 0) {
-            redirect(strtolower('{{moduleName}}/manage'));
+            redirect('{{stlModuleName}}/manage');
         }
 
         $data = $this->getDataFromDB($update_id);
         $data['token'] = $token;
 
         if ($data == false) {
-            redirect(strtolower('{{moduleName}}/manage'));
+            redirect(strtolower('Customers/manage'));
         } else {
-            // Check if the module has a picture field
             $data['draw_picture_uploader'] = $this->hasPictureField();
             $picture_settings = null;
+            $picture_path = '';
 
             if ($data['draw_picture_uploader']) {
                 $picture_settings = $this->_init_picture_settings();
-                $this->_make_sure_got_destination_folders($update_id, $picture_settings);
-                $data['picture_path'] = $this->getPicturePath($update_id);
             }
 
-            // Attempt to get the current picture
             if ($picture_settings) {
                 $column_name = $picture_settings['target_column_name'];
-
-                if (!empty($data[$column_name]) && isset($data[0]->$column_name)) {
-                    // We have a picture - display picture preview
+                if (isset($data[0]->$column_name) && !empty($data[0]->$column_name)) {
+                    // Picture exists
                     $picture = $data[0]->$column_name;
-
                     if ($picture_settings['upload_to_module'] == true) {
                         $module_assets_dir = BASE_URL . segment(1) . MODULE_ASSETS_TRIGGER;
-                        $data['picture_path'] = $module_assets_dir . '/' . $picture_settings['destination'] . '/' . $update_id . '/' . $picture;
+                        $picture_path = $module_assets_dir . '/' . $picture_settings['destination'] . '/' . $update_id . '/' . $picture;
                     } else {
-                        $data['picture_path'] = BASE_URL . $picture_settings['destination'] . '/' . $update_id . '/' . $picture;
+                        $picture_path = BASE_URL . $picture_settings['destination'] . '/' . $update_id . '/' . $picture;
                     }
+                    $data['draw_picture_uploader'] = false;
                 } else {
-                    // No picture - draw upload form
                     $data['draw_picture_uploader'] = true;
                 }
             }
 
+            if ($data['draw_picture_uploader']) {
+                if (!$picture_settings) {
+                    $picture_settings = $this->_init_picture_settings();
+                }
+                $this->_make_sure_got_destination_folders($update_id, $picture_settings);
+                if ($picture_settings['upload_to_module'] == true) {
+                    $module_assets_dir = BASE_URL . segment(1) . MODULE_ASSETS_TRIGGER;
+                    $picture_path = $module_assets_dir . '/' . $picture_settings['destination'] . '/' . $update_id . '/';
+                } else {
+                    $picture_path = BASE_URL . $picture_settings['destination'] . '/' . $update_id . '/';
+                }
+            }
+
+            $data['picture_path'] = $picture_path;
             $data['columns'] = $this->columns;
             $data['update_id'] = $update_id;
-            $data['headline'] = 'View ' . ucfirst('{{moduleName}}') . ' Record';
+            $data['headline'] = 'View {{moduleName}} Record';
             $data['view_file'] = 'show';
             $this->template('admin', $data);
         }
     }
+
+
+
+
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -273,10 +286,10 @@ class {{ModuleName}} extends Trongate {
     private function hasPictureField() {
         foreach ($this->columns as $column) {
             if (strpos($column['Field'], 'picture') !== false) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private function getPicturePath($update_id) {
@@ -293,9 +306,9 @@ class {{ModuleName}} extends Trongate {
         $picture_settings['max_height'] = 1200;
         $picture_settings['resized_max_width'] = 450;
         $picture_settings['resized_max_height'] = 450;
-        $picture_settings['destination'] = strtolower('{{moduleName}}_pics');
+        $picture_settings['destination'] = '{{stlModuleName}}_pics';
         $picture_settings['target_column_name'] = 'picture';
-        $picture_settings['thumbnail_dir'] = strtolower('{{moduleName}}_pics_thumbnails');
+        $picture_settings['thumbnail_dir'] = '{{stlModuleName}}_pics_thumbnails';
         $picture_settings['thumbnail_max_width'] = 120;
         $picture_settings['thumbnail_max_height'] = 120;
         $picture_settings['upload_to_module'] = true;
@@ -346,7 +359,7 @@ class {{ModuleName}} extends Trongate {
 
                 //update the database
                 $data[$target_column_name] = $_FILES['picture']['name'];
-                $this->model->update($update_id, $data);
+                $this->model->update_where('{{primaryKey}}', $update_id, $data, '{{stlModuleName}}');
 
                 $flash_msg = 'The picture was successfully uploaded';
                 set_flashdata($flash_msg);
@@ -384,8 +397,8 @@ class {{ModuleName}} extends Trongate {
         $dir_path = 'modules/'.segment(1).'/assets/';
         $data['destination'] = $dir_path.$data['destination'];
         $data['filename'] = '../'.$data['destination'].'/'.$target_file['name'];
-        $data['tmp_file_width'] = $data['image']->getWidth();
-        $data['tmp_file_height'] = $data['image']->getHeight();
+        $data['tmp_file_width'] = $data['image']->get_width();
+        $data['tmp_file_height'] = $data['image']->get_height();
 
         if (!isset($data['max_width'])) {
             $data['max_width'] = NULL;
@@ -427,12 +440,12 @@ class {{ModuleName}} extends Trongate {
 
         //resize rules figured out, let's rock...
         if (($reduce_width == true) && ($reduce_height == false)) {
-            $image->resizeToWidth($max_width);
+            $image->resize_to_width($max_width);
             $image->save($filename, $compression);
         }
 
         if (($reduce_width == false) && ($reduce_height == true)) {
-            $image->resizeToHeight($max_height);
+            $image->resize_to_height($max_height);
             $image->save($filename, $compression);
         }
 
@@ -441,8 +454,8 @@ class {{ModuleName}} extends Trongate {
         }
 
         if (($reduce_width == true) && ($reduce_height == true)) {
-            $image->resizeToWidth($max_width);
-            $image->resizeToHeight($max_height);
+            $image->resize_to_width($max_width);
+            $image->resize_to_height($max_height);
             $image->save($filename, $compression);
         }
     }
@@ -456,7 +469,7 @@ class {{ModuleName}} extends Trongate {
         $this->module('trongate_security');
         $this->trongate_security->_make_sure_allowed();
 
-        $result = $this->model->get_where($update_id);
+        $result = $this->model->get_where_custom('{{primaryKey}}', $update_id,  order_by:'{{primaryKey}}');
 
         if ($result == false) {
             redirect($_SERVER['HTTP_REFERER']);
@@ -468,7 +481,7 @@ class {{ModuleName}} extends Trongate {
         $picture_settings = $this->_init_picture_settings();
         $target_column_name = $picture_settings['target_column_name'];
         $data[$target_column_name] = '';
-        $this->model->update($update_id, $data);
+        $this->model->update_where('{{primaryKey}}', $update_id, $data, '{{stlModuleName}}');
 
         $flash_msg = 'The picture was successfully deleted';
         set_flashdata($flash_msg);

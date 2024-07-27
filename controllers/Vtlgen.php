@@ -2158,8 +2158,10 @@ class Vtlgen extends Trongate
             $response['message'] = 'Module already exists!';
         } else {
             try {
+                // Ensure we have a lower case moduleName
+                $stlModuleName = strtolower($moduleName);
                 // Generate module infrastructure
-                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey)) {
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName)) {
                     $response['status'] = 'success';
                     $response['message'] = 'Module created successfully.';
                 } else {
@@ -2185,7 +2187,7 @@ class Vtlgen extends Trongate
      * @throws Exception If an error occurs during the generation process.
      * @return bool Returns true if the infrastructure generation is successful.
      */
-    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey): bool {
+    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName ): bool {
         try {
             $this->createDirectory($modulePath);
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
@@ -2199,7 +2201,7 @@ class Vtlgen extends Trongate
             $processedColumns = $this->processColumnInfo($columnInfo, $primaryKey);
 
             // Generate module files
-            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey);
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName);
             $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
@@ -2277,7 +2279,7 @@ class Vtlgen extends Trongate
      * @param string $moduleName The name of the module.
      * @throws Exception Failed to read controller template or write controller file.
      */
-    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey) {
+    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName) {
 
         $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
 
@@ -2286,7 +2288,8 @@ class Vtlgen extends Trongate
             '{{moduleName}}' => $moduleName,
             '{{tableHeaders}}' => $processedColumns['tableHeaders'],
             '{{columns}}' => json_encode($processedColumns['columns']),
-            '{{primaryKey}}' => $primaryKey
+            '{{primaryKey}}' => $primaryKey,
+            '{{stlModuleName}}' => $stlModuleName
         ];
 
         $controllerContent = str_replace(array_keys($replacements), array_values($replacements), $template);
