@@ -12,24 +12,37 @@ class {{ModuleName}} extends Trongate {
        $this->columns = json_decode('{{columns}}', true);
    }
 
-    function index () {
+    public function index () {
         $data['view_module'] = '{{stlModuleName}}';
         $this->view('manage', $data);
 
     }
 
-
-    function manage() {
-
+    public function manage() {
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
 
         $data['headline'] = 'Manage {{ModuleName}}';
-        $all_rows = $this->model->get('{{primaryKey}} asc');
 
+        if (segment(4) !== '') {
+            $data['headline'] = 'Search Results';
 
+            // Access search parameters from the GET request
+            $searchField = $_GET['search_field'];
+            $searchOperator = $_GET['search_operator'];
+            $searchTerm = $_GET['search_term'];
+
+            // Execute the dynamic search query
+            $all_rows = $this->execute_search_query($searchField, $searchOperator, $searchTerm);
+        } else {
+            $all_rows = $this->model->get('{{primaryKey}} asc');
+        }
+
+        // Pagination configuration
         $pagination_data['total_rows'] = count($all_rows);
         $pagination_data['page_num_segment'] = 3;
         $pagination_data['limit'] = $this->_get_limit();
-        $pagination_data['pagination_root'] = '{{stlModuleName}}/'.segment(2);
+        $pagination_data['pagination_root'] = '{{stlModuleName}}/manage';
         $pagination_data['record_name_plural'] = '{{stlModuleName}}';
         $pagination_data['include_showing_statement'] = true;
         $data['pagination_data'] = $pagination_data;
@@ -39,9 +52,6 @@ class {{ModuleName}} extends Trongate {
         $data['per_page_options'] = $this->per_page_options;
         $data['view_module'] = '{{stlModuleName}}';
 
-
-        $this->module('trongate_security');
-        $this->trongate_security->_make_sure_allowed();
         $template_to_use = 'admin';
         $view_file_to_use = 'manage';
 
@@ -49,6 +59,40 @@ class {{ModuleName}} extends Trongate {
         $data['view_file'] = $view_file_to_use;
         $this->template($template_to_use, $data);
     }
+
+
+
+
+//    public function manage() {
+//
+//
+//        $data['headline'] = 'Manage {{ModuleName}}';
+//        $all_rows = $this->model->get('{{primaryKey}} asc');
+//
+//
+//        $pagination_data['total_rows'] = count($all_rows);
+//        $pagination_data['page_num_segment'] = 3;
+//        $pagination_data['limit'] = $this->_get_limit();
+//        $pagination_data['pagination_root'] = '{{stlModuleName}}/'.segment(2);
+//        $pagination_data['record_name_plural'] = '{{stlModuleName}}';
+//        $pagination_data['include_showing_statement'] = true;
+//        $data['pagination_data'] = $pagination_data;
+//
+//        $data['rows'] = $this->_reduce_rows($all_rows);
+//        $data['selected_per_page'] = $this->_get_selected_per_page();
+//        $data['per_page_options'] = $this->per_page_options;
+//        $data['view_module'] = '{{stlModuleName}}';
+//
+//
+//        $this->module('trongate_security');
+//        $this->trongate_security->_make_sure_allowed();
+//        $template_to_use = 'admin';
+//        $view_file_to_use = 'manage';
+//
+//        $data['table_headers'] = '{{tableHeaders}}';
+//        $data['view_file'] = $view_file_to_use;
+//        $this->template($template_to_use, $data);
+//    }
 
     function _get_limit() {
         if (isset($_SESSION['selected_per_page'])) {
@@ -93,7 +137,7 @@ class {{ModuleName}} extends Trongate {
         return $offset;
     }
 
-    function create() {
+    public function create() {
         $this->module('trongate_security');
         $this->trongate_security->_make_sure_allowed();
 
@@ -209,6 +253,13 @@ class {{ModuleName}} extends Trongate {
     private function getDataFromDb($update_id) {
         $record = $this->model->get_where_custom('{{primaryKey}}', $update_id,  order_by:'{{primaryKey}}');
         return (array) $record;
+    }
+
+    private function execute_search_query($searchField, $searchOperator, $searchTerm) {
+        if ($searchOperator == 'LIKE') {
+            $searchTerm = '%' . $searchTerm . '%';
+        }
+        return $this->model->get_where_custom($searchField, $searchTerm, $searchOperator, '{{primaryKey}} asc');
     }
 
 

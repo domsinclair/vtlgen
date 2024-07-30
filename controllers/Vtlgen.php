@@ -2200,9 +2200,13 @@ class Vtlgen extends Trongate
             // Process columns info
             $processedColumns = $this->processColumnInfo($columnInfo, $primaryKey);
 
+            // Prepare search field and operator options
+            $searchFieldOptions = array_column($columnInfo, 'Field');
+            $searchOperatorOptions = ['=' => '=', 'LIKE' => 'LIKE', '>' => '>', '<' => '<']; // Example, you can adjust as needed
+
             // Generate module files
             $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName);
-            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey);
+            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey, $searchFieldOptions, $searchOperatorOptions);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
             $this->generatePictureDirectoriesIfRequired($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName, $processedColumns);
@@ -2348,7 +2352,7 @@ class Vtlgen extends Trongate
      * @throws Some_Exception_Class description of exception
      * @return void
      */
-    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey): void {
+    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey, $searchFieldOptions, $searchOperatorOptions): void {
 
         // Paths for display and manage view templates
         $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
@@ -2370,6 +2374,17 @@ class Vtlgen extends Trongate
         $manageContent = str_replace('{{moduleName}}', strtolower($moduleName), $manageContent);
         $manageContent = str_replace('{{tableHeaders}}', json_encode($tableHeaders), $manageContent);
         $manageContent = str_replace('{{primaryKey}}', $primaryKey, $manageContent);
+
+        // Prepare search field and operator options
+        $searchFieldOptions = [];
+        foreach ($columnInfo as $column) {
+            $searchFieldOptions[$column['Field']] = ucfirst($column['Field']);
+        }
+        $manageContent = str_replace('{{searchFieldOptions}}', json_encode($searchFieldOptions), $manageContent);
+
+        $searchOperatorOptions = ['=' => '=', 'LIKE' => 'LIKE', '>' => '>', '<' => '<']; // Example, you can adjust as needed
+        $manageContent = str_replace('{{searchOperatorOptions}}', json_encode($searchOperatorOptions), $manageContent);
+
         if (file_put_contents($manageViewPath, $manageContent) === false) {
             throw new Exception("Failed to write manage view file");
         }
