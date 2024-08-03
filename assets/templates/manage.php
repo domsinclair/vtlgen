@@ -7,7 +7,7 @@ $primaryKey = '{{primaryKey}}';
 flashdata();
 echo validation_errors();
 echo '<p>';
-echo anchor('{{moduleName}}/create', 'Create New {{moduleName}} Record', array("class" => "button")).'</p>';
+echo anchor('{{moduleName}}/create', 'Create New {{moduleName}} Record', array("class" => "button"));
 if (strtolower(ENV) === 'dev') {
     echo anchor('api/explorer/{{moduleName}}', 'API Explorer', array("class" => "button alt"));
 }
@@ -128,13 +128,15 @@ if (count($rows) > 10) {
     }
 
     .search-form button {
+        color: #1a1a1a;
         margin-left: 10px;
         height: 30px;
-        line-height: 30px;
+        line-height: 20px;
         margin-bottom: 15px;
-        background-color: darkred;
+        background-color: var(--primary-color);
         padding: 5px;
         text-align: center;
+        border-radius: 10px;
     }
 
     .records-per-page {

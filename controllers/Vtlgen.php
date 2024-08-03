@@ -2382,12 +2382,23 @@ class Vtlgen extends Trongate
         }
         $manageContent = str_replace('{{searchFieldOptions}}', json_encode($searchFieldOptions), $manageContent);
 
-        $searchOperatorOptions = ['=' => '=', 'LIKE' => 'LIKE', '>' => '>', '<' => '<']; // Example, you can adjust as needed
+        // Enhance search operators with additional options
+        $searchOperatorOptions = [
+            '=' => '=',
+            'LIKE' => 'LIKE',
+            '>' => '>',
+            '<' => '<',
+            '>=' => '>=',
+            '<=' => '<=',
+            '!=' => '!=',
+            'IN' => 'IN'
+        ];
         $manageContent = str_replace('{{searchOperatorOptions}}', json_encode($searchOperatorOptions), $manageContent);
 
         if (file_put_contents($manageViewPath, $manageContent) === false) {
             throw new Exception("Failed to write manage view file");
         }
+
 
         // Process create view template
         $createContent = file_get_contents($createTemplatePath);
