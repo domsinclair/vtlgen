@@ -7,9 +7,13 @@ class {{ModuleName}} extends Trongate {
 
     private $columns = [];
 
+    private $validationRules = [];
+
    public function __construct() {
        parent::__construct();
        $this->columns = json_decode('{{columns}}', true);
+        $this->validationRules = json_decode('{{validationRules}}', true);
+
    }
 
     public function index () {
@@ -63,36 +67,7 @@ class {{ModuleName}} extends Trongate {
 
 
 
-//    public function manage() {
-//
-//
-//        $data['headline'] = 'Manage {{ModuleName}}';
-//        $all_rows = $this->model->get('{{primaryKey}} asc');
-//
-//
-//        $pagination_data['total_rows'] = count($all_rows);
-//        $pagination_data['page_num_segment'] = 3;
-//        $pagination_data['limit'] = $this->_get_limit();
-//        $pagination_data['pagination_root'] = '{{stlModuleName}}/'.segment(2);
-//        $pagination_data['record_name_plural'] = '{{stlModuleName}}';
-//        $pagination_data['include_showing_statement'] = true;
-//        $data['pagination_data'] = $pagination_data;
-//
-//        $data['rows'] = $this->_reduce_rows($all_rows);
-//        $data['selected_per_page'] = $this->_get_selected_per_page();
-//        $data['per_page_options'] = $this->per_page_options;
-//        $data['view_module'] = '{{stlModuleName}}';
-//
-//
-//        $this->module('trongate_security');
-//        $this->trongate_security->_make_sure_allowed();
-//        $template_to_use = 'admin';
-//        $view_file_to_use = 'manage';
-//
-//        $data['table_headers'] = '{{tableHeaders}}';
-//        $data['view_file'] = $view_file_to_use;
-//        $this->template($template_to_use, $data);
-//    }
+
 
     function _get_limit() {
         if (isset($_SESSION['selected_per_page'])) {
@@ -177,13 +152,12 @@ class {{ModuleName}} extends Trongate {
         if ($submit == 'Submit') {
             // Dynamically set validation rules based on columns
             foreach ($this->columns as $column) {
-                if ($column['Field'] !== '{{primaryKey}}') {
-                    //this needs to be changed to be more accurate.
-                    //$this->validation_helper->set_rules($column['Field'], ucfirst($column['Field']), 'required');
+                if ($column['Field'] !== '{{primaryKey}}' && isset($this->validationRules[$column['Field']])) {
+                    $this->validation->set_rules($column['Field'], ucfirst($column['Field']), $this->validationRules[$column['Field']]);
                 }
             }
 
-            $result = $this->validation_helper->run();
+            $result = $this->validation->run();
 
             if ($result == true) {
                 $update_id = (int) segment(3);

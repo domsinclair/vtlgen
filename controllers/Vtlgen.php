@@ -2148,6 +2148,9 @@ class Vtlgen extends Trongate
 
         $primaryKey = $this->getPrimaryKey($table_name);
 
+        // Generate validation rules
+        $validationRules = $this->createValidationRules($columnInfo);
+
         // Define the path to the modules directory
         $modulesDir = APPPATH . 'modules';
         $modulePath = $modulesDir . DIRECTORY_SEPARATOR . strtolower($moduleName) ;
@@ -2161,7 +2164,7 @@ class Vtlgen extends Trongate
                 // Ensure we have a lower case moduleName
                 $stlModuleName = strtolower($moduleName);
                 // Generate module infrastructure
-                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName)) {
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules)) {
                     $response['status'] = 'success';
                     $response['message'] = 'Module created successfully.';
                 } else {
@@ -2177,6 +2180,57 @@ class Vtlgen extends Trongate
         echo json_encode($response);
     }
 
+    private function createValidationRules($columnInfo) {
+        $validationRules = [];
+
+        foreach ($columnInfo as $column) {
+            $field = $column['Field'];
+            $type = $column['Type'];
+            $null = $column['Null'];
+            $rules = [];
+
+            // Ignore primary key fields
+            if (isset($column['Key']) && $column['Key'] === 'PRI') {
+                continue;
+            }
+
+            // Add 'required' rule if the field cannot be null
+            if ($null === 'NO') {
+                $rules[] = 'required';
+            }
+
+            // Add 'valid_email' rule if the field name contains 'email'
+            if (stripos($field, 'email') !== false) {
+                $rules[] = 'valid_email';
+            }
+
+            // Add password rules if the field name contains 'password'
+            if (stripos($field, 'password') !== false) {
+                $rules[] = 'min_length[8]'; // Example: Minimum length of 8 characters
+            }
+
+            // Add numeric rules if the type is int or tinyint
+            if (preg_match('/^int|tinyint/i', $type)) {
+                $rules[] = 'numeric';
+            }
+
+            // Add max_length rule if the type is varchar
+            if (preg_match('/^varchar\((\d+)\)/i', $type, $matches)) {
+                $rules[] = 'max_length[' . (int) $matches[1] . ']';
+            }
+
+            // Add the rules to the validation array if any rules exist for the field
+            if (!empty($rules)) {
+                $validationRules[$field] = implode('|', $rules);
+            }
+        }
+
+        return $validationRules;
+    }
+
+
+
+
 
 
     /**
@@ -2187,7 +2241,7 @@ class Vtlgen extends Trongate
      * @throws Exception If an error occurs during the generation process.
      * @return bool Returns true if the infrastructure generation is successful.
      */
-    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName ): bool {
+    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName, $validationRules ): bool {
         try {
             $this->createDirectory($modulePath);
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
@@ -2205,7 +2259,7 @@ class Vtlgen extends Trongate
             $searchOperatorOptions = ['=' => '=', 'LIKE' => 'LIKE', '>' => '>', '<' => '<']; // Example, you can adjust as needed
 
             // Generate module files
-            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName);
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules);
             $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey, $searchFieldOptions, $searchOperatorOptions);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
@@ -2283,7 +2337,7 @@ class Vtlgen extends Trongate
      * @param string $moduleName The name of the module.
      * @throws Exception Failed to read controller template or write controller file.
      */
-    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName) {
+    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules) {
 
         $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
 
@@ -2293,7 +2347,8 @@ class Vtlgen extends Trongate
             '{{tableHeaders}}' => $processedColumns['tableHeaders'],
             '{{columns}}' => json_encode($processedColumns['columns']),
             '{{primaryKey}}' => $primaryKey,
-            '{{stlModuleName}}' => $stlModuleName
+            '{{stlModuleName}}' => $stlModuleName,
+            '{{validationRules}}' => json_encode($validationRules)
         ];
 
         $controllerContent = str_replace(array_keys($replacements), array_values($replacements), $template);
