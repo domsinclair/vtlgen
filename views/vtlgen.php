@@ -290,12 +290,12 @@
                 </button>
             </div>
             <div class="grid-item">
-                <button class="svg-button" aria-label="Tabulator" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenShowTabulatorHelp'">
+                <button class="svg-button" aria-label="Create Modules" onclick="window.location.href='<?= BASE_URL ?>vtlgen/vtlgenShowTabulatorHelp'">
                     <picture>
                         <source srcset="vtlgen_module/help/images/vtlHelpDark.svg" media="(prefers-color-scheme: dark)">
                         <img class="svg-icon" src="vtlgen_module/help/images/vtlHelp.svg" alt="Create Data Icon">
                     </picture>
-                    <div class="popup popupLeft">Tabulator</div>
+                    <div class="popup popupLeft">Modules</div>
                 </button>
             </div>
         </div>

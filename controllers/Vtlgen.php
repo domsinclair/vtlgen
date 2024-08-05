@@ -763,8 +763,8 @@ class Vtlgen extends Trongate
      */
     public function vtlgenShowTabulatorHelp(): void
     {
-        $filepath = __DIR__ . '/../assets/help/tabulator.md';
-        $headline = 'Vtl Data Generator: Tabulator';
+        $filepath = __DIR__ . '/../assets/help/creatingmodules.md';
+        $headline = 'Vtl Data Generator: Creating Modules';
         $this->openHelpView($filepath, $headline);
     }
 
@@ -2180,6 +2180,12 @@ class Vtlgen extends Trongate
         echo json_encode($response);
     }
 
+    /**
+     * Create validation rules based on column information.
+     *
+     * @param array $columnInfo The information about the columns to generate rules for.
+     * @return array The generated validation rules for each field.
+     */
     private function createValidationRules($columnInfo) {
         $validationRules = [];
 
