@@ -2238,6 +2238,12 @@ class Vtlgen extends Trongate
     }
 
 
+    /**
+     * Converts a given string to its singular form and capitalises the first letter.
+     *
+     * @param string $str The input string to be singularised and capitalised.
+     * @return string The singularised and capitalised string.
+     */
     private function singulariseAndCapitalise($str): string{
 
         // Check if the word ends with "ies"
