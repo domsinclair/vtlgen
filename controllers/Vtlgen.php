@@ -2148,6 +2148,9 @@ class Vtlgen extends Trongate
 
         $primaryKey = $this->getPrimaryKey($table_name);
 
+        // Generate a singular module name
+        $singularModuleName = $this->singulariseAndCapitalise($moduleName);
+
         // Generate validation rules
         $validationRules = $this->createValidationRules($columnInfo);
 
@@ -2164,7 +2167,7 @@ class Vtlgen extends Trongate
                 // Ensure we have a lower case moduleName
                 $stlModuleName = strtolower($moduleName);
                 // Generate module infrastructure
-                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules)) {
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules,$singularModuleName)) {
                     $response['status'] = 'success';
                     $response['message'] = 'Module created successfully.';
                 } else {
@@ -2235,7 +2238,25 @@ class Vtlgen extends Trongate
     }
 
 
+    private function singulariseAndCapitalise($str): string{
 
+        // Check if the word ends with "ies"
+        if (substr($str, -3) === 'ies') {
+            // Replace "ies" with "y"
+            $singular = substr($str, 0, -3) . 'y';
+        } elseif (substr($str, -1) === 's') {
+            // Remove the trailing 's' for regular plurals
+            $singular = rtrim($str, 's');
+        } else {
+            // If it doesn't end with "s" or "ies", return as is (or handle as needed)
+            $singular = $str;
+        }
+
+        // Capitalize the first letter
+        $capitalised = ucfirst($singular);
+
+        return $capitalised;
+    }
 
 
 
@@ -2247,7 +2268,7 @@ class Vtlgen extends Trongate
      * @throws Exception If an error occurs during the generation process.
      * @return bool Returns true if the infrastructure generation is successful.
      */
-    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName, $validationRules ): bool {
+    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName, $validationRules, $singularModuleName ): bool {
         try {
             $this->createDirectory($modulePath);
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
@@ -2260,13 +2281,11 @@ class Vtlgen extends Trongate
             // Process columns info
             $processedColumns = $this->processColumnInfo($columnInfo, $primaryKey);
 
-            // Prepare search field and operator options
-            $searchFieldOptions = array_column($columnInfo, 'Field');
-            $searchOperatorOptions = ['=' => '=', 'LIKE' => 'LIKE', '>' => '>', '<' => '<']; // Example, you can adjust as needed
+
 
             // Generate module files
-            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules);
-            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey, $searchFieldOptions, $searchOperatorOptions);
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName);
+            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey,$singularModuleName);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
             $this->generatePictureDirectoriesIfRequired($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName, $processedColumns);
@@ -2343,7 +2362,7 @@ class Vtlgen extends Trongate
      * @param string $moduleName The name of the module.
      * @throws Exception Failed to read controller template or write controller file.
      */
-    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules) {
+    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName) {
 
         $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
 
@@ -2354,7 +2373,8 @@ class Vtlgen extends Trongate
             '{{columns}}' => json_encode($processedColumns['columns']),
             '{{primaryKey}}' => $primaryKey,
             '{{stlModuleName}}' => $stlModuleName,
-            '{{validationRules}}' => json_encode($validationRules)
+            '{{validationRules}}' => json_encode($validationRules),
+            '{{singularModuleName}}' => $singularModuleName
         ];
 
         $controllerContent = str_replace(array_keys($replacements), array_values($replacements), $template);
@@ -2409,11 +2429,11 @@ class Vtlgen extends Trongate
      * A description of the entire PHP function.
      *
      * @param string $moduleViewsPath description
-     * @param string $moduleName description
-     * @throws Some_Exception_Class description of exception
+     * @param string $moduleName      description
      * @return void
+     *@throws Some_Exception_Class description of exception
      */
-    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey, $searchFieldOptions, $searchOperatorOptions): void {
+    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey, $singularModuleName): void {
 
         // Paths for display and manage view templates
         $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
@@ -2435,6 +2455,7 @@ class Vtlgen extends Trongate
         $manageContent = str_replace('{{moduleName}}', strtolower($moduleName), $manageContent);
         $manageContent = str_replace('{{tableHeaders}}', json_encode($tableHeaders), $manageContent);
         $manageContent = str_replace('{{primaryKey}}', $primaryKey, $manageContent);
+        $manageContent = str_replace('{{singularModuleName}}', $singularModuleName, $manageContent);
 
         // Prepare search field and operator options
         $searchFieldOptions = [];
@@ -2469,6 +2490,7 @@ class Vtlgen extends Trongate
         $formFields = json_encode($columnInfo);
         $createContent = str_replace('{{moduleName}}', strtolower($moduleName), $createContent);
         $createContent = str_replace('{{formFields}}', $formFields, $createContent);
+        $createContent = str_replace('{{singularModuleName}}', $singularModuleName, $createContent);
         if (file_put_contents($createViewPath, $createContent) === false) {
             throw new Exception("Failed to write create view file");
         }
@@ -2486,6 +2508,7 @@ class Vtlgen extends Trongate
         }
         $showContent = str_replace('{{moduleName}}', strtolower($moduleName), $showContent);
         $showContent = str_replace('{{columns}}', $columnsData, $showContent);
+        $showContent = str_replace('{{singularModuleName}}', $singularModuleName, $showContent);
         if (file_put_contents($showViewPath, $showContent) === false) {
             throw new Exception("Failed to write show view file");
         }

@@ -2,7 +2,7 @@
 <?= validation_errors() ?>
 <div class="card">
     <div class="card-heading">
-        <?= ucfirst($view_module) ?> Details
+        <?= '{{singularModuleName}}' ?> Details
     </div>
 
     <div class="card-body">

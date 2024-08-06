@@ -19,7 +19,7 @@
 <div class="three-col">
 
     <div class="card">
-        <div class="card-heading"> <?= ucfirst('{{moduleName}}') ?> Details</div>
+        <div class="card-heading"> <?= '{{singularModuleName}}' ?> Details</div>
         <div class="card-body">
             <div class="record-details">
                 <?php foreach ($columns as $column): ?>

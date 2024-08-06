@@ -129,7 +129,7 @@ class {{ModuleName}} extends Trongate {
             $data['headline'] = 'Update {{moduleName}} Record';
             $data['cancel_url'] = BASE_URL . '{{stlModuleName}}/show/' . $update_id;
         } else {
-            $data['headline'] = 'Create New {{moduleName}} Record';
+            $data['headline'] = 'Create New {{singularModuleName}} Record';
             $data['cancel_url'] = BASE_URL . '{{stlModuleName}}/manage';
         }
 
@@ -293,7 +293,7 @@ class {{ModuleName}} extends Trongate {
             $data['picture_path'] = $picture_path;
             $data['columns'] = $this->columns;
             $data['update_id'] = $update_id;
-            $data['headline'] = 'View {{moduleName}} Record';
+            $data['headline'] = 'View {{singularModuleName}} Record';
             $data['view_file'] = 'show';
             $this->template('admin', $data);
         }

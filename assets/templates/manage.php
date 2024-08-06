@@ -7,7 +7,7 @@ $primaryKey = '{{primaryKey}}';
 flashdata();
 echo validation_errors();
 echo '<p>';
-echo anchor('{{moduleName}}/create', 'Create New {{moduleName}} Record', array("class" => "button"));
+echo anchor('{{moduleName}}/create', 'Create New {{singularModuleName}} Record', array("class" => "button"));
 if (strtolower(ENV) === 'dev') {
     echo anchor('api/explorer/{{moduleName}}', 'API Explorer', array("class" => "button alt"));
 }
@@ -43,7 +43,7 @@ if (count($rows) > 0) { ?>
 
                         <div class="search-item">
                             <?= form_label('Search Term:', 'search_term') ?>
-                            <?= form_input('search_term', '', array('id' => 'search_term')) ?>
+                            <?= form_input('search_term', '', array('id' => 'search_term', 'placeholder' => 'Enter Search Term...')) ?>
                         </div>
                         <div class="search-item">
                             <?= form_submit('search_submit', 'Search', array('class' => 'button ')) ?>
@@ -82,7 +82,7 @@ if (count($rows) > 0) { ?>
     </table>
     <?php
 } else {
-    echo '<p>No {{moduleName}} records were found.</p>';
+    echo '<p>No {{singularModuleName}} records were found.</p>';
 }
 
 // Display pagination links again if there are many records
