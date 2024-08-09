@@ -67,6 +67,7 @@
 
         // Create Tabulator
         let table = new Tabulator("#datatable", {
+            height: "300px",
             data: formattedData,
             layout: "fitColumns",
             selectable: true,
@@ -92,13 +93,17 @@
         table.on("rowSelectionChanged", function(data, rows, selected, deselected){
             var task = document.getElementById('task');
             var createMods = document.getElementById('createModuleDiv');
-
-
-            if (createMods.style.display === 'block') {
-                createMods.style.display = 'none';
-            } else {
+            if (rows.length > 0) { // If one or more rows are selected
                 createMods.style.display = 'block';
+            } else {
+                createMods.style.display = 'none';
             }
+
+            // if (createMods.style.display === 'block') {
+            //     createMods.style.display = 'none';
+            // } else {
+            //     createMods.style.display = 'block';
+            // }
         });
 
     });

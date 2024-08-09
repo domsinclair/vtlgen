@@ -431,7 +431,7 @@ class Vtlgen extends Trongate
             }
         }
         $data['tables'] = $tables;
-        $data['columns'] = $this->getColumnDataForGivenTable($tables[2]);
+        //$data['columns'] = $this->getColumnDataForGivenTable($tables[2]);
         $data['headline'] = 'Vtl Data Generator: Create Module';
         $data['instruction1'] = 'select those tables for which you wish to create modules.';
         $data['instruction2'] = '';
