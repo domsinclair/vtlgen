@@ -1333,7 +1333,7 @@ class Vtlgen extends Trongate
      * @return array The column data for the specified table.
      */
     private function getColumnDataForGivenTable(string $tableName): array{
-        //var_dump('Fetching column Information for ' . $tableName);
+
         $sql = "SHOW COLUMNS FROM $tableName";
         $stmt = $this->dbh->prepare($sql);
         $stmt->execute();
