@@ -25,7 +25,7 @@ Once your table has been created then the next stage is to create a module for i
 
 ###  What happens next...
 
-The Module creation process is almos instantaneous but a graet deal happens and knowing what happens will help you customise the finished article.  
+The Module creation process is almost instantaneous but a great deal happens and knowing what happens will help you customise the finished article.  
 
 The process begins by executing a Show Columns query on the table in question which returns a dataset containing comprehensive information about the columns in the selected table.
 
@@ -140,14 +140,14 @@ Once the module has been created you'll probably want to add some data.  Just he
 
 <br>
 
-The speed of generation is quite remarable and you can generate a million rows of data in a very short time.
+The speed of generation is quite remarkable and you can generate a million rows of data in a very short time.
 
 
 ### Easy Table and Module Editing
 
 There are bound to be occasions when it becomes apparent that your table isn't quite sufficient for your needs, requiring an additional field or two.
 
-This is where the Data Generator really comes into its own.  Every function in the Generator is reversible.  This means that you can you can very easiliy do the following.
+This is where the Data Generator really comes into its own.  Every function in the Generator is reversible.  This means that you can you can very easily do the following.
 
 1) Delete the existing data from the table
 2) Delete the module.
