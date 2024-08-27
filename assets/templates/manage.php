@@ -26,7 +26,7 @@ if (count($rows) > 0) { ?>
                         echo form_open('{{moduleName}}/manage/1/', array("method" => "get"));
                         ?>
                         <div class="search-item">
-                            <?= form_label('Search Field:', 'search_field') ?>
+                            <?= form_label('Search Field:', ['for' => 'search_field']) ?>
                             <?php
                             $search_field_options = json_decode('{{searchFieldOptions}}', true);
                             echo form_dropdown('search_field', $search_field_options, '', array('id' => 'search_field'));
@@ -34,7 +34,7 @@ if (count($rows) > 0) { ?>
                         </div>
 
                         <div class="search-item">
-                            <?= form_label('Operator:', 'search_operator') ?>
+                            <?= form_label('Operator:', ['for' => 'search_operator']) ?>
                             <?php
                             $search_operator_options = json_decode('{{searchOperatorOptions}}', true);
                             echo form_dropdown('search_operator', $search_operator_options, '', array('id' => 'search_operator'));
@@ -42,7 +42,7 @@ if (count($rows) > 0) { ?>
                         </div>
 
                         <div class="search-item">
-                            <?= form_label('Search Term:', 'search_term') ?>
+                            <?= form_label('Search Term:', ['for' => 'search_term']) ?>
                             <?= form_input('search_term', '', array('id' => 'search_term', 'placeholder' => 'Enter Search Term...')) ?>
                         </div>
                         <div class="search-item">
