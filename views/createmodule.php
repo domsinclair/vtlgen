@@ -28,6 +28,11 @@
     <div class="container" id="datatable"></div>
 </section>
 <section>
+    <div class="container">
+        <label><input type="checkbox" id="addMultiFileUploaderCheckbox" name="multiFileUploader" > Add Multi File Uploader</label>
+    </div>
+</section>
+<section>
     <div class="container" id="createModuleDiv" style="display: none" >
         <button  onclick='createModules()' style="margin-bottom: 15px;">Create Module</button>
     </div>
@@ -113,6 +118,9 @@
         var table = Tabulator.findTable("#datatable")[0];
         var selectedRows = table.getSelectedData();
 
+        // get the value from the multi file uploader checkbox
+        var addMultiFileUploader = document.getElementById("addMultiFileUploaderCheckbox").checked;
+
         // Filter the selected rows to include only the table names
         var tableNames = selectedRows.map(row => row.table);
 
@@ -135,7 +143,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ table: tableName })
+                    body: JSON.stringify({ table: tableName , addMultiFileUploader: addMultiFileUploader})
                 });
 
                 if (response.ok) {

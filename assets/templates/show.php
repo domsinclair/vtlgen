@@ -70,6 +70,7 @@
             </div>
         </div>
     <?php endif; ?>
+    {{multiFileUploader}}
     <div class="card">
         <div class="card-heading">Comments</div>
         <div class="card-body">

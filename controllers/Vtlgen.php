@@ -2128,7 +2128,9 @@ class Vtlgen extends Trongate
      */
     public function createModules(): void {
         $posted_data = json_decode(file_get_contents('php://input'), true);
+
         $table_name = $posted_data['table'];
+        $addMultiFileUploader = $posted_data['addMultiFileUploader'];
 
         // Initialize response array
         $response = ['status' => '', 'message' => ''];
@@ -2167,7 +2169,7 @@ class Vtlgen extends Trongate
                 // Ensure we have a lower case moduleName
                 $stlModuleName = strtolower($moduleName);
                 // Generate module infrastructure
-                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules,$singularModuleName)) {
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules,$singularModuleName,$addMultiFileUploader)) {
                     $response['status'] = 'success';
                     $response['message'] = 'Module created successfully.';
                 } else {
@@ -2274,7 +2276,7 @@ class Vtlgen extends Trongate
      * @throws Exception If an error occurs during the generation process.
      * @return bool Returns true if the infrastructure generation is successful.
      */
-    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName, $validationRules, $singularModuleName ): bool {
+    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader ): bool {
         try {
             $this->createDirectory($modulePath);
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
@@ -2290,8 +2292,8 @@ class Vtlgen extends Trongate
 
 
             // Generate module files
-            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName);
-            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey,$singularModuleName);
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader);
+            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey,$singularModuleName, $addMultiFileUploader);
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
             $this->generatePictureDirectoriesIfRequired($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName, $processedColumns);
@@ -2368,9 +2370,31 @@ class Vtlgen extends Trongate
      * @param string $moduleName The name of the module.
      * @throws Exception Failed to read controller template or write controller file.
      */
-    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName) {
+    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader) {
 
         $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
+
+        $dataline = '';
+        $filezoneSettings = '';
+
+        if($addMultiFileUploader) {
+            $dataline = " \$data['filezone_settings'] = \$this->_init_filezone_settings();";
+
+            // Pre-rendering the filezoneSettings
+            $filezoneSettings = <<<EOT
+        //  Filezone settings
+        
+        public function _init_filezone_settings() {
+            \$data['targetModule'] = '{$stlModuleName}';
+            \$data['destination'] = '{$stlModuleName}_pictures';
+            \$data['max_file_size'] = 1200;
+            \$data['max_width'] = 2500;
+            \$data['max_height'] = 1400;
+            \$data['upload_to_module'] = true;
+            return \$data;
+        }
+        EOT;
+        }
 
         $replacements = [
             '{{ModuleName}}' => ucfirst($moduleName),
@@ -2380,7 +2404,9 @@ class Vtlgen extends Trongate
             '{{primaryKey}}' => $primaryKey,
             '{{stlModuleName}}' => $stlModuleName,
             '{{validationRules}}' => json_encode($validationRules),
-            '{{singularModuleName}}' => $singularModuleName
+            '{{singularModuleName}}' => $singularModuleName,
+            '{{dataline}}' => $dataline,
+            '{{filezoneSettings}}' => $filezoneSettings
         ];
 
         $controllerContent = str_replace(array_keys($replacements), array_values($replacements), $template);
@@ -2390,6 +2416,8 @@ class Vtlgen extends Trongate
         // Update admin menu
         $this->updateAdminMenu($moduleName);
     }
+
+
 
     /**
      * Updates the admin menu by adding a new list item for the given module.
@@ -2439,7 +2467,7 @@ class Vtlgen extends Trongate
      * @return void
      *@throws Some_Exception_Class description of exception
      */
-    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey, $singularModuleName): void {
+    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey, $singularModuleName, $addMultiFileUploader): void {
 
         // Paths for display and manage view templates
         $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
@@ -2493,6 +2521,10 @@ class Vtlgen extends Trongate
         if ($createContent === false) {
             throw new Exception("Failed to read create view template");
         }
+        $multiFileUploader = '';
+        if ($addMultiFileUploader) {
+            $multiFileUploader = "<?= Modules::run('trongate_filezone/_draw_summary_panel', \$update_id, \$filezone_settings); ?>";
+        }
         $formFields = json_encode($columnInfo);
         $createContent = str_replace('{{moduleName}}', strtolower($moduleName), $createContent);
         $createContent = str_replace('{{formFields}}', $formFields, $createContent);
@@ -2515,6 +2547,7 @@ class Vtlgen extends Trongate
         $showContent = str_replace('{{moduleName}}', strtolower($moduleName), $showContent);
         $showContent = str_replace('{{columns}}', $columnsData, $showContent);
         $showContent = str_replace('{{singularModuleName}}', $singularModuleName, $showContent);
+        $showContent = str_replace('{{multiFileUploader}}', $multiFileUploader, $showContent);
         if (file_put_contents($showViewPath, $showContent) === false) {
             throw new Exception("Failed to write show view file");
         }

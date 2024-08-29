@@ -250,7 +250,7 @@ class {{ModuleName}} extends Trongate {
         $data['token'] = $token;
 
         if ($data == false) {
-            redirect(strtolower('Customers/manage'));
+            redirect('{{stlModuleName}}/manage');
         } else {
             $data['draw_picture_uploader'] = $this->hasPictureField();
             $picture_settings = null;
@@ -289,7 +289,7 @@ class {{ModuleName}} extends Trongate {
                     $picture_path = BASE_URL . $picture_settings['destination'] . '/' . $update_id . '/';
                 }
             }
-
+            {{dataline}}
             $data['picture_path'] = $picture_path;
             $data['columns'] = $this->columns;
             $data['update_id'] = $update_id;
@@ -528,5 +528,7 @@ class {{ModuleName}} extends Trongate {
             rmdir($dir);
         }
     }
+
+    {{filezoneSettings}}
 
 }
