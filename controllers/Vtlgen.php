@@ -402,7 +402,7 @@ class Vtlgen extends Trongate
    public function vtlgenDeleteModules(): void {
        $headline = 'Vtl Data Generator: Delete Module';
        $instruction1 = 'Select the module(s) that you want to delete.';
-       $instruction2 = 'This Process is Irreversible!';
+       $instruction2 = 'This Process is Irreversible!  If you think you may want to access some code in the module (or modules) then ensure that Temporarily Rename Modules is checked';
        $task = 'delete';
       $this ->showDeleteOrZipView($headline, $instruction1, $instruction2, $task);
    }
@@ -2976,7 +2976,7 @@ class Vtlgen extends Trongate
                     $constraintName = $row['constraint name'];
 
                     // Extract the table name from the foreign key
-                    list($tableName, $columnName) = explode('.', $foreignKey);
+                    [$tableName, $columnName] = explode('.', $foreignKey);
 
                     // SQL to drop the foreign key constraint
                     $sql = "ALTER TABLE $tableName DROP FOREIGN KEY $constraintName;";
@@ -3132,7 +3132,7 @@ class Vtlgen extends Trongate
             foreach ($selectedRows as $selectedRow) {
                 $field = $this->processFieldName($selectedRow['field']);
                 $dbType = $selectedRow['type'];
-                list($type, $length) = $this->parseDatabaseType($dbType);
+                [$type, $length] = $this->parseDatabaseType($dbType);
 
                 // Generate fake value using the field and type information
                 $fieldFakerStatement = $this->generateValueFromFieldName($faker, $field, $length);
@@ -4358,13 +4358,14 @@ class Vtlgen extends Trongate
      * @throws Exception An error occurred while deleting the modules.
      * @return void
      */
-    public function deleteorzipDeleteModules(): void{
+    public function deleteorzipDeleteModules(): void
+    {
         header('Content-Type: application/json'); // Set the content type to JSON
 
         $rawPostData = file_get_contents('php://input');
         $postData = json_decode($rawPostData, true);
 
-        $response = array('status' => '', 'message' => '', 'errors' => array());
+        $response = ['status' => '', 'message' => '', 'errors' => []];
 
         if (!isset($postData['modulesToDelete'])) {
             $response['status'] = 'error';
@@ -4374,26 +4375,53 @@ class Vtlgen extends Trongate
         }
 
         $selectedModules = $postData['modulesToDelete'];
+        $renameModules = $postData['renameModule'] ?? false;
 
-        try {
-            foreach ($selectedModules as $selectedModule) {
-                $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
-               // Delete the module here
-                if ($this->deleteDirectory($modulePath)) {
-                    // delete the admin sidebar menu item
-                    $this -> removeFromAdminMenu($selectedModule);
-                    $response['message'] .= "Module $selectedModule deleted successfully. ";
-                } else {
-                    throw new Exception("Failed to delete module $selectedModule.");
+        if ($renameModules) {
+            try {
+                foreach ($selectedModules as $selectedModule) {
+                    $newName = $selectedModule . 'Old';
+                    $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
+                    $newModulePath = APPPATH . 'modules' . '/' . $newName;
+
+                    if (rename($modulePath, $newModulePath)) {
+                        // delete the admin sidebar menu item
+                        $this->removeFromAdminMenu($selectedModule);
+                        $response['message'] .= "Module $selectedModule renamed to $newName successfully. ";
+                    } else {
+                        throw new Exception("Failed to rename module $selectedModule to $newName.");
+                    }
                 }
+            } catch (Exception $e) {
+                $response['status'] = 'error';
+                $response['message'] = 'An error occurred while renaming the modules.';
+                $response['errors'][] = $e->getMessage();
             }
             $response['status'] = 'success';
-            $response['message'] = 'Modules Deleted successfully.';
-        } catch (Exception $e) {
-            $response['status'] = 'error';
-            $response['message'] = 'An error occurred while deleting the modules.';
-            $response['errors'][] = $e->getMessage();
+            $response['message'] = 'Modules Renamed successfully.';
+        } else {
+            try {
+                foreach ($selectedModules as $selectedModule) {
+                    $modulePath = APPPATH . 'modules' . '/' . $selectedModule;
+                    // Delete the module here
+                    if ($this->deleteDirectory($modulePath)) {
+                        // delete the admin sidebar menu item
+                        $this->removeFromAdminMenu($selectedModule);
+                        $response['message'] .= "Module $selectedModule deleted successfully. ";
+                    } else {
+                        throw new Exception("Failed to delete module $selectedModule.");
+                    }
+                }
+                $response['status'] = 'success';
+                $response['message'] = 'Modules Deleted successfully.';
+            } catch (Exception $e) {
+                $response['status'] = 'error';
+                $response['message'] = 'An error occurred while deleting the modules.';
+                $response['errors'][] = $e->getMessage();
+            }
         }
+
+
 
         echo json_encode($response);
     }

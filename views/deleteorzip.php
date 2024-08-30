@@ -30,6 +30,7 @@
     <div id="task" style="display: none"><?= $task ?></div>
     <section>
         <div class="container" id="deleteModule" style="display: none;">
+            <label><input type="checkbox" id="renameModuleCheckbox" name="renameModule" >Temporarily Rename Module(s)</label>
             <button id="deleteModuleSubmitBtn" onclick='deleteSelectedModule()' >Delete Module</button>
         </div>
     </section>
@@ -262,10 +263,12 @@
         var table = Tabulator.findTable("#datatable")[0];
         var selectedRows = table.getSelectedData();
         var modulesToDelete = selectedRows.map(row => row.table);
+        var renameModule = document.getElementById("renameModuleCheckbox").checked;
 
         // Prepare the data to send
         var postData = {
-            modulesToDelete: modulesToDelete
+            modulesToDelete: modulesToDelete,
+            renameModule: renameModule
         };
         // Send the POST request
         try {

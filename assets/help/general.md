@@ -604,7 +604,7 @@ It will create a controllers folder containing a controller file and it will cre
 </figure>
 </div>
 
-><b>Note Carefully.  This action is irreversible</b>
+><b>Note Carefully.  This action is irreversible.  If there is additional code that you have added to the module since its creation that you may want to access in the future then check 'Temporarily Rename Module(s)'.  Doing this will simply rename the module to 'moduleNameOld' (where moduleName is the name of the module in question) thus preserving any custom code for you to copy over in the future if required. </b>
 
 <br>
 - Select the module or modules you wish to delete.

@@ -141,7 +141,14 @@ Once the module has been created you'll probably want to add some data.  Just he
 <br>
 
 The speed of generation is quite remarkable and you can generate a million rows of data in a very short time.
+<br>
+### Picture and File uploaders
 
+The module creation logic will create a single picture uploader for you automatically if it detects that there is a field named 'picture' in your table.
+
+There may be occasions when you require a multi file uploader for the module as well and if this is the case then make sure that you check the 'Add Multi File Uploader' checkbox and it will ensure that the necessary code is added to both the controller and show view.
+
+<br>
 
 ### Easy Table and Module Editing
 
