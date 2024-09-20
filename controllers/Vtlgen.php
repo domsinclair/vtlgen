@@ -433,7 +433,7 @@ class Vtlgen extends Trongate
         $data['tables'] = $tables;
         //$data['columns'] = $this->getColumnDataForGivenTable($tables[2]);
         $data['headline'] = 'Vtl Data Generator: Create Module';
-        $data['instruction1'] = 'select those tables for which you wish to create modules.';
+        $data['instruction1'] = 'Select those tables for which you wish to create modules.';
         $data['instruction2'] = '';
         $data['noDataMessage'] = 'There are currently no tables that do not have modules associated with them.';
         $data['view_module'] = 'vtlgen';
@@ -2118,7 +2118,51 @@ class Vtlgen extends Trongate
 
     //region Generate Module
 
+
+
     // The following code leans heavily on work done by Simon Field and Jake Castelli
+
+    public function createSimpleModule(): void {
+        $posted_data = json_decode(file_get_contents('php://input'), true);
+        $moduleName = strtolower($posted_data['name']);
+        // Define the path to the modules directory
+        $modulesDir = APPPATH . 'modules';
+        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . $moduleName ;
+        // Define the subdirectories relative to the module directory
+        $controllersPath = $modulePath . DIRECTORY_SEPARATOR . 'controllers';
+        $viewsPath = $modulePath . DIRECTORY_SEPARATOR . 'views';
+        $assetsPath = $modulePath . DIRECTORY_SEPARATOR . 'assets';
+        $assetsCssPath = $assetsPath . DIRECTORY_SEPARATOR . 'css';
+        $assetsImagesPath = $assetsPath . DIRECTORY_SEPARATOR . 'images';
+        $assetsJsPath = $assetsPath . DIRECTORY_SEPARATOR . 'js';
+
+
+
+        if ($moduleName) {
+            // Logic to create the simple module
+            // Create directory structure and empty files
+
+           // $modulePath = BASEPATH . "modules/" . $moduleName;
+            if (!is_dir($modulePath)) {
+                mkdir($modulePath, 0777, true);
+                mkdir($controllersPath, 0777, true);
+                mkdir($viewsPath, 0777, true);
+                mkdir($assetsPath, 0777, true);
+                mkdir($assetsCssPath, 0777, true);
+                mkdir($assetsImagesPath, 0777, true);
+                mkdir($assetsJsPath, 0777, true);
+                // Create necessary empty files
+                file_put_contents($controllersPath . "/". ucfirst($moduleName). ".php", "<?php\n\n// $moduleName controller");
+
+
+                echo json_encode(['status' => 'success']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Module already exists.']);
+            }
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid module name.']);
+        }
+    }
 
     /**
      * Creates a new module folder structure based on the provided module name.

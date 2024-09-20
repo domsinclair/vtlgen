@@ -66,7 +66,7 @@
                 <source id="vtlQuestionIconDark" media="(prefers-color-scheme: dark)">
                 <img id="vtlQuestionIconLight" src="" alt="Icon">
             </picture>
-            <h2 class="vtlModalTitle" id="vtlQuestionModalTitle">Question Title</h2>
+                <h2 class="vtlModalTitle" id="vtlQuestionModalTitle">Question Title</h2>
         </div>
         <div class="vtlModalContentWrapper">
             <p id="vtlQuestionContent">Question content</p>

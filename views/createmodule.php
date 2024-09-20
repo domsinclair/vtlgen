@@ -57,61 +57,145 @@
         <button class="vtlCloseButton" id="vtlCloseModal">Close</button>
     </div>
 </dialog>
+<div id="vtlQuestionOverlay" class="vtlOverlay"></div>
+<dialog id="vtlQuestionModal" class="vtlModal">
+    <div id="vtlQuestionModalHeader" class="vtlModalHeader">
+        <picture id="vtlQuestionIconPicture" class="vtlModalIcon">
+            <source id="vtlQuestionIconDark" media="(prefers-color-scheme: dark)">
+            <img id="vtlQuestionIconLight" src="" alt="Icon">
+        </picture>
+        <h2 class="vtlModalTitle" id="vtlQuestionModalTitle">Question Title</h2>
+    </div>
+    <div class="vtlModalContentWrapper">
+        <p id="vtlQuestionContent">Question content</p>
+    </div>
+    <div class="vtlModalFooter">
+        <button class="vtlAcceptButton" id="vtlAcceptQuestion">Accept</button>
+        <button class="vtlCancelButton" id="vtlCancelQuestion">Cancel</button>
+    </div>
+</dialog>
 <script src="<?= BASE_URL ?>vtlgen_module/js/vtlModal.js"></script>
+<script src="<?= BASE_URL ?>vtlgen_module/js/vtlQuestionModal.js"></script>
 </body>
 </html>
 <script>
     var noDataMessage = "<?= $noDataMessage ?>";
+    let isSimpleModuleCreated = false; // Track whether a simple module was created
     vtlModal.addEventListener('vtlModalClosed', () => {
+        if (isSimpleModuleCreated) {
+            // If a simple module was created, redirect to home page
+            window.location.href = '<?= BASE_URL ?>vtlgen';
+        } else {
+            // Otherwise, reload the page
             location.reload();
+        }
     });
     document.addEventListener('DOMContentLoaded', function() {
-        // Sample data from PHP
-        let tableData = <?php echo json_encode($data['tables']); ?>;
-        let formattedData = tableData.map(table => ({ table: table }));
 
-        // Create Tabulator
-        let table = new Tabulator("#datatable", {
-            height: "300px",
-            data: formattedData,
-            layout: "fitColumns",
-            selectable: true,
-            columns: [
-                {title: "Select", formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", vertAlign: "middle",headerHozAlign: "center", headerSort: false,width:60, cellClick: function (e, cell) {
-                        cell.getRow().toggleSelect();
-                    }
-                },
-                { title: "Tables without Modules", field: "table", sorter: "string" }
-            ],
-            placeholder: noDataMessage
-        });
-        table.on("rowSelected", function(row){
-            //row - row component for the selected row
-            row.getElement().style.backgroundColor = "var(--primary)";
-            row.getElement().style.color = "white";
-        });
-        table.on("rowDeselected", function(row){
-            //row - row component for the deselected row
-            row.getElement().style.backgroundColor = '';
-            row.getElement().style.color = '';
-        });
-        table.on("rowSelectionChanged", function(data, rows, selected, deselected){
-            var task = document.getElementById('task');
-            var createMods = document.getElementById('createModuleDiv');
-            if (rows.length > 0) { // If one or more rows are selected
-                createMods.style.display = 'block';
+        // Add event listeners for modal buttons
+        document.getElementById('vtlAcceptQuestion').addEventListener('click', acceptQuestion);
+        document.getElementById('vtlCancelQuestion').addEventListener('click', cancelQuestion);
+
+        // Step 1: Show the question modal when the page loads
+        openVtlQuestionModal('Create Simple Module', 'Would you like to create a simple module? If so please enter the name:', 'vtlInfo', 'info');
+
+        // Add an input field to the modal dynamically
+        const inputField = document.createElement('input');
+        inputField.type = 'text';
+        inputField.id = 'simpleModuleName';
+        inputField.placeholder = 'Enter module name...';
+        inputField.style.marginTop = '10px';
+        document.getElementById('vtlQuestionContent').appendChild(inputField);
+
+        // Step 2: Function to handle creating a simple module
+        function acceptQuestion() {
+            const moduleName = document.getElementById('simpleModuleName').value;
+
+            if (moduleName) {
+                // Send the simple module name to the backend
+                fetch('<?= BASE_URL ?>vtlgen/createSimpleModule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: moduleName })
+                }).then(response => response.json())
+                    .then(result => {
+                        if (result.status === 'success') {
+                            // Set the flag to true if a simple module is created
+                            isSimpleModuleCreated = true;
+                            // Use the vtlModal for success notification
+                            openVtlModal('Simple Module Created', true, 'Simple module "' + moduleName + '" created successfully.');
+                        } else {
+                            // Use the vtlModal for error notification
+                            openVtlModal('Error', false, 'Failed to create simple module. ' + (result.message || 'Unknown error.'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        openVtlModal('Error', false, 'An error occurred while trying to create the simple module.');
+                    });
             } else {
-                createMods.style.display = 'none';
+                openVtlModal('Error', false, 'Please enter a module name.');
             }
 
-            // if (createMods.style.display === 'block') {
-            //     createMods.style.display = 'none';
-            // } else {
-            //     createMods.style.display = 'block';
-            // }
-        });
+           // closeQuestionModal();
+        }
 
+        // Step 3: Handle the case where the user cancels the modal
+        function cancelQuestion() {
+            // Close the modal and proceed with the default behavior
+            //closeQuestionModal();
+            runDefaultTableBasedModuleCreation();  // This will invoke the existing functionality
+        }
+
+
+
+        // Step 4: Define the function that runs the default table-based module creation (original functionality)
+        function runDefaultTableBasedModuleCreation() {
+            // Sample data from PHP
+            let tableData = <?php echo json_encode($data['tables']); ?>;
+            let formattedData = tableData.map(table => ({ table: table }));
+
+            // Create Tabulator
+            let table = new Tabulator("#datatable", {
+                height: "300px",
+                data: formattedData,
+                layout: "fitColumns",
+                selectable: true,
+                columns: [
+                    {title: "Select", formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", vertAlign: "middle",headerHozAlign: "center", headerSort: false,width:60, cellClick: function (e, cell) {
+                            cell.getRow().toggleSelect();
+                        }
+                    },
+                    { title: "Tables without Modules", field: "table", sorter: "string" }
+                ],
+                placeholder: noDataMessage
+            });
+            table.on("rowSelected", function(row){
+                //row - row component for the selected row
+                row.getElement().style.backgroundColor = "var(--primary)";
+                row.getElement().style.color = "white";
+            });
+            table.on("rowDeselected", function(row){
+                //row - row component for the deselected row
+                row.getElement().style.backgroundColor = '';
+                row.getElement().style.color = '';
+            });
+            table.on("rowSelectionChanged", function(data, rows, selected, deselected){
+                var task = document.getElementById('task');
+                var createMods = document.getElementById('createModuleDiv');
+                if (rows.length > 0) { // If one or more rows are selected
+                    createMods.style.display = 'block';
+                } else {
+                    createMods.style.display = 'none';
+                }
+
+            });
+        }
     });
+
+
 
     async function createModules() {
         // Get the selected rows from the Tabulator datatable
