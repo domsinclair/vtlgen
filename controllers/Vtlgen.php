@@ -456,7 +456,7 @@ class Vtlgen extends Trongate
     /**
      * Checks the prerequisites for updating the VTL Generator module.
      *
-     * @return array The result array containing canUpdate, message, execEnabled, and gitInstalled keys.
+     * @return array|null The result array containing canUpdate, message, execEnabled, and gitInstalled keys.
      */
     public function vtlgenCheckUpdatePrerequisites()
     {
@@ -614,11 +614,14 @@ class Vtlgen extends Trongate
     public function vtlgenCreateSql(): void
     {
         $data['tables'] = $this->getAllTablesWithRows();
+        $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
+        $data['relatedTables'] = $this->getRelatedTablesFromDatabase();
         $data['headline'] = 'Vtl Data Generator: Create SQL';
-        $data['instruction1'] = 'Tables shown below have data rows that can be queried.';
-        $data['instruction2'] = 'Create your query then click Run Sql to see the results.';
+        $data['instruction1'] = 'Select the first table, and then the fields that you want to see.';
+        $data['instruction2'] = 'Once the first table has been selected related tables will be available. Click Create Sql then Run Sql to see the results.';
         $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'createsql';
+        $data['noDataMessage'] = 'There are currently no related tables in the database: ' . DATABASE;
+        $data['view_file'] = 'modifiedcreatesql';
         $this->template('admin', $data);
     }
 
@@ -1056,6 +1059,42 @@ class Vtlgen extends Trongate
         $this->template('admin', $data);
     }
 
+    private function getRelatedTablesFromDatabase(){
+
+        $sql = '
+        SELECT
+        `TABLE_NAME`,
+        `COLUMN_NAME`,
+        `REFERENCED_TABLE_NAME`,
+        `REFERENCED_COLUMN_NAME`
+    FROM `information_schema`.`KEY_COLUMN_USAGE`
+    WHERE `CONSTRAINT_SCHEMA` = :database AND
+        `REFERENCED_TABLE_SCHEMA` IS NOT NULL AND
+        `REFERENCED_TABLE_NAME` IS NOT NULL AND
+         `REFERENCED_COLUMN_NAME` IS NOT NULL
+        ';
+
+        // Ensure the user is allowed to perform the action
+        $this->module('trongate_security');
+        $this->trongate_security->_make_sure_allowed();
+
+        try {
+            // Prepare and execute the query
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute([':database' => DATABASE]);
+
+            // Fetch the results
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return $rows;
+        } catch (PDOException $e) {
+            // Handle any errors
+            error_log('Database Error: ' . $e->getMessage());
+            return false;
+        }
+
+    }
+
     private function getForeignKeysFromDatabase(): mixed
     {
         // Run the query to collect the information
@@ -1369,7 +1408,8 @@ class Vtlgen extends Trongate
             // Handle the exception (optional)
             // echo "Error: " . $e->getMessage();
         }
-
+        $starterArray = ['Select table...'];
+        $tables = array_merge($starterArray, $tables);
         return $tables;
     }
 
@@ -2122,47 +2162,8 @@ class Vtlgen extends Trongate
 
     // The following code leans heavily on work done by Simon Field and Jake Castelli
 
-    public function createSimpleModule(): void {
-        $posted_data = json_decode(file_get_contents('php://input'), true);
-        $moduleName = strtolower($posted_data['name']);
-        // Define the path to the modules directory
-        $modulesDir = APPPATH . 'modules';
-        $modulePath = $modulesDir . DIRECTORY_SEPARATOR . $moduleName ;
-        // Define the subdirectories relative to the module directory
-        $controllersPath = $modulePath . DIRECTORY_SEPARATOR . 'controllers';
-        $viewsPath = $modulePath . DIRECTORY_SEPARATOR . 'views';
-        $assetsPath = $modulePath . DIRECTORY_SEPARATOR . 'assets';
-        $assetsCssPath = $assetsPath . DIRECTORY_SEPARATOR . 'css';
-        $assetsImagesPath = $assetsPath . DIRECTORY_SEPARATOR . 'images';
-        $assetsJsPath = $assetsPath . DIRECTORY_SEPARATOR . 'js';
 
 
-
-        if ($moduleName) {
-            // Logic to create the simple module
-            // Create directory structure and empty files
-
-           // $modulePath = BASEPATH . "modules/" . $moduleName;
-            if (!is_dir($modulePath)) {
-                mkdir($modulePath, 0777, true);
-                mkdir($controllersPath, 0777, true);
-                mkdir($viewsPath, 0777, true);
-                mkdir($assetsPath, 0777, true);
-                mkdir($assetsCssPath, 0777, true);
-                mkdir($assetsImagesPath, 0777, true);
-                mkdir($assetsJsPath, 0777, true);
-                // Create necessary empty files
-                file_put_contents($controllersPath . "/". ucfirst($moduleName). ".php", "<?php\n\n// $moduleName controller");
-
-
-                echo json_encode(['status' => 'success']);
-            } else {
-                echo json_encode(['status' => 'error', 'message' => 'Module already exists.']);
-            }
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid module name.']);
-        }
-    }
 
     /**
      * Creates a new module folder structure based on the provided module name.
@@ -3117,7 +3118,6 @@ class Vtlgen extends Trongate
 
                 // Construct SQL statement
                 $sql = $this->buildBatchInsertQuery($selectedTable, $selectedRows, $batchValues);
-
                 // Prepare and execute SQL statement
                 $stmt = $this->dbh->prepare($sql);
                 $stmt->execute();
@@ -3864,6 +3864,7 @@ class Vtlgen extends Trongate
      * @return void
      */
     public function createdataCreateFakeData(): void{
+
         // Initialize Faker instance
         $faker = null;
         $faker = $this->$faker;
@@ -3880,7 +3881,9 @@ class Vtlgen extends Trongate
 
         $rawPostData = file_get_contents('php://input');
         // Decode the JSON data into an associative array
+
         $postData = json_decode($rawPostData, true);
+
         // Ensure JSON decoding was successful
         if ($postData === null) {
             throw new Exception("Invalid JSON data");

@@ -191,14 +191,26 @@ Underneath the table displaying the data are three buttons that allow you to dow
 
 This allows to create and test sql queries.  
 
-When you first open the view you'll see a table showing you all of the tables that currently contain rows of data that could be queried.
+When you first open the view you'll see a table showing you all of the currently defined relationships in the database and the fields upon which those relationships are based.
 
-- Create your sql Query in the sql editor.
+- Select the first table from which you wish to base your query from the first table dropdown.  This dropdown will contain all of the tables in your database.
+- A tabular data grid will then appear showing all of the fields in that table.
+- At this point , if your original selection has tables related to it they will be added to the second dropdown  allowing you to select one.
+- Constraints on form real estate have led to a four table relationship limit at this juncture.
+- Select the fields that you want in the query by checking the relevant boxes next to them in the tabulator data grids.
+- If you are selecting more than one table you will also need to select the join type between them.
+- Once you have done all of the above you can click 'Create Sql' to have the query generated for you.
+
+<br>
+
+> The query will not automatically add either WHERE or ORDER BY clauses, however the editor in which the sql is displayed can be edited so you can add your own.  You can also add additional table fields and joins if you so wish.
+
+<br>
 - When you're done click 'Run Sql'.
 - The sql will be evaluated and the results will appear in a data grid at the bottom of the view.
 - If the query meets your requirements and you want to save it click 'Save Sql'.
 - You'll be prompted to add a name for the query to be saved.
-- If You're not happy with the query you can click 'Clears Sql' and start again.
+
 
 The sql in the sql editor can be copied.
 
@@ -581,6 +593,12 @@ A backup script will then be generated and saved to a special backups folder in 
 </div>
 
 <br>
+
+You can create two types of module with the Vtl Data Generator. 
+
+If you really just want a new directory structure for a module you intend to code yourself (that may well be completely separate from any database table) the simply accept the option to create a basic module  presented to you when the form first opens.
+
+However if you would rather have a fully fledged working module from the get go the follow the steps below.
 
 - Select the table (or tables) for which you wish to create a Module or Modules.
 - Click Create Module.
