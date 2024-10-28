@@ -319,10 +319,8 @@ function createSql() {
 
 
     // Format the SQL before displaying it
-    let formattedSql = formatSql(sql);
-
     // Display formatted SQL query
-    document.getElementById('code').value = formattedSql;
+    document.getElementById('code').value = formatSql(sql);
 }
 
 /**
@@ -463,13 +461,13 @@ function formatSql(sql) {
  * @return {void}
  */
 function runSql() {
-    var baseUrl = document.body.getAttribute('data-base-url');
-    var codeInput = document.getElementById('code').value;
+    const baseUrl = document.body.getAttribute('data-base-url');
+    const codeInput = document.getElementById('code').value;
 
-    var targetUrl = baseUrl + 'vtlgen/createsqlGetDataFromSuppliedSql';
+    const targetUrl = baseUrl + 'vtlgen/createsqlGetDataFromSuppliedSql';
 
     // Create a new XMLHttpRequest object
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
 
     // Configure it: POST-request for the URL
     xhr.open('POST', targetUrl, true);
@@ -483,7 +481,7 @@ function runSql() {
         if (xhr.status != 200) { // analyze HTTP response status
             console.error(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
         } else {
-            var responseData = JSON.parse(xhr.responseText); // parse the response data
+            const responseData = JSON.parse(xhr.responseText); // parse the response data
 
             // Create Tabulator only if we received valid data
             if (responseData && responseData.data) {
@@ -519,14 +517,14 @@ function runSql() {
  * @return {void}
  */
 function saveSql() {
-    var queryName = prompt("Enter a name for your SQL query:");
+    const queryName = prompt("Enter a name for your SQL query:");
 
     if (queryName) {
-        var codeInput = document.getElementById('code').value;
-        var baseUrl = document.body.getAttribute('data-base-url');
-        var targetUrl = baseUrl + 'vtlgen/createsqlSaveEndUserCreatedQuery';
+        const codeInput = document.getElementById('code').value;
+        const baseUrl = document.body.getAttribute('data-base-url');
+        const targetUrl = baseUrl + 'vtlgen/createsqlSaveEndUserCreatedQuery';
 
-        var xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
 
         xhr.open('POST', targetUrl, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
@@ -534,9 +532,9 @@ function saveSql() {
         xhr.send(JSON.stringify({ name: queryName, sql: codeInput }));
 
         xhr.onload = function() {
-            var responseMessage = "";
+            let responseMessage = "";
             if (xhr.status === 200 && xhr.responseText) {
-                var response = JSON.parse(xhr.responseText);
+                const response = JSON.parse(xhr.responseText);
                 if (response.status === 'success') {
                     responseMessage = response.message;
                     openVtlModal('SQL Script Saved', true, responseMessage); // Call the globally defined function

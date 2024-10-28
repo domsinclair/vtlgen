@@ -123,6 +123,9 @@ Once that has been done delete the old vtlgen directory and then rename the new 
 
 The Data Generator now batch processes generation which means that you can now generate very large datasets.  
 
+It is now possible (as of V5.5) to create data for tables that reference other tables without having to specifically customise the data creation process.  The Generator is now able to recognise which tables fields in the chosen table may take references from, fetch actual data from those tables and then use it generate data.  This should greatly speed up data generation and should allow you to work with existing databases that have a high degree of referential integrity.
+
+
 Support is also provided for generating images for those modules that utilise the Trongate Single picture uploader.  The Data Generator looks for a field called 'picture' of type varchar(255) and if it finds one it will add one of 11 pre supplied images to that field. If a table was found to have such a field, and very specifically if the number of rows generated was less than 250, once generation has taken place the Generator will offer to transfer images and create the necessary folders that the single picture uploader would normally create.
 
 <br>

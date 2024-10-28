@@ -550,7 +550,7 @@ class Vtlgen extends Trongate
             'Select the table in the database from the drop down below for which you wish to create some fake data.',
             'Select those columns into which you want to add data, or just check the checkbox in the header if you want to select all the rows.',
             'data',
-            'createdata'
+            'modifiedcreatedata'
         );
     }
 
@@ -568,7 +568,7 @@ class Vtlgen extends Trongate
             'Select the table in the database from the drop down below for which you wish to create an index.',
             'Select the column on which you wish to create the index, and when asked select the index type',
             'index',
-            'createdata'
+            'modifiedcreatedata'
         );
     }
 
@@ -1050,6 +1050,9 @@ class Vtlgen extends Trongate
         $data['Application Modules'] = $this->applicationModules;
         $data['tables'] = $this->setupTablesForDropdown();
         $data['columnInfo'] = $this->getAllTablesAndTheirColumnData();
+
+        $data['relatedTables'] = $this->getRelatedTablesFromDatabase();
+
         $data['headline'] = $headline;
         $data['instruction1'] = $instruction1;
         $data['instruction2'] = $instruction2;
@@ -3067,7 +3070,7 @@ class Vtlgen extends Trongate
      * @param int|null        $numRows       The number of rows.
      * @return void
      */
-    private function processGeneralTablesThatAreNotSpecialCases(\Faker\Generator $faker, string $selectedTable, ?array $selectedRows, ?int $numRows): void
+    private function processGeneralTablesThatAreNotSpecialCases(\Faker\Generator $faker, string $selectedTable, ?array $selectedRows, ?int $numRows,  ?array $referencedInfo): void
     {
         $picDirectoryExists = $this->findPicDirectoryExists($selectedTable);
         if ($picDirectoryExists) {
@@ -3078,14 +3081,14 @@ class Vtlgen extends Trongate
         if ($selectedRows !== null) {
             // Check if $numRows is an integer
             if (is_numeric($numRows) && intval($numRows) == $numRows) {
-                $this->generateAndInsertRowsInBatches($faker, $selectedRows, $selectedTable, $numRows);
+                $this->generateAndInsertRowsInBatches($faker, $selectedRows, $selectedTable, $numRows,$referencedInfo);
             }
         } else {
            echo 'No Rows were selected';
         }
     }
 
-    private function generateAndInsertRowsInBatches(\Faker\Generator $faker, array $selectedRows, string $selectedTable, ?int $numRows = null, int $batchSize = 1000): void
+    private function generateAndInsertRowsInBatches(\Faker\Generator $faker, array $selectedRows, string $selectedTable, ?int $numRows = null, ?array $referencedInfo = null, int $batchSize = 1000): void
     {
         // At the top of your PHP script
         ini_set('display_errors', 0);
@@ -3094,6 +3097,22 @@ class Vtlgen extends Trongate
 
         // Start the output buffering to prevent any accidental output
         ob_start();
+
+        // Check if referencedInfo contains data
+        $hasReferencedInfo = !empty($referencedInfo);
+        // If referenced info is present, fetch and store referenced data
+        $referencedData = [];
+        if ($hasReferencedInfo) {
+            foreach ($referencedInfo as $reference) {
+                $referencedTable = $reference['referencedTable'];
+                $referencedColumn = $reference['referencedColumn'];
+                $columnName = $reference['columnName'];
+                $sql = "SELECT $referencedColumn FROM $referencedTable";
+                $stmt = $this->dbh->prepare($sql);
+                $stmt->execute();
+                $referencedData[$columnName] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            }
+        }
 
         try {
             // Check if $numRows is an integer
@@ -3114,7 +3133,14 @@ class Vtlgen extends Trongate
                 $currentBatchSize = min($batchSize, $numRows - $offset);
 
                 // Generate values for this batch of rows
-                $batchValues = $this->generateBatchValues($faker, $selectedRows, $currentBatchSize);
+                $batchValues = [];
+                if ($hasReferencedInfo) {
+                    $batchValues = $this->generateBatchValuesWithReferences($faker, $selectedRows, $currentBatchSize, $referencedData);
+                }
+                else {
+                    $batchValues = $this->generateBatchValues($faker, $selectedRows, $currentBatchSize);
+                }
+
 
                 // Construct SQL statement
                 $sql = $this->buildBatchInsertQuery($selectedTable, $selectedRows, $batchValues);
@@ -3189,6 +3215,61 @@ class Vtlgen extends Trongate
 
                 if ($fieldFakerStatement === "nothing") {
                     $fieldFakerStatement = $this->generateValueFromType($faker, $type, $length);
+                }
+
+                // Ensure the generated value is properly quoted for SQL insertion
+                $rowValues[] = $this->dbh->quote($fieldFakerStatement);
+            }
+
+            $values[] = '(' . implode(',', $rowValues) . ')';
+        }
+
+        return implode(',', $values);
+    }
+
+    /**
+     * Generates a batch of values using Faker and the provided selected rows, including references data when applicable.
+     *
+     * @param \Faker\Generator $faker          The Faker generator instance.
+     * @param array            $selectedRows   The array of selected rows.
+     * @param int              $batchSize      The number of values to generate in the batch.
+     * @param array            $referencedData An array of referenced data to be used when generating values.
+     * @return string The generated batch of values as a string.
+     */
+    private function generateBatchValuesWithReferences(
+        \Faker\Generator $faker,
+        array $selectedRows,
+        int $batchSize,
+        array $referencedData
+    ): string {
+        $values = [];
+
+        for ($i = 0; $i < $batchSize; $i++) {
+            $rowValues = [];
+
+            foreach ($selectedRows as $selectedRow) {
+                $field = $selectedRow['field']; // Directly using the field name as is
+                $dbType = $selectedRow['type'];
+                [$type, $length] = $this->parseDatabaseType($dbType);
+
+                // Check if the field name exists in the referencedData array
+                if (array_key_exists($field, $referencedData)) {
+                    // Use a random value from the referenced data
+                    $fieldFakerStatement = $referencedData[$field][array_rand($referencedData[$field])];
+                } else {
+                    // Usual process for fields that are not referenced
+                    $field = $this->processFieldName($selectedRow['field']); // Process field name for non-referenced fields
+                    $fieldFakerStatement = $this->generateValueFromFieldName($faker, $field, $length);
+                    $customFieldValue = $this->checkForCustomFieldNameGeneration($field, $faker);
+
+                    // Use custom value if provided, otherwise use the default generation
+                    if ($customFieldValue !== 'nothing') {
+                        $fieldFakerStatement = $customFieldValue;
+                    }
+
+                    if ($fieldFakerStatement === 'nothing') {
+                        $fieldFakerStatement = $this->generateValueFromType($faker, $type, $length);
+                    }
                 }
 
                 // Ensure the generated value is properly quoted for SQL insertion
@@ -3906,6 +3987,40 @@ class Vtlgen extends Trongate
         }
     }
 
+    public function createdataWithForeignKeys() : void
+    {
+        // Initialize Faker instance
+        $faker = null;
+        $faker = $this->$faker;
+
+        // register any custom provider(s) with the faker
+        $faker->addProvider(new Faker\Provider\Commerce($faker));
+        $faker->addProvider(new Faker\Provider\Blog($faker));
+
+        // Seed the faker.  This will ensure that the same data gets recreated
+        // which can be useful for testing purposes.
+        // Comment out the line below if you don't want to use a seeded faker.
+
+        //$faker->seed(FAKER_SEED);
+
+        $rawPostData = file_get_contents('php://input');
+        // Decode the JSON data into an associative array
+
+        $postData = json_decode($rawPostData, true);
+
+        // Ensure JSON decoding was successful
+        if ($postData === null) {
+            throw new Exception("Invalid JSON data");
+        }
+        // Extract relevant data from the decoded JSON
+        $selectedTable = $postData['selectedTable'];
+        $selectedRows = $postData['selectedRows'];
+        $numRows = $postData['numRows'];
+        $referencedInfo = $postData['referencedInfo'];
+
+
+        $this->processGeneralTablesThatAreNotSpecialCases($faker, $selectedTable, $selectedRows, $numRows, $referencedInfo);
+    }
     /**
      * Checks if the given field name requires custom field name generation.
      *
@@ -4196,10 +4311,14 @@ class Vtlgen extends Trongate
             case 'totalamount':
             case 'total':
             case 'ordernumber':
-            case 'quantity':
             case 'price':
             case 'productprice':
                 $value = $faker->numberBetween($min = 0, $max = 1000000);
+                $statement = $value;
+                break;
+
+            case 'quantity':
+                $value = $faker->numberBetween($min = 0, $max = 1000);
                 $statement = $value;
                 break;
 
@@ -4246,6 +4365,11 @@ class Vtlgen extends Trongate
 
             case 'taxamount':
                 $value = $faker->randomFloat(2, 0, 50);
+                $statement = $value;
+                break;
+
+            case 'cost':
+                $value = $faker->randomFloat(2, 0, 100);
                 $statement = $value;
                 break;
 
