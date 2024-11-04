@@ -6,9 +6,11 @@ This addition now gives the end user the necessary tools to create a functional 
 
 <br>
 
-> <b>The Data Generator uses information that it can obtain from an existing table in order to generate a module.
+><b>You can create two types of Module with the Data Generator.  If you want nothing more than a simple Module Directory structure set out for you, but without any code (controllers or views) then follow the instructions in the initial modal that opens.
 > 
-> It follows therefore that you will need to create a table before you can create a module</b>
+>The Data Generator uses information that it can obtain from an existing table in order to generate a module.
+> 
+> It follows therefore that you will need to create a table before you can create a module based on a database table.</b>
 
 <br>
 
@@ -71,53 +73,66 @@ The validation rules are created by the following function in the Data Generator
 <br>
 
 ```php
- private function createValidationRules($columnInfo) {
-        $validationRules = [];
+private function createValidationRules($columnInfo)
+        {
+            // Extract the columns array
+            $columns = $columnInfo['columns'];
+            $validationRules = [];
 
-        foreach ($columnInfo as $column) {
-            $field = $column['Field'];
-            $type = $column['Type'];
-            $null = $column['Null'];
-            $rules = [];
+            foreach ($columns as $column) {
+                $field = $column['name'];
+                $type = $column['type'];
+                $nullable = $column['nullable'];
+                $rules = [];
 
-            // Ignore primary key fields
-            if (isset($column['Key']) && $column['Key'] === 'PRI') {
-                continue;
+                // Ignore primary key fields
+                if (isset($column['key']) && $column['key'] === 'PRI') {
+                    continue;
+                }
+
+                // Add 'required' rule if the field cannot be null
+                if ($nullable === 'NO') {
+                    $rules[] = 'required';
+                }
+
+                // Add 'valid_email' rule if the field name contains 'email'
+                if (stripos($field, 'email') !== false) {
+                    $rules[] = 'valid_email';
+                }
+
+                // Add password rules if the field name contains 'password'
+                if (stripos($field, 'password') !== false) {
+                    $rules[] = 'min_length[8]';
+                }
+
+                // Add boolean rule for tinyint fields, as they often represent boolean values
+                if (preg_match('/^tinyint/i', $type)) {
+                    $rules[] = 'in_list[0,1]';
+                }
+
+                // Add numeric rules for integer fields (excluding tinyint)
+                if (preg_match('/^int|smallint|mediumint|bigint/i', $type)) {
+                    $rules[] = 'numeric';
+                }
+
+                // Add decimal rule for floating-point and decimal fields
+                if (preg_match('/^float|decimal/i', $type)) {
+                    $rules[] = 'decimal';
+                }
+
+                // Add max_length rule if the type is varchar
+                if (preg_match('/^varchar\((\d+)\)/i', $type, $matches)) {
+                    $rules[] = 'max_length[' . (int) $matches[1] . ']';
+                }
+
+                // Add the rules to the validation array if any rules exist for the field
+                if (!empty($rules)) {
+                    $validationRules[$field] = implode('|', $rules);
+                }
             }
 
-            // Add 'required' rule if the field cannot be null
-            if ($null === 'NO') {
-                $rules[] = 'required';
-            }
-
-            // Add 'valid_email' rule if the field name contains 'email'
-            if (stripos($field, 'email') !== false) {
-                $rules[] = 'valid_email';
-            }
-
-            // Add password rules if the field name contains 'password'
-            if (stripos($field, 'password') !== false) {
-                $rules[] = 'min_length[8]'; // Example: Minimum length of 8 characters
-            }
-
-            // Add numeric rules if the type is int or tinyint
-            if (preg_match('/^int|tinyint/i', $type)) {
-                $rules[] = 'numeric';
-            }
-
-            // Add max_length rule if the type is varchar
-            if (preg_match('/^varchar\((\d+)\)/i', $type, $matches)) {
-                $rules[] = 'max_length[' . (int) $matches[1] . ']';
-            }
-
-            // Add the rules to the validation array if any rules exist for the field
-            if (!empty($rules)) {
-                $validationRules[$field] = implode('|', $rules);
-            }
+            return $validationRules;
         }
-
-        return $validationRules;
-    }
 ```
 
 <br>
@@ -131,6 +146,15 @@ Both of these features are comprehensive and work surprisingly well out of the b
 In addition to the controller and views the module will have an assets folder with blank JS and css files, and an images folder. If a picture field is detected it will also create the necessary folder structure to support the Trongate picture uploader.
 
 <br>
+
+## Referential Integrity
+
+What happens if the table that you are creating a module fore references another table or tables?  This is not such an uncommon scenario.  Take a simple concept like Customers and their orders.  In a typical relational database these would be represented with a couple of tables (Customers and Orders) linked by a foreign key between Orders and Customers.
+
+When a new order is created it is vital that the value in the foreign key field of the Orders Table links back to a genuine Customer.
+
+At the point at which you opt to create a module based on an existing Database Table the Data Generator checks to see if it does indeed have any foreign keys and if it does it add some additional code that will validate the value you add in those fields and show you the relevant record that they relate to.  If no match is present you'll be informed. This requires the presence of a custom javascript file which gets created for you and links to it are automatically injected into the views that require it.
+
 
 ## Adding Data
 

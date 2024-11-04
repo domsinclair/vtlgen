@@ -431,13 +431,15 @@ class Vtlgen extends Trongate
             }
         }
         $data['tables'] = $tables;
+        $data['relatedTables'] = $this->getRelatedTablesFromDatabase();
         //$data['columns'] = $this->getColumnDataForGivenTable($tables[2]);
         $data['headline'] = 'Vtl Data Generator: Create Module';
         $data['instruction1'] = 'Select those tables for which you wish to create modules.';
         $data['instruction2'] = '';
         $data['noDataMessage'] = 'There are currently no tables that do not have modules associated with them.';
         $data['view_module'] = 'vtlgen';
-        $data['view_file'] = 'createmodule';
+        $data['view_file'] = 'modifiedcreatemodule';
+        //$data['view_file'] = 'createmodule';
         $this->template('admin', $data);
     }
 
@@ -1062,6 +1064,11 @@ class Vtlgen extends Trongate
         $this->template('admin', $data);
     }
 
+    /**
+     * Retrieves related tables and their relationship details from the database.
+     *
+     * @return array|false An array of relations containing table and column names, or false on failure.
+     */
     private function getRelatedTablesFromDatabase(){
 
         $sql = '
@@ -1096,6 +1103,40 @@ class Vtlgen extends Trongate
             return false;
         }
 
+    }
+
+    private function getRelatedTablesForTable(string $table_name): array {
+        $sql = '
+    SELECT
+        `TABLE_NAME`,
+        `COLUMN_NAME`,
+        `REFERENCED_TABLE_NAME`,
+        `REFERENCED_COLUMN_NAME`
+    FROM `information_schema`.`KEY_COLUMN_USAGE`
+    WHERE `CONSTRAINT_SCHEMA` = :database AND
+        `TABLE_NAME` = :table_name AND
+        `REFERENCED_TABLE_SCHEMA` IS NOT NULL AND
+        `REFERENCED_TABLE_NAME` IS NOT NULL AND
+        `REFERENCED_COLUMN_NAME` IS NOT NULL
+    ';
+
+        try {
+            // Prepare and execute the query
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute([
+                ':database' => DATABASE,
+                ':table_name' => $table_name,
+            ]);
+
+            // Fetch the results
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return $rows;
+        } catch (PDOException $e) {
+            // Handle any errors
+            error_log('Database Error: ' . $e->getMessage());
+            return [];
+        }
     }
 
     private function getForeignKeysFromDatabase(): mixed
@@ -2166,6 +2207,20 @@ class Vtlgen extends Trongate
     // The following code leans heavily on work done by Simon Field and Jake Castelli
 
 
+//    public function createModules(): void {
+//        $posted_data = json_decode(file_get_contents('php://input'), true);
+//
+//        $table_name = $posted_data['table'];
+//
+//        $relatedTables = $this->getRelatedTablesForTable($table_name);
+//
+//        // Output the related tables and terminate script
+//        echo json_encode([
+//            'status' => 'success',
+//            'relatedTables' => $relatedTables
+//        ]);
+//        die();
+//    }
 
 
     /**
@@ -2178,6 +2233,7 @@ class Vtlgen extends Trongate
         $posted_data = json_decode(file_get_contents('php://input'), true);
 
         $table_name = $posted_data['table'];
+
         $addMultiFileUploader = $posted_data['addMultiFileUploader'];
 
         // Initialize response array
@@ -2191,10 +2247,16 @@ class Vtlgen extends Trongate
             return;
         }
 
+
+
         // Get module details
         $moduleName = ucfirst($table_name);
 
-        $columnInfo = $this->getColumnDataForGivenTable($table_name);
+        //$columnInfo = $this->getColumnDataForGivenTable($table_name);
+        $columnInfo = $this -> getAndProcessComprehensiveColumnDataForGivenTable($table_name);
+
+        // Determine if foreign key additions are required
+        $requiresForeignKeyAdditions = $this->checkForForeignKeyAdditions($columnInfo);
 
         $primaryKey = $this->getPrimaryKey($table_name);
 
@@ -2217,7 +2279,7 @@ class Vtlgen extends Trongate
                 // Ensure we have a lower case moduleName
                 $stlModuleName = strtolower($moduleName);
                 // Generate module infrastructure
-                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules,$singularModuleName,$addMultiFileUploader)) {
+                if ($this->generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey, $stlModuleName, $validationRules,$singularModuleName,$addMultiFileUploader, $requiresForeignKeyAdditions)) {
                     $response['status'] = 'success';
                     $response['message'] = 'Module created successfully.';
                 } else {
@@ -2233,59 +2295,92 @@ class Vtlgen extends Trongate
         echo json_encode($response);
     }
 
-    /**
-     * Create validation rules based on column information.
-     *
-     * @param array $columnInfo The information about the columns to generate rules for.
-     * @return array The generated validation rules for each field.
-     */
-    private function createValidationRules($columnInfo) {
-        $validationRules = [];
-
-        foreach ($columnInfo as $column) {
-            $field = $column['Field'];
-            $type = $column['Type'];
-            $null = $column['Null'];
-            $rules = [];
-
-            // Ignore primary key fields
-            if (isset($column['Key']) && $column['Key'] === 'PRI') {
-                continue;
+        /**
+         * Checks for the presence of foreign key additions in the given column information.
+         *
+         * @param array $columnInfo The array containing information about the columns.
+         * @return bool Returns true if a foreign key is found, false otherwise.
+         */
+        public function checkForForeignKeyAdditions($columnInfo) {
+            foreach ($columnInfo['columns'] as $column) {
+                if (isset($column['foreign_key']) && $column['foreign_key'] !== null) {
+                    return true;
+                }
             }
-
-            // Add 'required' rule if the field cannot be null
-            if ($null === 'NO') {
-                $rules[] = 'required';
-            }
-
-            // Add 'valid_email' rule if the field name contains 'email'
-            if (stripos($field, 'email') !== false) {
-                $rules[] = 'valid_email';
-            }
-
-            // Add password rules if the field name contains 'password'
-            if (stripos($field, 'password') !== false) {
-                $rules[] = 'min_length[8]'; // Example: Minimum length of 8 characters
-            }
-
-            // Add numeric rules if the type is int or tinyint
-            if (preg_match('/^int|tinyint/i', $type)) {
-                $rules[] = 'numeric';
-            }
-
-            // Add max_length rule if the type is varchar
-            if (preg_match('/^varchar\((\d+)\)/i', $type, $matches)) {
-                $rules[] = 'max_length[' . (int) $matches[1] . ']';
-            }
-
-            // Add the rules to the validation array if any rules exist for the field
-            if (!empty($rules)) {
-                $validationRules[$field] = implode('|', $rules);
-            }
+            return false;
         }
 
-        return $validationRules;
-    }
+
+        /**
+         * Creates an array of validation rules based on the provided column information.
+         *
+         * @param array $columnInfo The array containing information about the columns.
+         * @return array The generated validation rules for each column.
+         */
+        private function createValidationRules($columnInfo)
+        {
+            // Extract the columns array
+            $columns = $columnInfo['columns'];
+            $validationRules = [];
+
+            foreach ($columns as $column) {
+                $field = $column['name'];
+                $type = $column['type'];
+                $nullable = $column['nullable'];
+                $rules = [];
+
+                // Ignore primary key fields
+                if (isset($column['key']) && $column['key'] === 'PRI') {
+                    continue;
+                }
+
+                // Add 'required' rule if the field cannot be null
+                if ($nullable === 'NO') {
+                    $rules[] = 'required';
+                }
+
+                // Add 'valid_email' rule if the field name contains 'email'
+                if (stripos($field, 'email') !== false) {
+                    $rules[] = 'valid_email';
+                }
+
+                // Add password rules if the field name contains 'password'
+                if (stripos($field, 'password') !== false) {
+                    $rules[] = 'min_length[8]';
+                }
+
+                // Add boolean rule for tinyint fields, as they often represent boolean values
+                if (preg_match('/^tinyint/i', $type)) {
+                    $rules[] = 'in_list[0,1]';
+                }
+
+                // Add numeric rules for integer fields (excluding tinyint)
+                if (preg_match('/^int|smallint|mediumint|bigint/i', $type)) {
+                    $rules[] = 'numeric';
+                }
+
+                // Add decimal rule for floating-point and decimal fields
+                if (preg_match('/^float|decimal/i', $type)) {
+                    $rules[] = 'decimal';
+                }
+
+                // Add max_length rule if the type is varchar
+                if (preg_match('/^varchar\((\d+)\)/i', $type, $matches)) {
+                    $rules[] = 'max_length[' . (int) $matches[1] . ']';
+                }
+
+                // Add the rules to the validation array if any rules exist for the field
+                if (!empty($rules)) {
+                    $validationRules[$field] = implode('|', $rules);
+                }
+            }
+
+            return $validationRules;
+        }
+
+
+
+
 
 
     /**
@@ -2315,16 +2410,31 @@ class Vtlgen extends Trongate
     }
 
 
-
-    /**
-     * Generate the infrastructure for a new module, including directories for controllers, views, and assets.
-     *
-     * @param string $modulePath The path where the module will be created.
-     * @param string $moduleName The name of the module.
-     * @throws Exception If an error occurs during the generation process.
-     * @return bool Returns true if the infrastructure generation is successful.
-     */
-    private function generateModuleInfrastructure($modulePath, $moduleName, $columnInfo, $primaryKey,$stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader ): bool {
+        /**
+         * Generates the infrastructure for a module including directories, controllers, views, and assets.
+         *
+         * @param string $modulePath                  The path where the module files will be created.
+         * @param string $moduleName                  The name of the module.
+         * @param array  $columnInfo                  The information about the module's columns.
+         * @param string $primaryKey                  The primary key of the module.
+         * @param string $stlModuleName               The name of the module in STL format.
+         * @param array  $validationRules             The validation rules for the module.
+         * @param string $singularModuleName          The singular name of the module.
+         * @param bool   $addMultiFileUploader        Whether to add a multi-file uploader to the module.
+         * @param bool   $requiresForeignKeyAdditions Whether the module requires foreign key additions.
+         * @return bool True on success, throws an exception on failure.
+         */
+        private function generateModuleInfrastructure(
+            string $modulePath,
+            string $moduleName,
+            array $columnInfo,
+            string $primaryKey,
+            string $stlModuleName,
+            array $validationRules,
+            string $singularModuleName,
+            bool $addMultiFileUploader,
+            bool $requiresForeignKeyAdditions
+        ): bool {
         try {
             $this->createDirectory($modulePath);
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'controllers');
@@ -2334,18 +2444,26 @@ class Vtlgen extends Trongate
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
             $this->createDirectory($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'images');
 
+
             // Process columns info
-            $processedColumns = $this->processColumnInfo($columnInfo, $primaryKey);
+            //$processedColumns = $this->processColumnInfo($columnInfo, $primaryKey);
+            $processedColumns = $columnInfo;
 
 
 
             // Generate module files
-            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader);
-            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey,$singularModuleName, $addMultiFileUploader);
+            $this->generateModuleController($modulePath . DIRECTORY_SEPARATOR . 'controllers', $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader, $requiresForeignKeyAdditions);
+            $this->generateModuleView($modulePath . DIRECTORY_SEPARATOR . 'views', $moduleName, $columnInfo, $primaryKey,$singularModuleName, $addMultiFileUploader,$requiresForeignKeyAdditions);
+
             $this->generateModuleApi($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName);
             // Additional assets generation if needed
             $this->generatePictureDirectoriesIfRequired($modulePath . DIRECTORY_SEPARATOR . 'assets', $moduleName, $processedColumns);
+            if ($requiresForeignKeyAdditions) {
+                $this->generateRequiredForeignKeyJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js',$moduleName);
+            }
             $this->generateCustomJs($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js');
+
+
             $this->generateCustomCss($modulePath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'css');
 
             return true;
@@ -2355,47 +2473,123 @@ class Vtlgen extends Trongate
     }
 
 
+        /**
+         * Retrieves and processes comprehensive column data for a given table.
+         *
+         * @param string $tableName The name of the table to retrieve column data for.
+         * @return array|false Returns an array with column details, primary key, and table headers on success, or false on failure.
+         */
+        private function getAndProcessComprehensiveColumnDataForGivenTable($tableName)
+        {
+            // Query to get comprehensive column data including foreign keys and extra info (e.g., AUTO_INCREMENT)
+            $query = "
+        SELECT 
+            C.COLUMN_NAME AS name,
+            C.DATA_TYPE AS type,
+            C.COLUMN_KEY AS col_key,
+            C.COLUMN_DEFAULT AS default_value,
+            C.IS_NULLABLE AS nullable,
+            C.EXTRA AS extra,
+            KCU.REFERENCED_TABLE_NAME AS referenced_table,
+            KCU.REFERENCED_COLUMN_NAME AS referenced_column
+        FROM 
+            information_schema.COLUMNS AS C
+        LEFT JOIN 
+            information_schema.KEY_COLUMN_USAGE AS KCU
+            ON C.TABLE_NAME = KCU.TABLE_NAME 
+            AND C.COLUMN_NAME = KCU.COLUMN_NAME 
+            AND KCU.CONSTRAINT_SCHEMA = C.TABLE_SCHEMA
+        WHERE 
+            C.TABLE_NAME = :table_name
+            AND C.TABLE_SCHEMA = :database;
+    ";
 
+            // Ensure the user is allowed to perform the action
+            $this->module('trongate_security');
+            $this->trongate_security->_make_sure_allowed();
 
+            try {
+                // Prepare and execute the query
+                $stmt = $this->dbh->prepare($query);
+                $stmt->execute([':table_name' => $tableName, ':database' => DATABASE]);
 
-    /**
-     * Processes the column information and returns an array containing the modified columns and table headers.
-     *
-     * @param array $columnInfo The array of column information.
-     * @param string $primaryKey The primary key of the table.
-     * @return array An array containing the modified columns and table headers.
-     *               The array has the following structure:
-     *               [
-     *                   'columns' => array, // The modified columns array.
-     *                   'tableHeaders' => string, // The table headers as a comma-separated string.
-     *               ]
-     */
-    private function processColumnInfo($columnInfo, $primaryKey) {
-        $columns = array_filter($columnInfo, function($column) use ($primaryKey) {
-            return $column['Field'] === $primaryKey || $column['Key'] !== 'PRI';
-        });
+                // Fetch the results
+                $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        array_unshift($columns, [
-            "Field" => $primaryKey,
-            "Type" => "int(11)",
-            "Null" => "NO",
-            "Key" => "PRI",
-            "Default" => null,
-            "Extra" => "auto_increment"
-        ]);
+                $columnInfo = [];
+                $primaryKey = null;
 
-        $tableHeaders = array_map(function($column) {
-            return $column['Field'];
-        }, $columns);
+                foreach ($columns as $column) {
+                    $colInfo = [
+                        'name' => $column['name'],
+                        'type' => $column['type'],
+                        'key' => $column['col_key'],
+                        'default' => $column['default_value'],
+                        'nullable' => $column['nullable'],
+                        'extra' => $column['extra'], // Capture extra info (e.g., AUTO_INCREMENT)
+                        'foreign_key' => null
+                    ];
 
-        return [
-            'columns' => $columns,
-            'tableHeaders' => implode(', ', $tableHeaders)
-        ];
-    }
+                    if ($column['referenced_table'] != null) {
+                        $colInfo['foreign_key'] = [
+                            'table' => $column['referenced_table'],
+                            'column' => $column['referenced_column']
+                        ];
+                    }
 
+                    if ($column['col_key'] === 'PRI') {
+                        $primaryKey = $column['name'];
+                    }
 
+                    $columnInfo[] = $colInfo;
+                }
 
+                if (!$primaryKey) {
+                    throw new Exception("Primary key not found for table.");
+                }
+
+                // Remove fields that are only auto_increment but not the primary key itself
+                $columns = array_filter($columnInfo, function ($column) use ($primaryKey) {
+                    return !($column['extra'] === 'auto_increment' && $column['name'] !== $primaryKey);
+                });
+
+                // Reset array indexing to be zero-indexed sequentially
+                $columns = array_values($columns);
+
+                // Insert primary key column to the beginning if it's not already present
+                if ($primaryKeyInfo = current(array_filter($columns, function ($column) use ($primaryKey) {
+                        return $column['name'] === $primaryKey;
+                    })) === false) {
+                    array_unshift($columns, [
+                        'name' => $primaryKey,
+                        'type' => 'int(11)',
+                        'nullable' => 'NO',
+                        'key' => 'PRI',
+                        'default' => null,
+                        'extra' => 'auto_increment', // Assuming primary key is auto_increment
+                        'foreign_key' => null
+                    ]);
+                }
+
+                $tableHeaders = array_map(function ($column) {
+                    return $column['name'];
+                }, $columns);
+
+                return [
+                    'columns' => $columns,
+                    'primaryKey' => $primaryKey,
+                    'tableHeaders' => implode(', ', $tableHeaders)
+                ];
+            } catch (PDOException $e) {
+                // Handle any errors
+                error_log('Database Error: ' . $e->getMessage());
+                return false;
+            } catch (Exception $e) {
+                // Handle non-PDO exceptions
+                error_log('Error: ' . $e->getMessage());
+                return false;
+            }
+        }
 
 
     /**
@@ -2411,14 +2605,34 @@ class Vtlgen extends Trongate
     }
 
 
-    /**
-     * Generates a module controller file based on the provided module name.
-     *
-     * @param string $moduleControllersPath The path where the module controller file will be generated.
-     * @param string $moduleName The name of the module.
-     * @throws Exception Failed to read controller template or write controller file.
-     */
-    private function generateModuleController($controllerPath, $moduleName, $processedColumns, $primaryKey, $stlModuleName, $validationRules, $singularModuleName, $addMultiFileUploader) {
+        /**
+         * Generates the module controller based on provided parameters and template.
+         *
+         * @param string $controllerPath              Path where the controller file will be created.
+         * @param string $moduleName                  The module's name.
+         * @param array  $processedColumns            Processed columns include table headers and column data.
+         * @param string $primaryKey                  The primary key field name.
+         * @param string $stlModuleName               STL module name used for settings.
+         * @param array  $validationRules             Validation rules for the module.
+         * @param string $singularModuleName          Singular form of the module's name.
+         * @param bool   $addMultiFileUploader        Flag to determine if a multi-file uploader should be added.
+         * @param bool   $requiresForeignKeyAdditions Flag to determine if foreign key additions are required.
+         * @return void
+         */
+        private function generateModuleController(
+            string $controllerPath,
+            string $moduleName,
+            array $processedColumns,
+            string $primaryKey,
+            string $stlModuleName,
+            array $validationRules,
+            string $singularModuleName,
+            bool $addMultiFileUploader,
+            bool $requiresForeignKeyAdditions
+
+        ): void {
+
+
 
         $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'controller.php');
 
@@ -2454,7 +2668,8 @@ class Vtlgen extends Trongate
             '{{validationRules}}' => json_encode($validationRules),
             '{{singularModuleName}}' => $singularModuleName,
             '{{dataline}}' => $dataline,
-            '{{filezoneSettings}}' => $filezoneSettings
+            '{{filezoneSettings}}' => $filezoneSettings,
+            '{{requiresForeignKeyAdditions}}' => $requiresForeignKeyAdditions
         ];
 
         $controllerContent = str_replace(array_keys($replacements), array_values($replacements), $template);
@@ -2506,101 +2721,110 @@ class Vtlgen extends Trongate
     }
 
 
+        /**
+         * Generates the view templates for a specified module, including manage, create, and show views.
+         *
+         * @param string $moduleViewsPath             The path where the module view templates will be stored.
+         * @param string $moduleName                  The name of the module.
+         * @param array  $columnInfo                  An array containing the column information of the module's table.
+         * @param string $primaryKey                  The primary key of the module's table.
+         * @param string $singularModuleName          The singular name of the module.
+         * @param bool   $addMultiFileUploader        Indicates whether a multi-file uploader should be added to the create and show views.
+         * @param bool   $requiresForeignKeyAdditions Indicates whether foreign key additions are required in the views.
+         * @return void
+         */
 
-    /**
-     * A description of the entire PHP function.
-     *
-     * @param string $moduleViewsPath description
-     * @param string $moduleName      description
-     * @return void
-     *@throws Some_Exception_Class description of exception
-     */
-    private function generateModuleView($moduleViewsPath, $moduleName, $columnInfo, $primaryKey, $singularModuleName, $addMultiFileUploader): void {
+        private function generateModuleView(
+            string $moduleViewsPath,
+            string $moduleName,
+            array $columnInfo,
+            string $primaryKey,
+            string $singularModuleName,
+            bool $addMultiFileUploader,
+            bool $requiresForeignKeyAdditions
+        ): void {
 
-        // Paths for display and manage view templates
-        $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
-        $createViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'create.php';
-        $showViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'show.php';
+            // Paths for display and manage view templates
+            $manageViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'manage.php';
+            $createViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'create.php';
+            $showViewPath = $moduleViewsPath . DIRECTORY_SEPARATOR . 'show.php';
 
+            $manageTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'manage.php';
+            $createTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'create.php';
+            $showTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'show.php';
 
-        $manageTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'manage.php';
-        $createTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'create.php';
-        $showTemplatePath = APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'show.php';
+            // Process manage view template
+            $manageContent = file_get_contents($manageTemplatePath);
+            if ($manageContent === false) {
+                throw new Exception("Failed to read manage view template");
+            }
+            $tableHeaders = array_column($columnInfo['columns'], 'name');
+            $manageContent = str_replace('{{moduleName}}', strtolower($moduleName), $manageContent);
+            $manageContent = str_replace('{{tableHeaders}}', json_encode($tableHeaders), $manageContent);
+            $manageContent = str_replace('{{primaryKey}}', $primaryKey, $manageContent);
+            $manageContent = str_replace('{{singularModuleName}}', $singularModuleName, $manageContent);
 
+            // Prepare search field and operator options
+            $searchFieldOptions = [];
+            foreach ($columnInfo['columns'] as $column) {
+                $searchFieldOptions[$column['name']] = ucfirst($column['name']);
+            }
+            $manageContent = str_replace('{{searchFieldOptions}}', json_encode($searchFieldOptions), $manageContent);
 
-        // Process manage view template
-        $manageContent = file_get_contents($manageTemplatePath);
-        if ($manageContent === false) {
-            throw new Exception("Failed to read manage view template");
-        }
-        $tableHeaders = array_column($columnInfo, 'Field');
-        $manageContent = str_replace('{{moduleName}}', strtolower($moduleName), $manageContent);
-        $manageContent = str_replace('{{tableHeaders}}', json_encode($tableHeaders), $manageContent);
-        $manageContent = str_replace('{{primaryKey}}', $primaryKey, $manageContent);
-        $manageContent = str_replace('{{singularModuleName}}', $singularModuleName, $manageContent);
+            // Enhance search operators with additional options
+            $searchOperatorOptions = [
+                '=' => '=',
+                'LIKE' => 'LIKE',
+                '>' => '>',
+                '<' => '<',
+                '>=' => '>=',
+                '<=' => '<=',
+                '!=' => '!=',
+                'IN' => 'IN'
+            ];
+            $manageContent = str_replace('{{searchOperatorOptions}}', json_encode($searchOperatorOptions), $manageContent);
 
-        // Prepare search field and operator options
-        $searchFieldOptions = [];
-        foreach ($columnInfo as $column) {
-            $searchFieldOptions[$column['Field']] = ucfirst($column['Field']);
-        }
-        $manageContent = str_replace('{{searchFieldOptions}}', json_encode($searchFieldOptions), $manageContent);
+            if (file_put_contents($manageViewPath, $manageContent) === false) {
+                throw new Exception("Failed to write manage view file");
+            }
 
-        // Enhance search operators with additional options
-        $searchOperatorOptions = [
-            '=' => '=',
-            'LIKE' => 'LIKE',
-            '>' => '>',
-            '<' => '<',
-            '>=' => '>=',
-            '<=' => '<=',
-            '!=' => '!=',
-            'IN' => 'IN'
-        ];
-        $manageContent = str_replace('{{searchOperatorOptions}}', json_encode($searchOperatorOptions), $manageContent);
+            // Process create view template
+            $createContent = file_get_contents($createTemplatePath);
+            if ($createContent === false) {
+                throw new Exception("Failed to read create view template");
+            }
+            $multiFileUploader = '';
+            if ($addMultiFileUploader) {
+                $multiFileUploader = "<?= Modules::run('trongate_filezone/_draw_summary_panel', \$update_id, \$filezone_settings); ?>";
+            }
+            $formFields = json_encode($columnInfo['columns']);
+            $createContent = str_replace('{{moduleName}}', strtolower($moduleName), $createContent);
+            $createContent = str_replace('{{formFields}}', $formFields, $createContent);
+            $createContent = str_replace('{{singularModuleName}}', $singularModuleName, $createContent);
+            $createContent = str_replace('{{requiresForeignKeyAdditions}}', $requiresForeignKeyAdditions, $createContent);
+            if (file_put_contents($createViewPath, $createContent) === false) {
+                throw new Exception("Failed to write create view file");
+            }
 
-        if (file_put_contents($manageViewPath, $manageContent) === false) {
-            throw new Exception("Failed to write manage view file");
-        }
-
-
-        // Process create view template
-        $createContent = file_get_contents($createTemplatePath);
-        if ($createContent === false) {
-            throw new Exception("Failed to read create view template");
-        }
-        $multiFileUploader = '';
-        if ($addMultiFileUploader) {
-            $multiFileUploader = "<?= Modules::run('trongate_filezone/_draw_summary_panel', \$update_id, \$filezone_settings); ?>";
-        }
-        $formFields = json_encode($columnInfo);
-        $createContent = str_replace('{{moduleName}}', strtolower($moduleName), $createContent);
-        $createContent = str_replace('{{formFields}}', $formFields, $createContent);
-        $createContent = str_replace('{{singularModuleName}}', $singularModuleName, $createContent);
-        if (file_put_contents($createViewPath, $createContent) === false) {
-            throw new Exception("Failed to write create view file");
-        }
-
-        // Process show view template
-        $showContent = file_get_contents($showTemplatePath);
-        if ($showContent === false) {
-            throw new Exception("Failed to read show view template");
-        }
-        $columnsData = '';
-        foreach ($columnInfo as $column) {
-            if ($column['Extra'] != 'auto_increment') {
-                $columnsData .= '<div class="row"><div>' . $column['Field'] . '</div><div><?= out($' . $column['Field'] . ') ?></div></div>';
+            // Process show view template
+            $showContent = file_get_contents($showTemplatePath);
+            if ($showContent === false) {
+                throw new Exception("Failed to read show view template");
+            }
+            $columnsData = '';
+            foreach ($columnInfo['columns'] as $column) {
+                if ($column['extra'] != 'auto_increment') {
+                    $columnsData .= '<div class="row"><div>' . $column['name'] . '</div><div><?= out($' . $column['name'] . ') ?></div></div>';
+                }
+            }
+            $showContent = str_replace('{{moduleName}}', strtolower($moduleName), $showContent);
+            $showContent = str_replace('{{columns}}', $columnsData, $showContent);
+            $showContent = str_replace('{{singularModuleName}}', $singularModuleName, $showContent);
+            $showContent = str_replace('{{multiFileUploader}}', $multiFileUploader, $showContent);
+            if (file_put_contents($showViewPath, $showContent) === false) {
+                throw new Exception("Failed to write show view file");
             }
         }
-        $showContent = str_replace('{{moduleName}}', strtolower($moduleName), $showContent);
-        $showContent = str_replace('{{columns}}', $columnsData, $showContent);
-        $showContent = str_replace('{{singularModuleName}}', $singularModuleName, $showContent);
-        $showContent = str_replace('{{multiFileUploader}}', $multiFileUploader, $showContent);
-        if (file_put_contents($showViewPath, $showContent) === false) {
-            throw new Exception("Failed to write show view file");
-        }
-    }
-
 
     /**
      * Generates the API file for a specific module using the provided paths.
@@ -2626,6 +2850,26 @@ class Vtlgen extends Trongate
         if (file_put_contents($apiPath, $apiContent) === false) {
             throw new Exception("Failed to write API file");
         }
+    }
+
+    private function generateRequiredForeignKeyJs($moduleAssetsJsPath, $moduleName): void {
+        $jsPath = $moduleAssetsJsPath . DIRECTORY_SEPARATOR . strtolower($moduleName).'.js';
+        $template = file_get_contents(APPPATH . 'modules' . DIRECTORY_SEPARATOR . 'vtlgen'.DIRECTORY_SEPARATOR . 'assets'  . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'javascript.js');
+
+        // Define the path to the directory where JS files will be stored
+        //$jsDirectory = $moduleAssetsJsPath . DIRECTORY_SEPARATOR . strtolower($moduleName) . DIRECTORY_SEPARATOR . 'js';
+
+
+
+        // Perform the placeholders replacement
+        $replacements = [
+            '{{moduleName}}' => strtolower($moduleName)
+        ];
+
+        $jsContent = str_replace(array_keys($replacements), array_values($replacements), $template);
+
+        // Write the generated JS content to the target file
+        file_put_contents($jsPath, $jsContent);
     }
 
 

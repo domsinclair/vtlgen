@@ -1,5 +1,8 @@
 <?php
-class {{ModuleName}} extends Trongate {
+
+
+
+    class {{ModuleName}} extends Trongate {
 
     private $default_limit = 20;
 
@@ -9,12 +12,14 @@ class {{ModuleName}} extends Trongate {
 
     private $validationRules = [];
 
-   public function __construct() {
-       parent::__construct();
-       $this->columns = json_decode('{{columns}}', true);
-        $this->validationRules = json_decode('{{validationRules}}', true);
+    private $hasForeignKeys ;
 
-   }
+    public function __construct() {
+        parent::__construct();
+        $this->columns = json_decode('{{columns}}', true);
+        $this->validationRules = json_decode('{{validationRules}}', true);
+        $this->hasForeignKeys = filter_var('{{requiresForeignKeyAdditions}}', FILTER_VALIDATE_BOOLEAN);
+    }
 
     public function index () {
         $data['view_module'] = '{{stlModuleName}}';
@@ -137,6 +142,11 @@ class {{ModuleName}} extends Trongate {
         $data['formFields'] = json_encode($this->columns); // Pass columns to view
         $data['view_file'] = 'create';
         $data['view_module'] = '{{stlModuleName}}';
+        if ($this->hasForeignKeys) {
+            $stlModuleName = 'clientorders';  // This would be dynamically set
+            $additional_includes_btm[] = '<script src="' . BASE_URL . 'modules/' . $stlModuleName . '_module/js/' . $stlModuleName . '.js"></script>';
+            $data['additional_includes_btm'] = $additional_includes_btm;
+        }
         $this->template('admin', $data);
     }
 
@@ -192,13 +202,13 @@ class {{ModuleName}} extends Trongate {
         if (($submit == 'Yes - Delete Now') && ($params['update_id'] > 1)) {
             //delete all of the comments associated with this record
             $sql = 'delete from trongate_comments where target_table = :module and update_id = :update_id';
-            $params['module'] = $stlModuleName;
+            $params['module'] = '{{stlModuleName}}';
             $this->model->query_bind($sql, $params);
 
             // Create a custom delete query to cater for primary keys that are not named id
 
             $primaryKey = '{{primaryKey}}'; // Replace with the actual primary key
-            $sqlDelete = 'DELETE FROM ' . $stlModuleName . ' WHERE ' . $primaryKey . ' = ' .$params['update_id'];
+            $sqlDelete = 'DELETE FROM ' . $moduleName. ' WHERE ' . $primaryKey . ' = ' .$params['update_id'];
             $this->model->query($sqlDelete);
 
 
@@ -218,7 +228,7 @@ class {{ModuleName}} extends Trongate {
     private function getDataFromPost(){
         $data = [];
         foreach ($this->columns as $column) {
-            $fieldName = $column['Field'];
+            $fieldName = $column['name'];
             $data[$fieldName] = post($fieldName);
         }
         return $data;
@@ -310,7 +320,7 @@ class {{ModuleName}} extends Trongate {
 
     private function hasPictureField() {
         foreach ($this->columns as $column) {
-            if (strpos($column['Field'], 'picture') !== false) {
+            if (strpos($column['name'], 'picture') !== false) {
                 return true;
             }
         }
@@ -531,4 +541,26 @@ class {{ModuleName}} extends Trongate {
 
     {{filezoneSettings}}
 
+    // Used by create view to fetch related data for foreign keys
+    public function fetchRelatedData() {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $value = $input['value'];
+        $foreignTable = $input['foreignTable'];
+        $foreignColumn = $input['foreignColumn'];
+
+        // Validate the input
+        if ($foreignTable && $foreignColumn && $value) {
+            $relatedRecord = $this->model->get_one_where($foreignColumn, $value, $foreignTable);
+
+            if ($relatedRecord) {
+                echo json_encode(['success' => true, 'relatedRecord' => json_encode($relatedRecord)]);
+            } else {
+                echo json_encode(['success' => false]);
+            }
+        } else {
+            echo json_encode(['success' => false]);
+        }
+    }
+
 }
+

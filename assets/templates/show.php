@@ -1,4 +1,13 @@
 
+<?php
+$draw_picture_uploader = true;
+if (isset($data[0]->picture)) {
+    $picture_path = BASE_URL.'uploads/images/thumbnails/'.$data[0]->picture;
+    $draw_picture_uploader = false;
+}
+?>
+<div class="breadcrumb">
+    <a href="<?= BASE_URL ?>">Home</a>
 <h1><?= out($headline) ?> <span class="smaller hide-sm">(Record ID: <?= out($update_id) ?>)</span></h1>
 <?= flashdata() ?>
 <div class="card">
@@ -23,10 +32,10 @@
         <div class="card-body">
             <div class="record-details">
                 <?php foreach ($columns as $column): ?>
-                    <?php if ($column['Extra'] != 'auto_increment'): ?>
+                    <?php if ($column['extra'] != 'auto_increment'): ?>
                         <div class="row">
-                            <div><?= $column['Field'] ?></div>
-                            <div><?= out($data[0]->{$column['Field']}) ?></div>
+                            <div><?= $column['name'] ?></div>
+                            <div><?= out($data[0]->{$column['name']}) ?></div>
                         </div>
                     <?php endif; ?>
                 <?php endforeach; ?>
@@ -35,7 +44,7 @@
     </div>
 
 
-    <?php if (isset($picture_path)): ?>
+    <?php if (isset($picture_path) && $picture_path != ""): ?>
         <div class="card">
             <div class="card-heading">Picture</div>
             <div class="card-body picture-preview">
