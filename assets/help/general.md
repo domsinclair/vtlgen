@@ -1,6 +1,38 @@
 The Vtl Data Generator is a module designed to help you with everyday database administrative tsaks that should make your development of applications with the Trongate Framework a bit easier.
 
 > <br>
+> <b>PLEASE NOTE  You must add the following code to the form_helper.php file which can be found in the tg_helpers directory of the Trongate engine directory.</b>
+>
+```php
+  /**
+     * Generates a date input form field element.
+     *
+     * @param string $name The name attribute for the input element.
+     * @param string|null $value The value attribute for the input element. Default is null.
+     * @param array|null $attributes Additional attributes for the input element as an associative array. Default is null.
+     * @param string|null $additional_code Additional HTML code to be included. Default is null.
+     * @return string The generated HTML input element.
+     */
+    function form_date(string $name, ?string $value = null, ?array $attributes = null, ?string $additional_code = null): string {
+        return generate_input_element('date', $name, $value, false, $attributes, $additional_code);
+    }
+
+    /**
+     * Generates a datetime-local input form field element.
+     *
+     * @param string $name The name attribute for the input element.
+     * @param string|null $value The value attribute for the input element. Default is null.
+     * @param array|null $attributes Additional attributes for the input element as an associative array. Default is null.
+     * @param string|null $additional_code Additional HTML code to be included. Default is null.
+     * @return string The generated HTML input element.
+     */
+    function form_datetime(string $name, ?string $value = null, ?array $attributes = null, ?string $additional_code = null): string {
+        return generate_input_element('datetime-local', $name, $value, false, $attributes, $additional_code);
+    }
+```
+> This is a temporary fix that ensures the module creator can utilse the latest html date and datetime input controls.
+
+> <br>
 > <b>It is designed to be used by Administrators only and only when the ENV configuration setting (found in the
 > config.php file in the config folder of Trongate itself) is set to 'dev'. Any other setting OR a non administrative user
 > will result in a fallback to the main welcome page.</b>
